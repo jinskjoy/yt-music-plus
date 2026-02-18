@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Extension Settings</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #000000;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #1a1a1a;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+    }
+
+    header {
+      background: #000000;
+      color: white;
+      padding: 24px;
+      border-bottom: 1px solid #333333;
+    }
+
+    header h1 {
+      font-size: 24px;
+      margin-bottom: 4px;
+    }
+
+    header p {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    main {
+      padding: 32px;
+    }
+
+    .section {
+      margin-bottom: 32px;
+    }
+
+    .section h2 {
+      font-size: 16px;
+      color: #ffffff;
+      margin-bottom: 16px;
+      font-weight: 600;
+    }
+
+    .setting-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #ffffff;
+    }
+
+    input[type="checkbox"],
+    input[type="number"],
+    input[type="text"],
+    select {
+      padding: 8px 12px;
+      border: 1px solid #444444;
+      border-radius: 6px;
+      font-size: 14px;
+      background: #2a2a2a;
+      color: #ffffff;
+    }
+
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    input[type="number"],
+    input[type="text"],
+    select {
+      cursor: text;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .input-group input {
+      flex: 1;
+    }
+
+    .info-text {
+      font-size: 12px;
+      color: #999;
+      margin-top: 6px;
+      margin-left: 30px;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 32px;
+    }
+
+    button {
+      padding: 10px 24px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-save {
+      background: #ffffff;
+      color: #000000;
+      flex: 1;
+      font-weight: 600;
+    }
+
+    .btn-save:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+      background: #f0f0f0;
+    }
+
+    .btn-reset {
+      background: #333333;
+      color: #ffffff;
+      flex: 1;
+      border: 1px solid #555555;
+    }
+
+    .btn-reset:hover {
+      background: #444444;
+    }
+
+    .status-message {
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .status-message.show {
+      display: block;
+    }
+
+    .status-message.success {
+      background: #1a4d1a;
+      color: #90ee90;
+      border: 1px solid #2d5a2d;
+    }
+
+    .status-message.error {
+      background: #4d1a1a;
+      color: #ff6b6b;
+      border: 1px solid #5a2d2d;
+    }
+    .status-message.info {
+        background: #1a1a4d;
+        color: #6b6bff;
+        border: 1px solid #2d2d5a;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>YT Music Refresher Settings</h1>
+      <p>Customize your extension behavior</p>
+    </header>
+
+    <main>
+
+      <form id="settingsForm">
+        <!-- Auto Refresh Section -->
+        <section class="section">
+          <h2>Auto Refresh Settings</h2>
+
+          <div class="setting-group">
+            <label>
+              <input type="checkbox" id="autoRefresh" name="autoRefresh">
+              Enable automatic playlist refresh
+            </label>
+            <p class="info-text">Automatically refresh your playlists at regular intervals</p>
+          </div>
+
+          <div class="setting-group">
+            <label for="refreshInterval">Refresh interval (minutes):</label>
+            <div class="input-group">
+              <input type="number" id="refreshInterval" name="refreshInterval" min="1" max="1440" value="30">
+            </div>
+            <p class="info-text">How often to refresh playlists (1-1440 minutes)</p>
+          </div>
+        </section>
+
+        <!-- Notification Settings -->
+        <section class="section">
+          <h2>Notification Settings</h2>
+
+          <div class="setting-group">
+            <label>
+              <input type="checkbox" id="enableNotifications" name="enableNotifications" checked>
+              Show notifications
+            </label>
+            <p class="info-text">Get notified when playlists are refreshed</p>
+          </div>
+
+          <div class="setting-group">
+            <label for="notificationDuration">Notification duration (seconds):</label>
+            <div class="input-group">
+              <input type="number" id="notificationDuration" name="notificationDuration" min="1" max="30" value="3">
+            </div>
+            <p class="info-text">How long notifications should stay visible</p>
+          </div>
+        </section>
+
+        <!-- API Settings -->
+        <section class="section">
+          <h2>API Settings</h2>
+
+          <div class="setting-group">
+            <label for="apiTimeout">API timeout (milliseconds):</label>
+            <div class="input-group">
+              <input type="number" id="apiTimeout" name="apiTimeout" min="1000" max="60000" value="10000">
+            </div>
+            <p class="info-text">Maximum time to wait for API responses</p>
+          </div>
+
+          <div class="setting-group">
+            <label>
+              <input type="checkbox" id="logAPIRequests" name="logAPIRequests">
+              Log API requests (for debugging)
+            </label>
+            <p class="info-text">Enable detailed logging of API requests</p>
+          </div>
+        </section>
+
+        <!-- Display Settings -->
+        <section class="section">
+          <h2>Display Settings</h2>
+
+          <div class="setting-group">
+            <label for="theme">Theme:</label>
+            <select id="theme" name="theme">
+              <option value="auto">Auto (System preference)</option>
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+            </select>
+          </div>
+
+          <div class="setting-group">
+            <label>
+              <input type="checkbox" id="compactView" name="compactView">
+              Use compact view
+            </label>
+            <p class="info-text">Display less detailed information in the sidebar</p>
+          </div>
+        </section>
+
+        <div id="statusMessage" class="status-message"></div>
+        <!-- Action Buttons -->
+        <div class="button-group">
+          <button type="submit" class="btn-save">Save Settings</button>
+          <button type="reset" class="btn-reset">Reset to Defaults</button>
+        </div>
+      </form>
+    </main>
+  </div>
+
+  <script type="module" src="options.js"></script>
+</body>
+</html>

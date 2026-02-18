@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Playlist Manager</title>
+  <link rel="stylesheet" href="sidebar.css">
+</head>
+<body>
+  <div class="sidebar-container">
+    <header class="sidebar-header">
+      <h2>Playlist Manager</h2>
+      <button id="closeSidebarBtn" class="close-btn" title="Close">✕</button>
+    </header>
+
+    <main class="sidebar-content">
+      <section class="search-section">
+        <input
+          type="text"
+          id="searchInput"
+          class="search-input"
+          placeholder="Search playlists..."
+        />
+      </section>
+
+      <section class="playlists-section">
+        <h3>Your Playlists</h3>
+        <div id="playlistList" class="playlist-list"></div>
+      </section>
+
+      <section class="stats-section">
+        <h3>Statistics</h3>
+        <div id="statsContainer" class="stats-container"></div>
+      </section>
+    </main>
+
+    <footer class="sidebar-footer">
+      <button id="refreshAllBtn" class="btn-primary">Refresh All</button>
+    </footer>
+  </div>
+
+  <script type="module" src="sidebar.js"></script>
+</body>
+</html>
