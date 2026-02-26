@@ -1,0 +1,55 @@
+<div class="yt-music-extended-popup-container">
+    <div class="yt-music-extended-popup-content">
+        <div class="popup-header">
+            <h2>YouTube Music Plus</h2>
+            <button id="closePopupBtn" class="close-btn" aria-label="Close popup">×</button>
+        </div>
+        
+        <!-- Playlist Info Section -->
+        <div class="playlist-info-section">
+            <img id="yt-music-plus-playlistThumbnail" class="playlist-thumbnail" src="" alt="Playlist thumbnail"/>
+            <div class="playlist-details">
+                <h3 id="yt-music-plus-playlistName">Playlist Name</h3>
+                <div class="playlist-meta">
+                    <span id="yt-music-plus-playlistTrackCount">0 tracks</span>
+                </div>
+                <p id="yt-music-plus-playlistDescription" class="playlist-description"></p>
+            </div>
+            
+            <!-- Playlist Action Buttons -->
+            <div class="playlist-action-buttons">
+                <button id="findUnavailableBtn" class="btn btn-primary" type="button">Find Unavailable Tracks</button>
+                <button id="findVideoTracksBtn" class="btn btn-primary" type="button">Find Video Tracks</button>
+            </div>
+        </div>
+        
+        <form id="yt-music-plus-form">
+            
+            <!-- Action Buttons Section -->
+            <div class="action-buttons-container">
+                <button id="replaceSelectedBtn" class="btn btn-primary">Replace Selected</button>
+                <button id="removeSelectedBtn" class="btn btn-danger">Remove Selected</button>
+                <!-- progress indicator shown when searches are running -->
+                <div id="searchProgress" class="search-progress hidden">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+
+            <!-- Scrollable Grid Section -->
+            <div class="items-grid-wrapper">
+                <div class="items-grid-header">
+                    <div class="grid-col grid-col-serial">#</div>
+                    <div class="grid-col grid-col-original">Original Media</div>
+                    <div class="grid-col grid-col-replacement">Replacement Media</div>
+                    <div class="grid-col grid-col-checkbox">
+                        <input type="checkbox" id="yt-music-plus-selectAllCheckbox" class="select-all-checkbox" checked/>
+                    </div>
+                </div>
+
+                <div class="items-grid-container" id="yt-music-plus-itemsGridContainer">
+                    
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

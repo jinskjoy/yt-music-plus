@@ -6,10 +6,13 @@ class ContentScriptController {
     this.domModifier = DOMModifier;
     this.messageManager = new MessageManager();
     this.sidebarElement = null;
+    this.popupElement = null;
     this.ytconfig = null;
     this.listenForPageMessages();
     this.initializeListeners();
     this.injectBridgeScript();
+    this.injectPopup();
+    this.injectActionButtons();
   }
 
   injectBridgeScript() {
@@ -25,6 +28,85 @@ class ContentScriptController {
     }
   }
 
+  async injectPopup() {
+    // Inject the popup HTML and CSS
+    try {
+      // Inject CSS
+      const cssUrl = chrome.runtime.getURL('styles/in-site-popup.css');
+      const cssLink = document.createElement('link');
+      cssLink.rel = 'stylesheet';
+      cssLink.href = cssUrl;
+      document.head.appendChild(cssLink);
+
+      // Fetch and inject HTML
+      const htmlUrl = chrome.runtime.getURL('html/in-site-popup.html');
+      const response = await fetch(htmlUrl);
+      const htmlText = await response.text();
+
+      const popupContainer = document.createElement('div');
+      popupContainer.innerHTML = htmlText;
+      document.body.appendChild(popupContainer);
+      this.popupElement = popupContainer.querySelector('.yt-music-extended-popup-container');
+
+      // Add close button listener
+      const closeBtn = this.popupElement.querySelector('#closePopupBtn');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => this.hidePopup());
+      }
+
+      const selectAllCheckbox = this.popupElement.querySelector('#yt-music-plus-selectAllCheckbox');
+      if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', (e) => {
+          const checkboxes = this.popupElement.querySelectorAll('.item-checkbox');
+          checkboxes.forEach(cb => cb.checked = e.target.checked);
+        });
+      }
+
+      //Detect if any checkbox is unchecked, if so uncheck the selectAllCheckbox
+      // Grid container will be dynamically generated, so we need to use event delegation
+      this.popupElement.addEventListener('change', (e) => {
+        // If the changed element is not a checkbox, ignore
+        if (!e.target.classList.contains('item-checkbox')) return;
+        // If all checkboxes are checked, check the selectAllCheckbox        
+
+        const checkboxes = this.popupElement.querySelectorAll('.item-checkbox');
+        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+        selectAllCheckbox.checked = allChecked;
+      });
+
+      console.log('Popup injected successfully');
+    } catch (error) {
+      console.error('Error injecting popup:', error);
+    }
+  }
+  injectActionButtons() {
+    const scriptHtml = `
+      <div id="yt-music-plus-action-buttons" class="action-buttons style-scope ytmusic-responsive-header-renderer">
+        <div class="style-scope" role="button" tabindex="0" animated="" state="default" aria-label="" icon="" elevation="1" aria-disabled="false" >
+          <div class="content-wrapper style-scope ytmusic-play-button-renderer">
+            <span class="icon style-scope" style="">YouTube Music Plus</span>
+          </div>
+        </div>
+      </div> `;
+    document.querySelector('ytmusic-responsive-header-renderer').insertAdjacentHTML('beforeend', scriptHtml);
+    document.getElementById('yt-music-plus-action-buttons')?.addEventListener('click', () => {
+      this.showPopup();
+    });
+  }
+
+  showPopup() {
+    if (this.popupElement) {
+      this.popupElement.classList.add('show');
+    }
+  }
+
+  hidePopup() {
+    if (this.popupElement) {
+      this.popupElement.classList.remove('show');
+    }
+  }
+
+
   listenForPageMessages() {
     // Listen for messages from the bridge script running in page context
     window.addEventListener('message', (event) => {
@@ -35,6 +117,9 @@ class ContentScriptController {
       if (event.data.type === 'BRIDGE_LOADED') {
         console.log('Bridge script and content script have loaded and are ready. Notifying background script.');
         this.notifyBackgroundOfContentScript();
+      }
+      else if (event.data.type === 'OPEN_POPUP') {
+        this.showPopup();
       }
     }, false);
   }
@@ -61,7 +146,17 @@ class ContentScriptController {
     console.log('Content script received message:', message);
     try {
       switch (message.action) {
-    
+
+        case 'showPopup':
+          this.showPopup();
+          sendResponse({ success: true });
+          break;
+
+        case 'hidePopup':
+          this.hidePopup();
+          sendResponse({ success: true });
+          break;
+
         case 'showSidebar':
           await this.showSidebar();
           sendResponse({ success: true });

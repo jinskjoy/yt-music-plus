@@ -44,6 +44,8 @@
         "sidebar/sidebar.html",
         "sidebar/sidebar.css",
         "sidebar/sidebar.js",
+        "html/in-site-popup.html",
+        "styles/in-site-popup.css",
         "scripts/content.js",
         "scripts/bridge.js",
         "utils/dom-modifier.js",
