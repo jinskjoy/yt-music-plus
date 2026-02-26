@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YT Music Playlist Refresher</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>YT Music Refresher</h1>
+    </header>
+
+    <main>
+      <section class="actions">
+        <button id="refreshBtn" class="btn btn-primary">
+          <span class="icon">🔄</span>
+          Refresh Playlist
+        </button>
+        
+        <button id="openSidebarBtn" class="btn btn-secondary">
+          <span class="icon">📋</span>
+          Open Sidebar
+        </button>
+
+        <button id="openSidePanelBtn" class="btn btn-secondary">
+          <span class="icon">🖼️</span>
+          Open Side Panel
+        </button>
+
+        <button id="closeSidePanelBtn" class="btn btn-secondary">
+          <span class="icon">❌</span>
+          Close Side Panel
+        </button>
+
+        <button id="testSidePanelBtn" class="btn btn-tertiary">
+          <span class="icon">🧪</span>
+          Test Side Panel
+        </button>
+      </section>
+
+      <section class="status">
+        <div id="statusMessage" class="status-message"></div>
+      </section>
+
+      <section class="settings">
+        <h3>Settings</h3>
+        <label>
+          <input type="checkbox" id="autoRefresh">
+          Enable auto-refresh
+        </label>
+        <div class="setting-item">
+          <label for="refreshInterval">Refresh interval (minutes):</label>
+          <input type="number" id="refreshInterval" min="1" max="60" value="30">
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <button id="settingsBtn" class="icon-btn" title="Settings">⚙️</button>
+    </footer>
+  </div>
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
