@@ -32,7 +32,7 @@
   ],
   "content_scripts": [
     {
-      "matches": ["https://music.youtube.com/*"],
+      "matches": ["https://music.youtube.com/playlist/*"],
       "js": ["scripts/content-loader.js"],
       "all_frames": false,
       "run_at": "document_idle"

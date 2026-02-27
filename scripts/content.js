@@ -54,6 +54,14 @@ class ContentScriptController {
         closeBtn.addEventListener('click', () => this.hidePopup());
       }
 
+      // Close popup on Escape key
+      const handleEscapeKey = (e) => {
+        if (e.key === 'Escape' && this.popupElement.classList.contains('show')) {
+          this.hidePopup();
+        }
+      };
+      document.addEventListener('keydown', handleEscapeKey);
+
       const selectAllCheckbox = this.popupElement.querySelector('#yt-music-plus-selectAllCheckbox');
       if (selectAllCheckbox) {
         selectAllCheckbox.addEventListener('change', (e) => {
@@ -103,6 +111,8 @@ class ContentScriptController {
   hidePopup() {
     if (this.popupElement) {
       this.popupElement.classList.remove('show');
+      // Notify bridge script that popup is closed so it can re-enable page reloads
+      window.postMessage({ type: 'POPUP_CLOSED' }, '*');
     }
   }
 
