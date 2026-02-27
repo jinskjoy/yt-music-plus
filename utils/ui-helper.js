@@ -189,6 +189,9 @@ export class UIHelper {
   static createMediaGridRow(originalMedia, replacementMedia, serialNumber = 1) {
     const row = document.createElement('div');
     row.className = 'grid-row';
+    row.dataset.serialNumber = serialNumber;
+    row.dataset.originalMedia = JSON.stringify(originalMedia);
+    row.dataset.replacementMedia = JSON.stringify(replacementMedia);
 
     // Serial number column
     const serialCol = document.createElement('div');
@@ -373,5 +376,21 @@ export class UIHelper {
       console.error("Error calculating similarity metrics:", error);
       return false;
     }
+  }
+
+  static getSelectedMediaItems() {
+    const selectedItems = [];
+    const checkboxes = document.querySelectorAll('.item-checkbox');
+    checkboxes.forEach((checkbox, index) => {
+      if (checkbox.checked) {
+        const row = checkbox.closest('.grid-row');
+        if (row) {
+          const originalMedia = JSON.parse(row.dataset.originalMedia);
+          const replacementMedia = JSON.parse(row.dataset.replacementMedia);
+          selectedItems.push({ originalMedia, replacementMedia });
+        }
+      }
+    });
+    return selectedItems;
   }
 }

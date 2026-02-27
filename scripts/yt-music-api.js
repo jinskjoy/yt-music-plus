@@ -33,8 +33,7 @@ export class YTMusicAPI {
             headers: {
                 'Content-Type': 'application/json',
                 'accept': '*/*',
-                'Authorization': this.authToken || '', // Include auth token if available,
-                'referrer': 'https://music.youtube.com/'
+                'Authorization': this.authToken || '', // Include auth token if available
             },
             body: JSON.stringify(body)
         });
