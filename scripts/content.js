@@ -80,11 +80,48 @@ class ContentScriptController {
         const checkboxes = this.popupElement.querySelectorAll('.item-checkbox');
         const allChecked = Array.from(checkboxes).every(cb => cb.checked);
         selectAllCheckbox.checked = allChecked;
+
+        //If none of the checkboxes are checked, disable the action buttons, else enable them
+        const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+        const actionButtons = this.popupElement.querySelectorAll('.action-buttons-container button');
+        actionButtons.forEach(btn => btn.disabled = !anyChecked);
       });
+
+      // Add back button listener for returning to playlist selection
+      const backButton = this.popupElement.querySelector('#backButton');
+      if (backButton) {
+        backButton.addEventListener('click', () => this.showPlaylistSelection());
+      }
 
       console.log('Popup injected successfully');
     } catch (error) {
       console.error('Error injecting popup:', error);
+    }
+  }
+
+  showPlaylistSelection() {
+    if (this.popupElement) {
+      const selectionScreen = this.popupElement.querySelector('#playlistSelectionScreen');
+      const detailsScreen = this.popupElement.querySelector('#playlistDetailsScreen');
+      if (selectionScreen && detailsScreen) {
+        selectionScreen.classList.remove('hidden');
+        detailsScreen.classList.add('hidden');
+      }
+      const titleElement = this.popupElement.querySelector('#popupTitle');
+      if (titleElement) {
+        titleElement.textContent = '';
+      }
+    }
+  }
+
+  showPlaylistDetails() {
+    if (this.popupElement) {
+      const selectionScreen = this.popupElement.querySelector('#playlistSelectionScreen');
+      const detailsScreen = this.popupElement.querySelector('#playlistDetailsScreen');
+      if (selectionScreen && detailsScreen) {
+        selectionScreen.classList.add('hidden');
+        detailsScreen.classList.remove('hidden');
+      }
     }
   }
   injectActionButtons() {

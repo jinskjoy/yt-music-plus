@@ -393,4 +393,25 @@ export class UIHelper {
     });
     return selectedItems;
   }
+
+  static createPlaylistCard(playlist) {
+    const card = document.createElement('div');
+    card.className = 'playlist-card';
+    const thumbnail = document.createElement('img');
+    thumbnail.src = playlist.thumbnail || '';
+    thumbnail.alt = playlist.title || 'Playlist Thumbnail';
+    thumbnail.className = 'playlist-card-thumbnail';
+    const title = document.createElement('div');
+    title.className = 'playlist-card-title';
+    title.textContent = playlist.title || 'Untitled Playlist';
+    const meta = document.createElement('div');
+    meta.className = 'playlist-card-meta';
+    meta.textContent = playlist.subtitle || '';
+
+    card.appendChild(thumbnail);
+    card.appendChild(title);
+    card.appendChild(meta);
+
+    return card;
+  }
 }

@@ -74,7 +74,7 @@ import { UIHelper } from '../utils/ui-helper.js';
     class Bridge {
         constructor() {
             this.ytMusicAPI = new YTMusicAPI();
-
+            this.currentSelectedPlaylist = null; // Store the currently selected playlist details
             this.baseUrl = "https://music.youtube.com/watch?v=";
             this.timeOutDuration = 100;
             this.isReloadDisabled = false;
@@ -172,9 +172,9 @@ import { UIHelper } from '../utils/ui-helper.js';
             const replaceSelected = document.getElementById('replaceSelectedBtn');
             const addSelected = document.getElementById('addSelectedBtn');
             const removeSelected = document.getElementById('removeSelectedBtn');
-             if (replaceSelected) replaceSelected.disabled = show;
-             if (addSelected) addSelected.disabled = show;
-             if (removeSelected) removeSelected.disabled = show;
+            if (replaceSelected) replaceSelected.disabled = show;
+            if (addSelected) addSelected.disabled = show;
+            if (removeSelected) removeSelected.disabled = show;
             if (findUnavailable) findUnavailable.disabled = show;
             if (findVideo) findVideo.disabled = show;
         }
@@ -182,29 +182,84 @@ import { UIHelper } from '../utils/ui-helper.js';
             // Get all editable playlists for the user
             const playlists = await this.ytMusicAPI.getEditablePlaylists();
             console.log("Fetched playlists in bridge:", playlists);
-            //Check if the current page is a playlist page and get the playlist ID from the URL
-            const currentPlaylistId = this.ytMusicAPI.getCurrentPlaylistIdFromURL();
-            console.log("Current playlist ID from URL:", currentPlaylistId);
-            //Check if the current playlist ID is in the list of editable playlists
-            const currentPlaylist = playlists.find(playlist => playlist.id === currentPlaylistId);
-            if (currentPlaylist) {
-                UIHelper.setPlaylistDetails(currentPlaylist);
 
-                //Open popup
-                window.postMessage({ type: 'OPEN_POPUP' }, '*');
-            } else {
-                console.log("Current playlist ID is not in the list of editable playlists or no playlist ID found in URL.");
+            // Display all playlists in the selection screen
+            this.displayPlaylistsForSelection(playlists);
+
+            // Open popup to show playlist selection
+            window.postMessage({ type: 'OPEN_POPUP' }, '*');
+        }
+
+        displayPlaylistsForSelection(playlists) {
+            const playlistsGrid = document.getElementById('playlistsGrid');
+            if (!playlistsGrid) {
+                console.error("Playlists grid container not found");
+                return;
             }
 
+            // Clear existing playlist cards
+            playlistsGrid.replaceChildren();
+
+            if (playlists.length === 0) {
+                const noPlaylistsMessage = document.createElement('div');
+                noPlaylistsMessage.style.gridColumn = '1/-1';
+                noPlaylistsMessage.style.padding = '20px';
+                noPlaylistsMessage.style.textAlign = 'center';
+                noPlaylistsMessage.textContent = 'No editable playlists found';
+                playlistsGrid.appendChild(noPlaylistsMessage);
+                return;
+            }
+
+            // Create a playlist card for each playlist
+            playlists.forEach((playlist) => {
+                const card = UIHelper.createPlaylistCard(playlist);
+
+                // Add click handler to select the playlist
+                card.addEventListener('click', () => {
+                    this.onPlaylistSelected(playlist);
+                });
+
+                playlistsGrid.appendChild(card);
+            });
+        }
+
+        onPlaylistSelected(playlist) {
+            console.log("Playlist selected:", playlist);
+
+            // Set the playlist details in the UI
+            UIHelper.setPlaylistDetails(playlist);
+
+            // Store the current playlist for reference
+            this.currentSelectedPlaylist = playlist;
+            this.clearPlaylistItemsContainer(); // Clear any existing items in the details screen
+
+            // Switch to details screen
+            const detailsScreen = document.getElementById('playlistDetailsScreen');
+            if (detailsScreen) {
+                detailsScreen.classList.remove('hidden');
+            }
+            const selectionScreen = document.getElementById('playlistSelectionScreen');
+            if (selectionScreen) {
+                selectionScreen.classList.add('hidden');
+            }
+            this.updatePopupTitle(`Playlist: ${playlist.title}`);
+        }
+
+        updatePopupTitle(title) {
+            const titleElement = document.getElementById('popupTitle');
+            if (titleElement) {
+                titleElement.textContent = title;
+            }
         }
 
         async processPlaylistItems(items) {
             // Process the playlist items to find greyed out ones and fetch replacement suggestions for first 4 greyed out items (for testing purposes, remove the limit to process all greyed out items)
-            const greyedOutItems = items.filter(item => item.isGreyedOut).slice(0, 5);
+            const greyedOutItems = items.filter(item => item.isGreyedOut).slice(0, 10);
             console.log("Greyed out items in the playlist:", greyedOutItems);
             this.clearPlaylistItemsContainer();
             let i = 1;
             for (const greyedOutItem of greyedOutItems) {
+                this.setProgressText(`Processing track ${i} of ${greyedOutItems.length}`);
                 console.log("Processing greyed out item:", greyedOutItem);
                 const searchResult = await this.ytMusicAPI.searchMusic(greyedOutItem);
                 console.log("Search result for greyed out item:", searchResult);
@@ -226,8 +281,8 @@ import { UIHelper } from '../utils/ui-helper.js';
 
                 await this.sleep(this.timeOutDuration); // Sleep for a bit to avoid hitting rate limits or overwhelming the API with requests
             }
+            this.setProgressText(`Processing complete. Found ${greyedOutItems.length} unavailable tracks and replacements.`);
             // After processing all items, modify the UI to show the results
-            //this.displayResultsInUI(greyedOutItems);
         }
 
         async displayResultsInUI(greyedOutItems) {
@@ -267,15 +322,28 @@ import { UIHelper } from '../utils/ui-helper.js';
             document.getElementById('yt-music-plus-itemsGridContainer').appendChild(gridRow);
             return i;
         }
+        setProgressText(text) {
+            const el = document.getElementById('progressText');
+            if (el) {
+                el.textContent = text;
+                if (text) {
+                    el.classList.remove('hidden');
+                } else {
+                    el.classList.add('hidden');
+                }
+            }
+        }
 
         async findUnavailableTracks() {
+            this.clearPlaylistItemsContainer();
             this.toggleSearchProgress(true);
+            this.setProgressText("Finding unavailable tracks...");
             try {
-                const currentPlaylistId = this.ytMusicAPI.getCurrentPlaylistIdFromURL();
-                console.log("Current playlist ID from URL:", currentPlaylistId);
+                const currentPlaylistId = this.currentSelectedPlaylist ? this.currentSelectedPlaylist.id : this.ytMusicAPI.getCurrentPlaylistIdFromURL();
+                console.log("Current playlist ID:", currentPlaylistId);
 
                 if (!currentPlaylistId) {
-                    console.error("Could not determine current playlist ID from URL");
+                    console.error("Could not determine current playlist ID from URL or selected playlist");
                     return;
                 }
 
@@ -286,6 +354,7 @@ import { UIHelper } from '../utils/ui-helper.js';
                 // Filter for unavailable (greyed out) tracks
                 const unavailableItems = items.filter(item => item.isGreyedOut);
                 console.log("Unavailable (greyed out) items:", unavailableItems);
+                this.setProgressText(`Found ${unavailableItems.length} unavailable tracks. Fetching replacements...`);
 
                 if (unavailableItems.length === 0) {
                     console.log("No unavailable tracks found in the playlist");
@@ -295,6 +364,7 @@ import { UIHelper } from '../utils/ui-helper.js';
                 // Process the unavailable items to find replacements
                 await this.processPlaylistItems(unavailableItems);
             } catch (error) {
+                this.setProgressText("Error occurred while finding unavailable tracks. Check console for details.");
                 console.error('Error finding unavailable tracks:', error);
             } finally {
                 this.toggleSearchProgress(false);
@@ -302,13 +372,15 @@ import { UIHelper } from '../utils/ui-helper.js';
         }
 
         async findVideoTracks() {
+            this.clearPlaylistItemsContainer();
             this.toggleSearchProgress(true);
+            this.setProgressText("Finding video tracks...");
             try {
-                const currentPlaylistId = this.ytMusicAPI.getCurrentPlaylistIdFromURL();
-                console.log("Current playlist ID from URL:", currentPlaylistId);
+                const currentPlaylistId = this.currentSelectedPlaylist ? this.currentSelectedPlaylist.id : this.ytMusicAPI.getCurrentPlaylistIdFromURL();
+                console.log("Current playlist ID:", currentPlaylistId);
 
                 if (!currentPlaylistId) {
-                    console.error("Could not determine current playlist ID from URL");
+                    console.error("Could not determine current playlist ID from URL or selected playlist");
                     return;
                 }
 
@@ -319,11 +391,13 @@ import { UIHelper } from '../utils/ui-helper.js';
                 // Filter for video tracks (non-music items or items with video property set)
                 const videoTracks = items.filter(item => item.isVideo);
                 console.log("Video tracks found:", videoTracks);
-
+                this.setProgressText(`Found ${videoTracks.length} video tracks. Fetching replacements...`);
                 if (videoTracks.length === 0) {
                     console.log("No video tracks found in the playlist");
                     return;
                 }
+
+                this.clearPlaylistItemsContainer();
                 let i = 1;
                 for (const track of videoTracks) {
                     console.log("Video track details:", track);
@@ -349,17 +423,20 @@ import { UIHelper } from '../utils/ui-helper.js';
         async replaceSelectedItems() {
             try {
                 this.toggleSearchProgress(true);
+                this.setProgressText("Replacing selected items...");
                 // This function will be called when the user clicks the "Replace Selected" button in the popup
                 // It should gather the selected items in the UI, get their corresponding replacement media, and call the API to replace them in the playlist
-                const playlistId = this.ytMusicAPI.getCurrentPlaylistIdFromURL();
+                const playlistId = this.currentSelectedPlaylist ? this.currentSelectedPlaylist.id : this.ytMusicAPI.getCurrentPlaylistIdFromURL();
                 if (!playlistId) {
-                    console.error("Could not determine current playlist ID from URL");
+                    console.error("Could not determine current playlist ID from URL or selected playlist");
                     return;
                 }
                 console.log("Replace Selected button clicked");
                 const selectedItems = UIHelper.getSelectedMediaItems();
                 console.log("Selected items to replace:", selectedItems);
+                let i = 1;
                 for (const item of selectedItems) {
+                    this.setProgressText(`Replacing track ${i} of ${selectedItems.length}...`);
                     if (item.replacementMedia && item.replacementMedia.videoId) {
                         try {
                             const originalItemDetails = item.originalMedia;
@@ -376,27 +453,32 @@ import { UIHelper } from '../utils/ui-helper.js';
                     } else {
                         console.warn(`No replacement found for item ${originalItemDetails.name}, skipping replacement.`);
                     }
+                    i++;
                 }
                 console.log('All replacements completed.');
             }
             finally {
                 this.toggleSearchProgress(false);
+                this.setProgressText("All replacements completed.");
             }
         }
         async addSelectedItems() {
             this.toggleSearchProgress(true);
+            this.setProgressText("Adding selected items...");
             try {
                 // This function will be called when the user clicks the "Add Selected" button in the popup
                 // It should gather the selected items in the UI, get their corresponding replacement media, and call the API to add them to the playlist
                 console.log("Add Selected button clicked");
-                const playlistId = this.ytMusicAPI.getCurrentPlaylistIdFromURL();
+                const playlistId = this.currentSelectedPlaylist ? this.currentSelectedPlaylist.id : this.ytMusicAPI.getCurrentPlaylistIdFromURL();
                 if (!playlistId) {
-                    console.error("Could not determine current playlist ID from URL");
+                    console.error("Could not determine current playlist ID from URL or selected playlist");
                     return;
                 }
                 const selectedItems = UIHelper.getSelectedMediaItems();
                 console.log("Selected items to add:", selectedItems);
+                let i = 1;
                 for (const item of selectedItems) {
+                    this.setProgressText(`Adding track ${i} of ${selectedItems.length}...`);
                     const originalItemDetails = item.originalMedia;
                     const replacementItemDetails = item.replacementMedia;
                     console.log("Original item details for adding:", originalItemDetails);
@@ -411,16 +493,19 @@ import { UIHelper } from '../utils/ui-helper.js';
                     } else {
                         console.warn(`No valid replacement found for item ${originalItemDetails.name}, skipping addition.`);
                     }
+                    i++;
                 }
                 console.log('All additions completed.');
             }
             finally {
                 this.toggleSearchProgress(false);
+                this.setProgressText("All additions completed.");
             }
         }
 
         async removeSelectedItems() {
             try {
+                this.setProgressText("Removing selected items...");
                 this.toggleSearchProgress(true);
                 // This function will be called when the user clicks the "Remove Selected" button in the popup
                 // It should gather the selected items in the UI and call the API to remove them from the playlist
@@ -432,7 +517,9 @@ import { UIHelper } from '../utils/ui-helper.js';
                 console.log("Remove Selected button clicked");
                 const selectedItems = UIHelper.getSelectedMediaItems();
                 console.log("Selected items to remove:", selectedItems);
+                let i = 1;
                 for (const item of selectedItems) {
+                    this.setProgressText(`Removing track ${i} of ${selectedItems.length}...`);
                     try {
                         const originalItemDetails = item.originalMedia;
                         const replacementItemDetails = item.replacementMedia;
@@ -444,11 +531,13 @@ import { UIHelper } from '../utils/ui-helper.js';
                     } catch (error) {
                         console.error(`Error removing item ${originalItemDetails.name} from the playlist:`, error);
                     }
+                    i++;
                 }
                 console.log('All removals completed.')
             }
 
             finally {
+                this.setProgressText("All removals completed.");
                 this.toggleSearchProgress(false);
             }
         }

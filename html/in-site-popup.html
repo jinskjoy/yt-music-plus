@@ -1,9 +1,23 @@
 <div class="yt-music-extended-popup-container">
     <div class="yt-music-extended-popup-content">
         <div class="popup-header">
-            <h2>YouTube Music Plus</h2>
+            <h2 class="extension-title">YouTube Music Plus</h2>
+            <h2 id="popupTitle"></h2>
             <button id="closePopupBtn" class="close-btn" aria-label="Close popup">×</button>
         </div>
+        
+        <!-- Playlist Selection Screen -->
+        <div id="playlistSelectionScreen" class="playlist-selection-screen">
+            <div class="playlists-grid-container">
+                <div id="playlistsGrid" class="playlists-grid">
+                    <!-- Playlist items will be dynamically inserted here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Playlist Details Screen -->
+        <div id="playlistDetailsScreen" class="playlist-details-screen hidden">
+            <button id="backButton" class="btn btn-primary back-button" aria-label="Back to playlists">← Back</button>
         
         <!-- Playlist Info Section -->
         <div class="playlist-info-section">
@@ -27,10 +41,11 @@
             
             <!-- Action Buttons Section -->
             <div class="action-buttons-container">
-                <button id="replaceSelectedBtn" class="btn btn-primary">Replace Selected</button>
+                <button id="replaceSelectedBtn" class="btn btn-primary" title="This action will remove the unavailable item and replace it with best match">Replace Selected</button>
                 <button id="addSelectedBtn" class="btn btn-primary">Add Selected</button>
                 <button id="removeSelectedBtn" class="btn btn-danger">Remove Selected</button>
                 <!-- progress indicator shown when searches are running -->
+                <div id="progressText" class="search-progress-text hidden"></div>
                 <div id="searchProgress" class="search-progress hidden">
                     <div class="spinner"></div>
                 </div>
@@ -52,5 +67,6 @@
                 </div>
             </div>
         </form>
+        </div>
     </div>
 </div>

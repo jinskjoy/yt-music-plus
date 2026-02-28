@@ -13,6 +13,7 @@
     border-radius: 8px;
     background: white;
     z-index: 10000;
+    overflow: hidden;
     display: none;
 }
 
@@ -27,6 +28,7 @@
     display: flex;
     flex-direction: column;
     height: 100%;
+    overflow: hidden;
 }
 
 .popup-header {
@@ -191,21 +193,21 @@
 }
 
 .btn-primary {
-    background-color: #000000;
+    background-color: var(--yt-spec-dark-green);
     color: white;
 }
 
 .btn-primary:hover:not(:disabled) {
-    background-color: #555555;
+    background-color: var(--light-theme-base-color);
 }
 
 .btn-danger {
-    background-color: #d32f2f;
+    background-color: var(--error-color);
     color: white;
 }
 
 .btn-danger:hover:not(:disabled) {
-    background-color: #c62828;
+    background-color: var(--error-color);
 }
 
 .btn-toggle {
@@ -398,6 +400,149 @@
     background: #a8a8a8;
 }
 
+/* Playlist Selection Screen */
+.playlist-selection-screen {
+    display: flex;
+    flex-direction: column;
+    /* allow the selection screen to grow and fill available popup height */
+    flex: 1;
+    /* ensure the flex item can shrink below its content so inner scroll works */
+    min-height: 0;
+    overflow: hidden;
+}
+
+.playlists-grid-container {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    /* reserve space for the scrollbar to avoid layout shift */
+    scrollbar-gutter: stable;
+    padding: 2px;
+}
+
+/* scrollbars for playlist grid mimic the items grid styling */
+.playlists-grid-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.playlists-grid-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.playlists-grid-container::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.playlists-grid-container::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+.playlists-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+}
+
+.playlist-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    min-height: 200px;
+}
+
+.playlist-card:hover {
+    background-color: #f0f0f0;
+    border-color: #000;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.playlist-card-thumbnail {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 4px;
+    object-fit: cover;
+    background-color: #e0e0e0;
+}
+
+.playlist-card-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: #333;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    word-break: break-word;
+}
+
+.playlist-card-meta {
+    font-size: 12px;
+    color: #666;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+    overflow: hidden;
+}
+
+/* Playlist Details Screen */
+.playlist-details-screen {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.playlist-details-screen.hidden {
+    display: none;
+}
+
+.back-button {
+    margin-bottom: 12px;
+    align-self: flex-start;
+    background-color: var(--dark-primary-color);
+    color: white;
+}
+
+.back-button:hover:not(:disabled) {
+    background-color: #616161;
+}
+
+/* Scrollable container for details screen content */
+.playlist-details-screen > *:not(.back-button) {
+    flex: 1;
+}
+
+#yt-music-plus-form{
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    max-width: 100%;
+    overflow-y: auto;
+}
+
+.playlist-info-section {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+    padding: 12px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    border: 1px solid #e8e8e8;
+    align-items: flex-start;
+    flex-shrink: 0;
+}
+
+
 /* Responsive Design */
 @media (max-width: 1024px) {
     .items-grid-header,
@@ -485,4 +630,9 @@
 }
 .warning-icon {
     margin-right: 4px;
+}
+.extenstion-title{
+    background-color: black;
+    color: white;
+    padding: 10px;
 }
