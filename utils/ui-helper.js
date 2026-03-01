@@ -259,6 +259,23 @@ export class UIHelper {
     return container;
   }
 
+  static removeMediaGridRow(originalRecord, containerId = 'yt-music-plus-itemsGridContainer') {
+    const container = document.getElementById(containerId);
+    if (!container) {
+      console.error(`Container with ID ${containerId} not found`);
+      return;
+    }
+
+    // Remove all rows (keeping the header)
+    const existingRows = container.querySelectorAll('.grid-row');
+    existingRows.forEach(row => {
+      const originalMedia = JSON.parse(row.dataset.originalMedia || '{}');
+      if (originalMedia && originalMedia.videoId === originalRecord.videoId) {
+        row.remove();
+      }
+    });
+  }
+
   static setPlaylistDetails(playlist) {
     //Fill Playlist Info Section with playlist details
     const thumbnailEl = document.getElementById('yt-music-plus-playlistThumbnail');
@@ -279,38 +296,12 @@ export class UIHelper {
       descriptionEl.textContent = playlist.owner || '';
     }
   }
-
-  // Simple title similarity check based on common words and length difference
-  static calculateTitleSimilarity(title1, title2) {
-    // Simple similarity check based on common words and length difference
-    const words1 = title1.toLowerCase().split(/\s+/);
-    const words2 = title2.toLowerCase().split(/\s+/);
-    const commonWords = words1.filter(word => words2.includes(word)).length;
-    const lengthDifference = Math.abs(title1.length - title2.length);
-    const maxLength = Math.max(title1.length, title2.length);
-
-    // Calculate a similarity score based on common words and length difference
-    const similarityScore = (commonWords / maxLength) - (lengthDifference / maxLength);
-    return similarityScore;
-  }
-  //Levenshtein distance or Jaro-Winkler distance
-  static calculateLevenshteinDistance(s1, s2) {
-    const len1 = s1.length;
-    const len2 = s2.length;
-    const dp = Array.from({ length: len1 + 1 }, () => Array(len2 + 1).fill(0));
-
-    for (let i = 0; i <= len1; i++) dp[i][0] = i;
-    for (let j = 0; j <= len2; j++) dp[0][j] = j;
-
-    for (let i = 1; i <= len1; i++) {
-      for (let j = 1; j <= len2; j++) {
-        const cost = s1[i - 1] === s2[j - 1] ? 0 : 1;
-        dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
-      }
-    }
-    return dp[len1][len2];
-  }
-
+  /**
+   * Jaro-Winkler distance implementation for string similarity comparison
+   * @param {*} s1 
+   * @param {*} s2 
+   * @returns A similarity score between 0 and 1, where 1 means identical strings and 0 means completely different strings
+   */
   static calculateJaroWinklerDistance(s1, s2) {
     let m = 0; // Number of matching characters
     let t = 0; // Number of transpositions
@@ -392,5 +383,27 @@ export class UIHelper {
       }
     });
     return selectedItems;
+  }
+
+
+  static createPlaylistCard(playlist) {
+    const card = document.createElement('div');
+    card.className = 'playlist-card';
+    const thumbnail = document.createElement('img');
+    thumbnail.src = playlist.thumbnail || '';
+    thumbnail.alt = playlist.title || 'Playlist Thumbnail';
+    thumbnail.className = 'playlist-card-thumbnail';
+    const title = document.createElement('div');
+    title.className = 'playlist-card-title';
+    title.textContent = playlist.title || 'Untitled Playlist';
+    const meta = document.createElement('div');
+    meta.className = 'playlist-card-meta';
+    meta.textContent = playlist.subtitle || '';
+
+    card.appendChild(thumbnail);
+    card.appendChild(title);
+    card.appendChild(meta);
+
+    return card;
   }
 }
