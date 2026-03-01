@@ -1,16 +1,19 @@
-<div class="yt-music-extended-popup-container">
+<div class="yt-music-extended-popup-container" role="dialog" aria-modal="true" aria-labelledby="popupTitle">
     <div class="yt-music-extended-popup-content">
         <div class="popup-header">
-            <h2 class="extension-title">YouTube Music Plus</h2>
+            <h2 class="extension-title">YouTube Music +</h2>
             <h2 id="popupTitle"></h2>
             <button id="closePopupBtn" class="close-btn" aria-label="Close popup">×</button>
         </div>
-        
+
         <!-- Playlist Selection Screen -->
         <div id="playlistSelectionScreen" class="playlist-selection-screen">
+            <!-- Playlist items will be dynamically inserted here -->
+            <div id="playlistsLoadingIndicator" class="search-progress">
+                <div class="spinner"></div>
+            </div>
             <div class="playlists-grid-container">
                 <div id="playlistsGrid" class="playlists-grid">
-                    <!-- Playlist items will be dynamically inserted here -->
                 </div>
             </div>
         </div>
@@ -18,55 +21,62 @@
         <!-- Playlist Details Screen -->
         <div id="playlistDetailsScreen" class="playlist-details-screen hidden">
             <button id="backButton" class="btn btn-primary back-button" aria-label="Back to playlists">← Back</button>
-        
-        <!-- Playlist Info Section -->
-        <div class="playlist-info-section">
-            <img id="yt-music-plus-playlistThumbnail" class="playlist-thumbnail" src="" alt="Playlist thumbnail"/>
-            <div class="playlist-details">
-                <h3 id="yt-music-plus-playlistName">Playlist Name</h3>
-                <div class="playlist-meta">
-                    <span id="yt-music-plus-playlistTrackCount">0 tracks</span>
-                </div>
-                <p id="yt-music-plus-playlistDescription" class="playlist-description"></p>
-            </div>
-            
-            <!-- Playlist Action Buttons -->
-            <div class="playlist-action-buttons">
-                <button id="findUnavailableBtn" class="btn btn-primary" type="button">Find Unavailable Tracks</button>
-                <button id="findVideoTracksBtn" class="btn btn-primary" type="button">Find Video Tracks</button>
-            </div>
-        </div>
-        
-        <form id="yt-music-plus-form">
-            
-            <!-- Action Buttons Section -->
-            <div class="action-buttons-container">
-                <button id="replaceSelectedBtn" class="btn btn-primary" title="This action will remove the unavailable item and replace it with best match">Replace Selected</button>
-                <button id="addSelectedBtn" class="btn btn-primary">Add Selected</button>
-                <button id="removeSelectedBtn" class="btn btn-danger">Remove Selected</button>
-                <!-- progress indicator shown when searches are running -->
-                <div id="progressText" class="search-progress-text hidden"></div>
-                <div id="searchProgress" class="search-progress hidden">
-                    <div class="spinner"></div>
+
+            <!-- Playlist Info Section -->
+            <div class="playlist-info-section">
+                <img id="yt-music-plus-playlistThumbnail" class="playlist-thumbnail" src="" alt="Playlist thumbnail" />
+                <div class="playlist-details">
+                    <h3 id="yt-music-plus-playlistName">Playlist Name</h3>
+                    <div class="playlist-meta">
+                        <span id="yt-music-plus-playlistTrackCount">0 tracks</span>
+                    </div>
+                    <p id="yt-music-plus-playlistDescription" class="playlist-description"></p>
+                </div><!-- Playlist Action Buttons -->
+                <div class="playlist-action-buttons">
+                    <button id="findUnavailableBtn" class="btn btn-primary" type="button">Find Unavailable
+                        Tracks</button>
+                    <button id="findVideoTracksBtn" class="btn btn-primary" type="button">Find Video Tracks</button>
                 </div>
             </div>
 
-            <!-- Scrollable Grid Section -->
-            <div class="items-grid-wrapper">
-                <div class="items-grid-header">
-                    <div class="grid-col grid-col-serial">#</div>
-                    <div class="grid-col grid-col-original">Original Media</div>
-                    <div class="grid-col grid-col-replacement">Replacement Media</div>
-                    <div class="grid-col grid-col-checkbox">
-                        <input type="checkbox" id="yt-music-plus-selectAllCheckbox" class="select-all-checkbox" checked/>
+            <form id="yt-music-plus-form">
+
+                <div class="warning-message"><span>⚠️ If a popup is shown asking whether to stay in the current page or reload, please click "Stay on this page" or "Cancel". YouTube Music may show this popup when performing operations that require reloading the page.</span></div>
+                
+                <!-- Action Buttons Section -->
+                <div class="action-buttons-container">
+                    <button id="replaceSelectedBtn" class="btn btn-primary" disabled
+                        title="This action will remove the unavailable item and replace it with best match.">Replace
+                        Selected</button>
+                    <button id="addSelectedBtn" class="btn btn-primary" disabled
+                        title="This action will add the replacements to the playlist, but will not remove the unavailable ones.">Add
+                        Selected</button>
+                    <button id="removeSelectedBtn" class="btn btn-danger" disabled
+                        title="This action will remove the selected items from the playlist. It will not add replacements.">Remove
+                        Selected</button>
+                    <!-- progress indicator shown when searches are running -->
+                    <div id="progressText" class="search-progress-text hidden"></div>
+                    <div id="searchProgress" class="search-progress hidden">
+                        <div class="spinner"></div>
                     </div>
                 </div>
 
-                <div class="items-grid-container" id="yt-music-plus-itemsGridContainer">
-                    
+                <!-- Scrollable Grid Section -->
+                <div class="items-grid-wrapper">
+                    <div class="items-grid-header">
+                        <div class="grid-col grid-col-serial">#</div>
+                        <div class="grid-col grid-col-original">Original Media</div>
+                        <div class="grid-col grid-col-replacement">Replacement Media</div>
+                        <div class="grid-col grid-col-checkbox">
+                            <input type="checkbox" id="yt-music-plus-selectAllCheckbox" class="select-all-checkbox" />
+                        </div>
+                    </div>
+
+                    <div class="items-grid-container" id="yt-music-plus-itemsGridContainer">
+
+                    </div>
                 </div>
-            </div>
-        </form>
+            </form>
         </div>
     </div>
 </div>

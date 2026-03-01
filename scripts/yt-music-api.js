@@ -227,7 +227,14 @@ export class YTMusicAPI {
     async searchMusic(query) {
         //Query will be a dictionary of name, artist, album, etc. You can construct the query string based on these parameters.
         // use only name: name, artists array and album name to construct the search query for better accuracy. For example: "song name artist1 artist2 album name",
-        const queryString = `${query.name} ${query.artists ? query.artists.join(' ') : ''} ${query.album || ''}`.trim();
+        let queryString = query.name;
+        if (query.album) {
+            queryString += " - " + query.album;
+        }
+        if (query.artists && query.artists.length > 0) {
+            queryString += " - " + query.artists.join(" ");
+        }
+        queryString = queryString.trim();
         try {
             const response = await this.makePostRequest("/youtubei/v1/search?prettyPrint=false", {
                 context: window.ytcfg.data_.INNERTUBE_CONTEXT,
