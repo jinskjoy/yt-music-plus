@@ -77,6 +77,7 @@ import { UIHelper } from '../utils/ui-helper.js';
             this.currentSelectedPlaylist = null; // Store the currently selected playlist details
             this.baseUrl = "https://music.youtube.com/watch?v=";
             this.timeOutDuration = 100;
+            this.pageLoadTimeout = 3000;
             this.isReloadDisabled = false;
             this.playlistsCache = []; // Cache to store fetched playlist items to minimize API calls
             this.preventUnloadListener = (e) => {
@@ -126,8 +127,46 @@ import { UIHelper } from '../utils/ui-helper.js';
             console.log("Setting auth token in bridge:", token);
             this.ytMusicAPI.setAuthToken(token);
             this.addEventListeners();
+            this.injectActionButtons();
             this.showTriggerButtons();
         }
+
+        injectActionButtons() {
+            const existingButtons = document.getElementById('yt-music-plus-action-buttons');
+            if (existingButtons) {
+                console.warn('Action buttons already exist, skipping injection.');
+                return;
+            }
+            const header = document.querySelector('ytmusic-responsive-header-renderer');
+            if (!header) {
+                console.warn('Could not find the header to inject action buttons.');
+                return;
+            }
+            const actionButtons = document.createElement('div');
+            actionButtons.id = 'yt-music-plus-action-buttons';
+            actionButtons.classList.add('action-buttons', 'style-scope', 'ytmusic-responsive-header-renderer', 'hidden');
+
+            const innerDiv = document.createElement('div');
+            innerDiv.className = 'style-scope';
+            innerDiv.setAttribute('role', 'button');
+            innerDiv.setAttribute('tabindex', '0');
+
+            const contentWrapper = document.createElement('div');
+            contentWrapper.className = 'content-wrapper style-scope ytmusic-play-button-renderer';
+            const span = document.createElement('span');
+            span.className = 'icon style-scope';
+            span.textContent = 'YouTube Music +';
+            contentWrapper.appendChild(span);
+            innerDiv.appendChild(contentWrapper);
+            actionButtons.appendChild(innerDiv);
+
+            actionButtons.addEventListener('click', () => {
+                this.showPopup();
+            });
+            header.appendChild(actionButtons);
+
+        }
+
         showTriggerButtons() {
             const naavBarBtn = document.getElementById('yt-music-plus-nav-btn');
             if (naavBarBtn) {
@@ -150,7 +189,7 @@ import { UIHelper } from '../utils/ui-helper.js';
                 this.onPlaylistSelected(playlistFromCache);
             }
         }
-        
+
         hidePopup() {
             const popupElement = document.getElementById('yt-music-plus-popup');
             if (popupElement) {
@@ -159,13 +198,20 @@ import { UIHelper } from '../utils/ui-helper.js';
             window.bridgeInstance.enableReload();
         }
         addEventListeners() {
+            //Add listener for page navigation, back, forward etc
+            navigation.addEventListener('navigate', (event) => {
+                if (event.navigationType != 'push') {
+                    return;
+                }
+                const isPlaylistPage = event.destination.url.startsWith('https://music.youtube.com/playlist');
+                if (isPlaylistPage) {
+                    setTimeout(() => {
+                        this.injectActionButtons();
+                        this.showTriggerButtons();
+                    }, this.pageLoadTimeout);
+                }
+            });
 
-            const actionButtons = document.getElementById('yt-music-plus-action-buttons');
-            if (actionButtons) {
-                actionButtons.addEventListener('click', () => {
-                    this.showPopup();
-                });
-            }
             const navBarBtn = document.getElementById('yt-music-plus-nav-btn');
             if (navBarBtn) {
                 navBarBtn.addEventListener('click', () => {
@@ -187,12 +233,12 @@ import { UIHelper } from '../utils/ui-helper.js';
                 // Close popup on Escape key
                 const handleEscapeKey = (e) => {
                     if (e.key === 'Escape' && popupElement.classList.contains('hidden') === false) {
-                    this.hidePopup();
+                        this.hidePopup();
                     }
                 };
                 document.addEventListener('keydown', handleEscapeKey);
             }
-            
+
 
             const findUnavailableBtn = document.getElementById('findUnavailableBtn');
             if (findUnavailableBtn) {
@@ -533,7 +579,7 @@ import { UIHelper } from '../utils/ui-helper.js';
             this.disableReload();
             this.toggleSearchProgress(true);
         }
-        afterActionsOnSelectedItems(){
+        afterActionsOnSelectedItems() {
             // This function can be used to perform any necessary steps after performing actions on the selected items, such as re-enabling page reloads, showing success messages, etc.
             // For example, we can re-enable page reloads after our API operations are complete:
             this.enableReload();
@@ -640,7 +686,7 @@ import { UIHelper } from '../utils/ui-helper.js';
             try {
                 this.beforeActionsOnSelectedItems();
                 this.setProgressText("Removing selected items...");
-                
+
                 // This function will be called when the user clicks the "Remove Selected" button in the popup
                 // It should gather the selected items in the UI and call the API to remove them from the playlist
                 const playlistId = this.currentSelectedPlaylist ? this.currentSelectedPlaylist.id : this.ytMusicAPI.getCurrentPlaylistIdFromURL();

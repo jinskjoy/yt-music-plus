@@ -15,7 +15,6 @@ class ContentScriptController {
     await this.injectPopup();
     this.injectBridgeScript();
     this.injectNavBarButton();
-    this.injectActionButtons();
   }
 
   injectNavBarButton() {
@@ -141,27 +140,6 @@ class ContentScriptController {
         detailsScreen.classList.remove('hidden');
       }
     }
-  }
-  injectActionButtons() {
-    const existingButtons = document.getElementById('yt-music-plus-action-buttons');
-    if (existingButtons) {
-      console.warn('Action buttons already exist, skipping injection.');
-      return;
-    }
-    const header = document.querySelector('ytmusic-responsive-header-renderer');
-    if (!header) {
-      console.warn('Could not find the header to inject action buttons.');
-      return;
-    }
-    const scriptHtml = `
-      <div id="yt-music-plus-action-buttons" class="action-buttons style-scope ytmusic-responsive-header-renderer hidden">
-        <div class="style-scope" role="button" tabindex="0" animated="" state="default" aria-label="" icon="" elevation="1" aria-disabled="false" >
-          <div class="content-wrapper style-scope ytmusic-play-button-renderer">
-            <span class="icon style-scope" style="">YouTube Music +</span>
-          </div>
-        </div>
-      </div> `;
-    header.insertAdjacentHTML('beforeend', scriptHtml);
   }
 
 
