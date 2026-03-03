@@ -1,10 +1,13 @@
 import { DOMModifier } from '../utils/dom-modifier.js';
 import { MessageManager } from '../utils/messages.js';
+import { StorageManager } from '../utils/storage.js';
 
 class ContentScriptController {
   constructor() {
     this.domModifier = DOMModifier;
     this.messageManager = new MessageManager();
+    this.storageManager = new StorageManager();
+    this._extSettings = { showNavButton: true, showPlaylistButton: true };
     this.sidebarElement = null;
     this.listenForPageMessages();
     this.initializeListeners();
@@ -12,12 +15,26 @@ class ContentScriptController {
   }
 
   async init() {  
+    await this.loadSettings();
     await this.injectPopup();
     this.injectBridgeScript();
     this.injectNavBarButton();
   }
 
+  async loadSettings() {
+    try {
+      const stored = await this.storageManager.get(Object.keys(this._extSettings));
+      this._extSettings = { ...this._extSettings, ...stored };
+    } catch (err) {
+      console.error('Failed to load settings in content script:', err);
+      this._extSettings = { showNavButton: true, showPlaylistButton: true };
+    }
+  }
+
   injectNavBarButton() {
+    // Only inject if enabled via settings
+    if (!this._extSettings || this._extSettings.showNavButton !== true) return;
+
     const navBarRightSide = document.getElementById('right-content');
     if (navBarRightSide) {
       const button = document.createElement('div');
@@ -153,6 +170,12 @@ class ContentScriptController {
       if (event.data.type === 'BRIDGE_LOADED') {
         console.log('Bridge script and content script have loaded and are ready. Notifying background script.');
         this.notifyBackgroundOfContentScript();
+        // Send current settings to bridge (page context)
+        try {
+          window.postMessage({ type: 'EXT_SETTINGS', settings: this._extSettings }, '*');
+        } catch (e) {
+          console.warn('Failed to post settings to bridge:', e);
+        }
       }
     }, false);
   }

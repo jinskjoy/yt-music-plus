@@ -6,9 +6,9 @@
   "action": {
     "default_popup": "popup/popup.html",
     "default_icon": {
-      "16": "icons/icon16.ico",
-      "48": "icons/icon48.ico",
-      "128": "icons/icon128.ico"
+      "16": "icons/favicon.ico",
+      "48": "icons/favicon.ico",
+      "128": "icons/favicon.ico"
     },
     "default_title": "YouTube Music Refresher"
   },
@@ -32,7 +32,7 @@
   ],
   "content_scripts": [
     {
-      "matches": ["https://music.youtube.com/playlist/*"],
+      "matches": ["https://music.youtube.com/*"],
       "js": ["scripts/content-loader.js"],
       "all_frames": false,
       "run_at": "document_idle"
@@ -50,6 +50,7 @@
         "scripts/bridge.js",
         "utils/dom-modifier.js",
         "utils/messages.js",
+        "utils/storage.js",
         "utils/ui-helper.js",
         "scripts/yt-music-api.js"
       ],

@@ -7,7 +7,6 @@ class BackgroundService {
     this.apiManager = null; // Will be initialized after receiving ytconfig from content script
     this.pageVariables = {};
     this.initializeListeners();
-    this.setupAutoRefresh();
   }
 
   async initAfterContentScriptLoad() {
@@ -59,15 +58,6 @@ class BackgroundService {
       }
     } catch (error) {
       sendResponse({ success: false, message: error.message });
-    }
-  }
-
-  storeAuthToken(token) {
-    // For demonstration, we're just logging it. In a real implementation, you might want to store it securely.
-    console.log('Storing auth token:', token);
-    this.authToken = token; // Store in memory for now
-    if (this.apiManager) {
-      this.apiManager.setAuthToken(token); // If your API manager supports setting an auth token, do it here
     }
   }
 
