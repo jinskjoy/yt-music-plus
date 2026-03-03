@@ -80,6 +80,10 @@ import { UIHelper } from '../utils/ui-helper.js';
             this.pageLoadTimeout = 3000;
             this.isReloadDisabled = false;
             this.playlistsCache = []; // Cache to store fetched playlist items to minimize API calls
+            this._extSettings = {
+                showPlaylistButton: true,
+                showNavButton: true
+            };
             this.preventUnloadListener = (e) => {
                 if (this.isReloadDisabled) {
                     e.preventDefault();
@@ -132,6 +136,10 @@ import { UIHelper } from '../utils/ui-helper.js';
         }
 
         injectActionButtons() {
+            // If extension settings were provided and playlist action button is disabled, skip injection
+            if (this._extSettings && this._extSettings.showPlaylistButton === false) {
+                return;
+            }
             const existingButtons = document.getElementById('yt-music-plus-action-buttons');
             if (existingButtons) {
                 console.warn('Action buttons already exist, skipping injection.');
@@ -170,11 +178,21 @@ import { UIHelper } from '../utils/ui-helper.js';
         showTriggerButtons() {
             const naavBarBtn = document.getElementById('yt-music-plus-nav-btn');
             if (naavBarBtn) {
-                naavBarBtn.classList.remove('hidden');
+                if (!this._extSettings || this._extSettings.showNavButton !== false) {
+                    naavBarBtn.classList.remove('hidden');
+                }
+                else {
+                    naavBarBtn.classList.add('hidden');
+                }
             }
             const playlistActionBtn = document.getElementById('yt-music-plus-action-buttons');
             if (playlistActionBtn) {
-                playlistActionBtn.classList.remove('hidden');
+                if (!this._extSettings || this._extSettings.showPlaylistButton !== false) {
+                    playlistActionBtn.classList.remove('hidden');
+                }
+                else {
+                    playlistActionBtn.classList.add('hidden');
+                }
             }
         }
         async showPopup() {
@@ -206,8 +224,11 @@ import { UIHelper } from '../utils/ui-helper.js';
                 const isPlaylistPage = event.destination.url.startsWith('https://music.youtube.com/playlist');
                 if (isPlaylistPage) {
                     setTimeout(() => {
-                        this.injectActionButtons();
-                        this.showTriggerButtons();
+                        // Only inject playlist action buttons if enabled via settings
+                        if (!this._extSettings || this._extSettings.showPlaylistButton !== false) {
+                            this.injectActionButtons();
+                            this.showTriggerButtons();
+                        }
                     }, this.pageLoadTimeout);
                 }
             });
@@ -731,9 +752,19 @@ import { UIHelper } from '../utils/ui-helper.js';
     window.bridgeInstance = new Bridge(); // Expose the Bridge class to the global scope
 
 
-    // Listen for messages from content script
+    // Listen for messages from content script (page context)
     window.addEventListener('message', (event) => {
         if (event.source !== window) return;
+        try {
+            if (event.data && event.data.type === 'EXT_SETTINGS') {
+                // Store settings on the bridge instance
+                window.bridgeInstance._extSettings = event.data.settings;
+                console.log('Bridge received external settings:', window.bridgeInstance._extSettings);
+                window.bridgeInstance.showTriggerButtons();
+            }
+        } catch (e) {
+            console.warn('Error handling message in bridge:', e);
+        }
     });
     window.postMessage({ type: 'BRIDGE_LOADED' }, '*');
     console.log('Bridge script loaded and ready to fetch variables');

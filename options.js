@@ -2,6 +2,10 @@ import { StorageManager } from '../utils/storage.js';
 
 class OptionsPage {
   constructor() {
+    this.defaultSettings = {
+      showNavButton: true,
+      showPlaylistButton: true,
+    };
     this.storageManager = new StorageManager();
     this.form = document.getElementById('settingsForm');
     this.statusMessage = document.getElementById('statusMessage');
@@ -16,19 +20,13 @@ class OptionsPage {
 
   async loadSettings() {
     try {
-      const defaultSettings = {
-        autoRefresh: true,
-        refreshInterval: 30,
-        enableNotifications: true,
-        notificationDuration: 3,
-        apiTimeout: 10000,
-        logAPIRequests: false,
-        theme: 'auto',
-        compactView: false,
-      };
 
-      const settings = await this.storageManager.get(Object.keys(defaultSettings));
-      const finalSettings = { ...defaultSettings, ...settings };
+      let settings = await this.storageManager.get(Object.keys(this.defaultSettings));
+      if (settings === null || Object.keys(settings).length === 0){
+        await this.storageManager.set(this.defaultSettings);
+        settings = this.defaultSettings;
+      }
+      const finalSettings = { ...this.defaultSettings, ...settings };
 
       // Load settings into form
       Object.entries(finalSettings).forEach(([key, value]) => {
@@ -51,18 +49,21 @@ class OptionsPage {
     e.preventDefault();
 
     try {
-      const formData = new FormData(this.form);
       const settings = {};
+      // Access the elements directly from the form
+      const elements = this.form.elements;
 
-      // Convert form data to settings object
-      for (let [key, value] of formData.entries()) {
-        const element = document.getElementById(key);
+      for (let element of elements) {
+        // Skip elements without a name (buttons, etc.)
+        if (!element.name) continue;
+
         if (element.type === 'checkbox') {
-          settings[key] = element.checked;
+          // This will now correctly catch 'false' for unchecked boxes
+          settings[element.name] = element.checked;
         } else if (element.type === 'number') {
-          settings[key] = parseInt(value);
+          settings[element.name] = parseInt(element.value) || 0;
         } else {
-          settings[key] = value;
+          settings[element.name] = element.value;
         }
       }
 
@@ -87,7 +88,9 @@ class OptionsPage {
       e.preventDefault();
       return;
     }
-    this.showStatus('Settings reset to default. Please save to apply changes.', 'info');
+    await this.storageManager.set(this.defaultSettings);
+    await this.loadSettings();
+    this.showStatus('Settings reset to default.', 'success');
   }
 
   showStatus(message, type = 'success') {

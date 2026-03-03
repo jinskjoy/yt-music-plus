@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Extension Settings</title>
+  <link rel="shortcut icon" href="icons/favicon.ico" type="image/x-icon">
+  <title>YouTube Music + Settings</title>
   <style>
     * {
       margin: 0;
@@ -180,105 +181,44 @@
         color: #6b6bff;
         border: 1px solid #2d2d5a;
     }
+    .logo{
+      display: flex;
+      justify-content: center;
+      align-items: center
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>YT Music Refresher Settings</h1>
-      <p>Customize your extension behavior</p>
+      <h1 class="logo"><img src="images/yt-music-plus-logo-circle.png" alt="" height="40px">&nbsp;YouTube Music + Settings</h1>
+      <p class="logo">Customize your extension behavior</p>
     </header>
 
     <main>
 
       <form id="settingsForm">
-        <!-- Auto Refresh Section -->
         <section class="section">
-          <h2>Auto Refresh Settings</h2>
+          <h2>Buttons</h2>
 
           <div class="setting-group">
             <label>
-              <input type="checkbox" id="autoRefresh" name="autoRefresh">
-              Enable automatic playlist refresh
+              <input type="checkbox" id="showNavButton" name="showNavButton">
+              Show YouTube Music + button in navigation bar
             </label>
-            <p class="info-text">Automatically refresh your playlists at regular intervals</p>
-          </div>
-
-          <div class="setting-group">
-            <label for="refreshInterval">Refresh interval (minutes):</label>
-            <div class="input-group">
-              <input type="number" id="refreshInterval" name="refreshInterval" min="1" max="1440" value="30">
-            </div>
-            <p class="info-text">How often to refresh playlists (1-1440 minutes)</p>
-          </div>
-        </section>
-
-        <!-- Notification Settings -->
-        <section class="section">
-          <h2>Notification Settings</h2>
-
-          <div class="setting-group">
-            <label>
-              <input type="checkbox" id="enableNotifications" name="enableNotifications" checked>
-              Show notifications
-            </label>
-            <p class="info-text">Get notified when playlists are refreshed</p>
-          </div>
-
-          <div class="setting-group">
-            <label for="notificationDuration">Notification duration (seconds):</label>
-            <div class="input-group">
-              <input type="number" id="notificationDuration" name="notificationDuration" min="1" max="30" value="3">
-            </div>
-            <p class="info-text">How long notifications should stay visible</p>
-          </div>
-        </section>
-
-        <!-- API Settings -->
-        <section class="section">
-          <h2>API Settings</h2>
-
-          <div class="setting-group">
-            <label for="apiTimeout">API timeout (milliseconds):</label>
-            <div class="input-group">
-              <input type="number" id="apiTimeout" name="apiTimeout" min="1000" max="60000" value="10000">
-            </div>
-            <p class="info-text">Maximum time to wait for API responses</p>
+            <p class="info-text">Adds a trigger in the main navigation bar</p>
           </div>
 
           <div class="setting-group">
             <label>
-              <input type="checkbox" id="logAPIRequests" name="logAPIRequests">
-              Log API requests (for debugging)
+              <input type="checkbox" id="showPlaylistButton" name="showPlaylistButton">
+              Show YouTube Music + button in playlist page
             </label>
-            <p class="info-text">Enable detailed logging of API requests</p>
-          </div>
-        </section>
-
-        <!-- Display Settings -->
-        <section class="section">
-          <h2>Display Settings</h2>
-
-          <div class="setting-group">
-            <label for="theme">Theme:</label>
-            <select id="theme" name="theme">
-              <option value="auto">Auto (System preference)</option>
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-            </select>
-          </div>
-
-          <div class="setting-group">
-            <label>
-              <input type="checkbox" id="compactView" name="compactView">
-              Use compact view
-            </label>
-            <p class="info-text">Display less detailed information in the sidebar</p>
+            <p class="info-text">Adds action button on playlist pages</p>
           </div>
         </section>
 
         <div id="statusMessage" class="status-message"></div>
-        <!-- Action Buttons -->
         <div class="button-group">
           <button type="submit" class="btn-save">Save Settings</button>
           <button type="reset" class="btn-reset">Reset to Defaults</button>
