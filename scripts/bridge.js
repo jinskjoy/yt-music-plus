@@ -1,775 +1,798 @@
 /**
- * Bridge Script - Runs in page context to access window variables
- * This script extracts window.ytconfig and sends it to the content script via postMessage
- * Periodically fetches the config to ensure fresh data
+ * Bridge Script - Runs in page context to access YouTube Music APIs
+ * Extracts authentication tokens and provides methods for playlist manipulation
+ * Communicates with content script via window.postMessage
  */
+
 import { YTMusicAPI } from './yt-music-api.js';
 import { UIHelper } from '../utils/ui-helper.js';
+
 (function () {
+  /**
+   * Intercepts authorization tokens from XMLHttpRequest and Fetch API calls
+   */
+  function fetchAuthToken() {
+    const originalSetRequestHeader = XMLHttpRequest.prototype.setRequestHeader;
 
-    function fetchAuthToken() {
-        // // Injected Bridge Script
-        const constantHeader = "Authorization"; // or "X-Goog-AuthUser", etc.
-        const originalSetRequestHeader = XMLHttpRequest.prototype.setRequestHeader;
+    // Intercept XMLHttpRequest headers
+    XMLHttpRequest.prototype.setRequestHeader = function (header, value) {
+      if (window.bridgeInstance?.ytMusicAPI.isAuthTokenSet()) {
+        XMLHttpRequest.prototype.setRequestHeader = originalSetRequestHeader;
+        return originalSetRequestHeader.apply(this, arguments);
+      }
 
+      if (header.toLowerCase() === 'authorization') {
+        window.bridgeInstance?.setAuthToken(value);
+        XMLHttpRequest.prototype.setRequestHeader = originalSetRequestHeader;
+      }
 
-        XMLHttpRequest.prototype.setRequestHeader = function (header, value) {
-            if (window.bridgeInstance.ytMusicAPI.isAuthTokenSet()) {
-                // If we already have the auth token, we can restore setRequestHeader to original to avoid overhead
-                XMLHttpRequest.prototype.setRequestHeader = originalSetRequestHeader;
-                return originalSetRequestHeader.apply(this, arguments);
-            }
-            if (header.toLowerCase() === "authorization") {
-                console.log("Captured Auth Header:", value);
-                window.bridgeInstance.setAuthToken(value); // Store it in the bridge for potential future use
-                // Reset the setRequestHeader to original
-                XMLHttpRequest.prototype.setRequestHeader = originalSetRequestHeader;
-            }
-            return originalSetRequestHeader.apply(this, arguments);
-        };
+      return originalSetRequestHeader.apply(this, arguments);
+    };
 
-        const { fetch: originalFetch } = window;
+    // Intercept Fetch API headers
+    const { fetch: originalFetch } = window;
 
-        window.fetch = async (...args) => {
-            if (window.bridgeInstance.ytMusicAPI.isAuthTokenSet()) {
-                // If we already have the auth token, we can restore fetch to original to avoid overhead
-                window.fetch = originalFetch;
-                return originalFetch(...args);
-            }
-            try {
-                let request = args[0];
-                // 1. Check if headers exist in the fetch call
-                const headers = request.headers;
-                if (!headers) {
-                    return originalFetch(...args); // If no headers, just proceed with original fetch
-                }
+    window.fetch = async (...args) => {
+      if (window.bridgeInstance?.ytMusicAPI.isAuthTokenSet()) {
+        window.fetch = originalFetch;
+        return originalFetch(...args);
+      }
 
-                console.log("Fetch called with resource:", request, "and headers:", headers);
-                if (headers && request.url.includes("music.youtube.com")) { // You can adjust this condition to target specific API calls
-                    let authToken = null;
+      try {
+        const request = args[0];
+        const headers = request?.headers;
 
-                    // 2. Handle different Header formats (Object or Headers instance)
-                    if (headers instanceof Headers) {
-                        authToken = headers.get("Authorization");
-                    } else {
-                        authToken = headers["Authorization"] || headers["authorization"];
-                    }
-                    console.log("Captured Auth Token from fetch:", authToken);
-                    // 3. If found, relay it to the Content Script
-                    if (authToken) {
-                        window.bridgeInstance.setAuthToken(authToken); // Store it in the bridge for potential future use
-                    }
-                    // Reset fetch to original after capturing the token to avoid interference with other calls
-                    window.fetch = originalFetch;
-                }
+        if (headers && request?.url?.includes('music.youtube.com')) {
+          let authToken = null;
 
-                return originalFetch(...args);
-            } catch (error) {
-                console.error("Error in fetch wrapper:", error);
-                return originalFetch(...args); // Fallback to original fetch in case of error 
-            };
-        };
+          // Handle both Headers instance and plain object
+          if (headers instanceof Headers) {
+            authToken = headers.get('Authorization');
+          } else {
+            authToken = headers['Authorization'] || headers['authorization'];
+          }
+
+          if (authToken) {
+            window.bridgeInstance?.setAuthToken(authToken);
+            window.fetch = originalFetch;
+          }
+        }
+
+        return originalFetch(...args);
+      } catch (error) {
+        return originalFetch(...args);
+      }
+    };
+  }
+
+  /**
+   * Bridge Class - Main controller for playlist operations
+   */
+  class Bridge {
+    // Constants
+    static TIMEOUT_DURATION = 100;
+    static PAGE_LOAD_TIMEOUT = 3000;
+    static BASE_URL = 'https://music.youtube.com/watch?v=';
+    static PLAYLIST_PAGE_PATH = 'https://music.youtube.com/playlist';
+
+    constructor() {
+      this.ytMusicAPI = new YTMusicAPI();
+      this.currentSelectedPlaylist = null;
+      this.playlistsCache = [];
+      this.isReloadDisabled = false;
+      this.extSettings = {
+        showPlaylistButton: true,
+        showNavButton: true
+      };
+      this.preventUnloadListener = (e) => {
+        if (this.isReloadDisabled) {
+          e.preventDefault();
+          e.returnValue = '';
+        }
+      };
     }
 
-    class Bridge {
-        constructor() {
-            this.ytMusicAPI = new YTMusicAPI();
-            this.currentSelectedPlaylist = null; // Store the currently selected playlist details
-            this.baseUrl = "https://music.youtube.com/watch?v=";
-            this.timeOutDuration = 100;
-            this.pageLoadTimeout = 3000;
-            this.isReloadDisabled = false;
-            this.playlistsCache = []; // Cache to store fetched playlist items to minimize API calls
-            this._extSettings = {
-                showPlaylistButton: true,
-                showNavButton: true
-            };
-            this.preventUnloadListener = (e) => {
-                if (this.isReloadDisabled) {
-                    e.preventDefault();
-                    e.returnValue = '';
-                    console.log('Page reload prevented during API operations');
-                }
-            };
-        }
+    /**
+     * Sleep utility for delays
+     * @param {number} ms - Milliseconds to sleep
+     * @returns {Promise<void>}
+     */
+    sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-        sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-        /**
-         * Disable page reloads during API operations
-         * YouTube Music's internal code will attempt to reload after API calls, but we prevent it
-         */
-        disableReload() {
-            if (this.isReloadDisabled) return;
-            this.isReloadDisabled = true;
-
-            // Add beforeunload listener to prevent page navigation/reload
-            window.addEventListener('beforeunload', this.preventUnloadListener);
-            console.log('Page reload disabled - API operations can proceed without interruption');
-        }
-
-        /**
-         * Re-enable page reloads and optionally reload the page
-         * @param {boolean} shouldReload - If true, reload the page after re-enabling
-         */
-        enableReload(shouldReload = false) {
-            if (!this.isReloadDisabled) return;
-
-            this.isReloadDisabled = false;
-
-            // Remove beforeunload listener to allow navigation again
-            window.removeEventListener('beforeunload', this.preventUnloadListener);
-            console.log('Page reload enabled');
-
-            if (shouldReload) {
-                console.log('Reloading page to reflect changes');
-                window.location.reload();
-            }
-        }
-
-        setAuthToken(token) {
-            console.log("Setting auth token in bridge:", token);
-            this.ytMusicAPI.setAuthToken(token);
-            this.addEventListeners();
-            this.injectActionButtons();
-            this.showTriggerButtons();
-        }
-
-        injectActionButtons() {
-            // If extension settings were provided and playlist action button is disabled, skip injection
-            if (this._extSettings && this._extSettings.showPlaylistButton === false) {
-                return;
-            }
-            const existingButtons = document.getElementById('yt-music-plus-action-buttons');
-            if (existingButtons) {
-                console.warn('Action buttons already exist, skipping injection.');
-                return;
-            }
-            const header = document.querySelector('ytmusic-responsive-header-renderer');
-            if (!header) {
-                console.warn('Could not find the header to inject action buttons.');
-                return;
-            }
-            const actionButtons = document.createElement('div');
-            actionButtons.id = 'yt-music-plus-action-buttons';
-            actionButtons.classList.add('action-buttons', 'style-scope', 'ytmusic-responsive-header-renderer', 'hidden');
-
-            const innerDiv = document.createElement('div');
-            innerDiv.className = 'style-scope';
-            innerDiv.setAttribute('role', 'button');
-            innerDiv.setAttribute('tabindex', '0');
-
-            const contentWrapper = document.createElement('div');
-            contentWrapper.className = 'content-wrapper style-scope ytmusic-play-button-renderer';
-            const span = document.createElement('span');
-            span.className = 'icon style-scope';
-            span.textContent = 'YouTube Music +';
-            contentWrapper.appendChild(span);
-            innerDiv.appendChild(contentWrapper);
-            actionButtons.appendChild(innerDiv);
-
-            actionButtons.addEventListener('click', () => {
-                this.showPopup();
-            });
-            header.appendChild(actionButtons);
-
-        }
-
-        showTriggerButtons() {
-            const naavBarBtn = document.getElementById('yt-music-plus-nav-btn');
-            if (naavBarBtn) {
-                if (!this._extSettings || this._extSettings.showNavButton !== false) {
-                    naavBarBtn.classList.remove('hidden');
-                }
-                else {
-                    naavBarBtn.classList.add('hidden');
-                }
-            }
-            const playlistActionBtn = document.getElementById('yt-music-plus-action-buttons');
-            if (playlistActionBtn) {
-                if (!this._extSettings || this._extSettings.showPlaylistButton !== false) {
-                    playlistActionBtn.classList.remove('hidden');
-                }
-                else {
-                    playlistActionBtn.classList.add('hidden');
-                }
-            }
-        }
-        async showPopup() {
-            const popupElement = document.getElementById('yt-music-plus-popup');
-            if (popupElement) {
-                popupElement.classList.remove('hidden');
-            }
-            await this.initPlaylistFetching();
-            const currentPlaylistId = this.ytMusicAPI.getCurrentPlaylistIdFromURL();
-            const playlistFromCache = this.playlistsCache.find(pl => pl.id === currentPlaylistId);
-            if (currentPlaylistId) {
-                this.onPlaylistSelected(playlistFromCache);
-            }
-        }
-
-        hidePopup() {
-            const popupElement = document.getElementById('yt-music-plus-popup');
-            if (popupElement) {
-                popupElement.classList.add('hidden');
-            }
-            window.bridgeInstance.enableReload();
-        }
-        addEventListeners() {
-            //Add listener for page navigation, back, forward etc
-            navigation.addEventListener('navigate', (event) => {
-                if (event.navigationType != 'push') {
-                    return;
-                }
-                const isPlaylistPage = event.destination.url.startsWith('https://music.youtube.com/playlist');
-                if (isPlaylistPage) {
-                    setTimeout(() => {
-                        // Only inject playlist action buttons if enabled via settings
-                        if (!this._extSettings || this._extSettings.showPlaylistButton !== false) {
-                            this.injectActionButtons();
-                            this.showTriggerButtons();
-                        }
-                    }, this.pageLoadTimeout);
-                }
-            });
-
-            const navBarBtn = document.getElementById('yt-music-plus-nav-btn');
-            if (navBarBtn) {
-                navBarBtn.addEventListener('click', () => {
-                    this.showPopup();
-                });
-            }
-
-            // Add close button listener
-            const popupElement = document.getElementById('yt-music-plus-popup');
-            const closeBtn = popupElement.querySelector('#closePopupBtn');
-            if (closeBtn) {
-                closeBtn.addEventListener('click', () => this.hidePopup());
-                popupElement.addEventListener('click', (event) => {
-                    if (event.target === popupElement) {
-                        this.hidePopup();
-                    }
-                });
-
-                // Close popup on Escape key
-                const handleEscapeKey = (e) => {
-                    if (e.key === 'Escape' && popupElement.classList.contains('hidden') === false) {
-                        this.hidePopup();
-                    }
-                };
-                document.addEventListener('keydown', handleEscapeKey);
-            }
-
-
-            const findUnavailableBtn = document.getElementById('findUnavailableBtn');
-            if (findUnavailableBtn) {
-                findUnavailableBtn.addEventListener('click', () => this.findUnavailableTracks());
-            }
-
-            const findVideoTracksBtn = document.getElementById('findVideoTracksBtn');
-            if (findVideoTracksBtn) {
-                findVideoTracksBtn.addEventListener('click', () => this.findVideoTracks());
-            }
-
-            const replaceSelectedBtn = document.getElementById('replaceSelectedBtn');
-            if (replaceSelectedBtn) {
-                replaceSelectedBtn.addEventListener('click', () => this.replaceSelectedItems());
-            }
-
-            const addSelectedBtn = document.getElementById('addSelectedBtn');
-            if (addSelectedBtn) {
-                addSelectedBtn.addEventListener('click', () => this.addSelectedItems());
-            }
-
-            const removeSelectedBtn = document.getElementById('removeSelectedBtn');
-            if (removeSelectedBtn) {
-                removeSelectedBtn.addEventListener('click', () => this.removeSelectedItems());
-            }
-        }
-        /**
-         * Toggle the search progress spinner
-         * @param {boolean} show
-         */
-        toggleSearchProgress(show) {
-            const el = document.getElementById('searchProgress');
-            if (el) {
-                if (show) {
-                    el.classList.remove('hidden');
-                } else {
-                    el.classList.add('hidden');
-                }
-            }
-            // also disable/enable search buttons to prevent duplicate clicks
-            const findUnavailable = document.getElementById('findUnavailableBtn');
-            const findVideo = document.getElementById('findVideoTracksBtn');
-            const replaceSelected = document.getElementById('replaceSelectedBtn');
-            const addSelected = document.getElementById('addSelectedBtn');
-            const removeSelected = document.getElementById('removeSelectedBtn');
-            const backBtn = document.getElementById('backButton');
-            if (backBtn) backBtn.disabled = show;
-            if (replaceSelected) replaceSelected.disabled = show;
-            if (addSelected) addSelected.disabled = show;
-            if (removeSelected) removeSelected.disabled = show;
-            if (findUnavailable) findUnavailable.disabled = show;
-            if (findVideo) findVideo.disabled = show;
-            this.setCheckAllCheckBox(); // Ensure checkboxes are also disabled/enabled appropriately
-        }
-
-        setCheckAllCheckBox() {
-            const popupElement = document.querySelector('.yt-music-extended-popup-container');
-            const selectAllCheckbox = popupElement.querySelector('#yt-music-plus-selectAllCheckbox');
-            const checkboxes = popupElement.querySelectorAll('.item-checkbox');
-            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
-            selectAllCheckbox.checked = allChecked;
-
-            //If none of the checkboxes are checked, disable the action buttons, else enable them
-            const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
-            const actionButtons = popupElement.querySelectorAll('.action-buttons-container button');
-            actionButtons.forEach(btn => btn.disabled = !anyChecked);
-        }
-        hidePlaylistLoadingIndicator() {
-            const loadingIndicator = document.getElementById('playlistsLoadingIndicator');
-            if (loadingIndicator) {
-                loadingIndicator.classList.add('hidden');
-            }
-        }
-
-        async initPlaylistFetching() {
-            // Get all editable playlists for the user
-            this.playlistsCache = await this.ytMusicAPI.getEditablePlaylists();
-            console.log("Fetched playlists in bridge:", this.playlistsCache);
-
-            // Display all playlists in the selection screen
-            this.displayPlaylistsForSelection();
-            this.hidePlaylistLoadingIndicator();
-        }
-
-        displayPlaylistsForSelection() {
-            const playlistsGrid = document.getElementById('playlistsGrid');
-            if (!playlistsGrid) {
-                console.error("Playlists grid container not found");
-                return;
-            }
-
-            // Clear existing playlist cards
-            playlistsGrid.replaceChildren();
-
-            if (this.playlistsCache.length === 0) {
-                const noPlaylistsMessage = document.createElement('div');
-                noPlaylistsMessage.style.gridColumn = '1/-1';
-                noPlaylistsMessage.style.padding = '20px';
-                noPlaylistsMessage.style.textAlign = 'center';
-                noPlaylistsMessage.textContent = 'No editable playlists found';
-                playlistsGrid.appendChild(noPlaylistsMessage);
-                return;
-            }
-
-            // Create a playlist card for each playlist
-            this.playlistsCache.forEach((playlist) => {
-                const card = UIHelper.createPlaylistCard(playlist);
-
-                // Add click handler to select the playlist
-                card.addEventListener('click', () => {
-                    this.onPlaylistSelected(playlist);
-                });
-
-                playlistsGrid.appendChild(card);
-            });
-        }
-
-        onPlaylistSelected(playlist) {
-            console.log("Playlist selected:", playlist);
-
-            // Set the playlist details in the UI
-            UIHelper.setPlaylistDetails(playlist);
-            if (!this.currentSelectedPlaylist || this.currentSelectedPlaylist.id !== playlist.id) {
-                this.clearPlaylistItemsContainer(); // Clear any existing items in the details screen
-
-                // Store the current playlist for reference
-                this.currentSelectedPlaylist = playlist;
-                this.setProgressText("");
-            }
-            // Switch to details screen
-            const detailsScreen = document.getElementById('playlistDetailsScreen');
-            if (detailsScreen) {
-                detailsScreen.classList.remove('hidden');
-            }
-            const selectionScreen = document.getElementById('playlistSelectionScreen');
-            if (selectionScreen) {
-                selectionScreen.classList.add('hidden');
-            }
-            this.updatePopupTitle(`Playlist: ${playlist.title}`);
-        }
-
-        updatePopupTitle(title) {
-            const titleElement = document.getElementById('popupTitle');
-            if (titleElement) {
-                titleElement.textContent = title;
-            }
-        }
-
-        async processPlaylistItems(items) {
-            // Process the playlist items to find greyed out ones and fetch replacement suggestions for first 4 greyed out items (for testing purposes, remove the limit to process all greyed out items)
-            const greyedOutItems = items.filter(item => item.isGreyedOut).slice(0, 10);
-            console.log("Greyed out items in the playlist:", greyedOutItems);
-            this.clearPlaylistItemsContainer();
-            let i = 1;
-            for (const greyedOutItem of greyedOutItems) {
-                this.setProgressText(`Processing track ${i} of ${greyedOutItems.length}`);
-                console.log("Processing greyed out item:", greyedOutItem);
-                const searchResult = await this.ytMusicAPI.searchMusic(greyedOutItem);
-                console.log("Search result for greyed out item:", searchResult);
-                let bestSearchResult = null;
-                try {
-                    bestSearchResult = this.ytMusicAPI.getBestSearchResult(searchResult, greyedOutItem);
-
-                } catch (error) {
-                    console.error("Error finding best search result for item:", greyedOutItem, "Search results were:", searchResult, "Error was:", error);
-                }
-                console.log("Best search result for greyed out item:", bestSearchResult, "Original item:", greyedOutItem);
-
-
-                // Here you can decide what to do with the best search result, e.g., show it in the popup or automatically replace the item in the playlist
-                // Append the original item object to add the replacement media object for easier handling in the UI
-                greyedOutItem.replacement = bestSearchResult;
-                //Show the greyed out item and its best search result in the UI
-                this.addItem(greyedOutItem, this.baseUrl, i++);
-
-                await this.sleep(this.timeOutDuration); // Sleep for a bit to avoid hitting rate limits or overwhelming the API with requests
-            }
-            var progressText = greyedOutItems.length > 0 ? `Processing complete. Found ${greyedOutItems.length} unavailable tracks and their replacements.` : "Processing complete. No unavailable tracks found in the playlist.";
-            var hasBadMatches = greyedOutItems.some(item => item.replacement && !item.replacement.isGoodMatch);
-            if (hasBadMatches) {
-                progressText += " Some replacements may not be good matches, please review carefully before replacing.";
-            }
-            this.setProgressText(progressText);
-            // After processing all items, modify the UI to show the results
-        }
-
-        async displayResultsInUI(greyedOutItems) {
-            //Empty the container first
-            this.clearPlaylistItemsContainer();
-            let i = 1;
-            for (const item of greyedOutItems) {
-                i = this.addItem(item, this.baseUrl, i);
-            }
-        }
-
-        clearPlaylistItemsContainer() {
-            const container = document.getElementById('yt-music-plus-itemsGridContainer');
-            container.replaceChildren();
-        }
-
-        addItem(item, baseUrl, i) {
-            console.log("Displaying item in UI:", item);
-            const originalMedia = {
-                name: item.name,
-                artist: item.artists.join(", "),
-                thumbnail: item.thumbnail,
-                url: baseUrl + item.videoId,
-                videoId: item.videoId,
-                playlistSetVideoId: item.playlistSetVideoId
-            };
-            const replacementMedia = item.replacement ? {
-                name: item.replacement.name,
-                artist: item.replacement.artists.join(", "),
-                thumbnail: item.replacement.thumbnail,
-                url: baseUrl + item.replacement.videoId,
-                isGoodMatch: item.replacement.isGoodMatch,
-                videoId: item.replacement.videoId,
-                playlistSetVideoId: item.replacement.playlistSetVideoId
-            } : null;
-            const gridRow = UIHelper.createMediaGridRow(originalMedia, replacementMedia, i++);
-            document.getElementById('yt-music-plus-itemsGridContainer').appendChild(gridRow);
-            return i;
-        }
-        setProgressText(text) {
-            const el = document.getElementById('progressText');
-            if (el) {
-                el.textContent = text;
-                if (text) {
-                    el.classList.remove('hidden');
-                } else {
-                    el.classList.add('hidden');
-                }
-            }
-        }
-
-        async findUnavailableTracks() {
-            this.clearPlaylistItemsContainer();
-            this.toggleSearchProgress(true);
-            this.setProgressText("Finding unavailable tracks...");
-            try {
-                const currentPlaylistId = this.currentSelectedPlaylist ? this.currentSelectedPlaylist.id : this.ytMusicAPI.getCurrentPlaylistIdFromURL();
-                console.log("Current playlist ID:", currentPlaylistId);
-
-                if (!currentPlaylistId) {
-                    console.error("Could not determine current playlist ID from URL or selected playlist");
-                    return;
-                }
-
-                console.log("Fetching items for playlist:", currentPlaylistId);
-                const items = await this.ytMusicAPI.getPlaylistItems(currentPlaylistId);
-                console.log("Fetched playlist items:", items);
-
-                // Filter for unavailable (greyed out) tracks
-                const unavailableItems = items.filter(item => item.isGreyedOut);
-                console.log("Unavailable (greyed out) items:", unavailableItems);
-                this.setProgressText(`Found ${unavailableItems.length} unavailable tracks. Fetching replacements...`);
-
-                if (unavailableItems.length === 0) {
-                    console.log("No unavailable tracks found in the playlist");
-                    return;
-                }
-
-                // Process the unavailable items to find replacements
-                await this.processPlaylistItems(unavailableItems);
-            } catch (error) {
-                this.setProgressText("Error occurred while finding unavailable tracks. Check console for details.");
-                console.error('Error finding unavailable tracks:', error);
-            } finally {
-                this.toggleSearchProgress(false);
-            }
-        }
-
-        async findVideoTracks() {
-            this.clearPlaylistItemsContainer();
-            this.toggleSearchProgress(true);
-            this.setProgressText("Finding video tracks...");
-            try {
-                const currentPlaylistId = this.currentSelectedPlaylist ? this.currentSelectedPlaylist.id : this.ytMusicAPI.getCurrentPlaylistIdFromURL();
-                console.log("Current playlist ID:", currentPlaylistId);
-
-                if (!currentPlaylistId) {
-                    console.error("Could not determine current playlist ID from URL or selected playlist");
-                    return;
-                }
-
-                console.log("Fetching items for playlist:", currentPlaylistId);
-                const items = await this.ytMusicAPI.getPlaylistItems(currentPlaylistId);
-                console.log("Fetched playlist items:", items);
-
-                // Filter for video tracks (non-music items or items with video property set)
-                const videoTracks = items.filter(item => item.isVideo);
-                console.log("Video tracks found:", videoTracks);
-                this.setProgressText(`Found ${videoTracks.length} video tracks. Fetching replacements...`);
-                if (videoTracks.length === 0) {
-                    console.log("No video tracks found in the playlist");
-                    return;
-                }
-
-                this.clearPlaylistItemsContainer();
-                let i = 1;
-                for (const track of videoTracks) {
-                    console.log("Video track details:", track);
-                    //Remove any video-specific keywords from the track name to improve search results, e.g., "Official Video", "Music Video", etc.
-                    console.log("Original track name before cleaning:", track.name);
-                    // Ensure regex is global; replaceAll requires either a string or a global RegExp
-                    track.name = track.name.replaceAll(/(official\s*)?(music\s*)?video/ig, "").trim();
-                    console.log("Cleaned track name for searching:", track.name);
-                    const searchResult = await this.ytMusicAPI.searchMusic(track);
-                    console.log("Search result for video track:", searchResult);
-                    const replacement = this.ytMusicAPI.getBestSearchResult(track, track);
-                    console.log("Best search result for video track:", replacement);
-                    track.replacement = replacement; // Attach the replacement to the track for easier handling in the UI
-                    this.addItem(track, this.baseUrl, i++); // Show the video track and its best search result in the UI
-                    await this.sleep(this.timeOutDuration); // Sleep for a bit to avoid hitting rate limits or overwhelming the API with requests
-                }
-                const progressText = videoTracks.length > 0 ? `Processing complete. Found ${videoTracks.length} video tracks and their replacements.` : "Processing complete. No video tracks found in the playlist.";
-                const countOfReplacementsFound = videoTracks.filter(track => track.replacement).length;
-                const countOfGoodMatches = videoTracks.filter(track => track.replacement && track.replacement.isGoodMatch).length;
-                if (countOfReplacementsFound === 0) {
-                    this.setProgressText(progressText + " No replacements found for video tracks.");
-                } else if (countOfGoodMatches === 0) {
-                    this.setProgressText(progressText + ` Replacements were found for ${countOfReplacementsFound} video tracks, but none were good matches. Please review carefully before replacing.`);
-                } else if (countOfGoodMatches < countOfReplacementsFound) {
-                    this.setProgressText(progressText + ` Replacements were found for ${countOfReplacementsFound} video tracks, but only ${countOfGoodMatches} were good matches. Please review carefully before replacing.`);
-                } else {
-                    this.setProgressText(progressText);
-                }
-            } catch (error) {
-                console.error('Error finding video tracks:', error);
-                this.setProgressText("Error occurred while finding video tracks. Check console for details.");
-            } finally {
-                this.toggleSearchProgress(false);
-            }
-        }
-        beforeActionsOnSelectedItems() {
-            // This function can be used to perform any necessary steps before performing actions on the selected items, such as disabling page reloads, showing confirmation dialogs, etc.
-            // For example, we can disable page reloads to prevent YouTube Music from interrupting our API operations:
-            this.disableReload();
-            this.toggleSearchProgress(true);
-        }
-        afterActionsOnSelectedItems() {
-            // This function can be used to perform any necessary steps after performing actions on the selected items, such as re-enabling page reloads, showing success messages, etc.
-            // For example, we can re-enable page reloads after our API operations are complete:
-            this.enableReload();
-            this.toggleSearchProgress(false);
-        }
-
-        async replaceSelectedItems() {
-            try {
-                this.beforeActionsOnSelectedItems();
-                this.setProgressText("Replacing selected items...");
-                // This function will be called when the user clicks the "Replace Selected" button in the popup
-                // It should gather the selected items in the UI, get their corresponding replacement media, and call the API to replace them in the playlist
-                const playlistId = this.currentSelectedPlaylist ? this.currentSelectedPlaylist.id : this.ytMusicAPI.getCurrentPlaylistIdFromURL();
-                if (!playlistId) {
-                    console.error("Could not determine current playlist ID from URL or selected playlist");
-                    return;
-                }
-                console.log("Replace Selected button clicked");
-                const selectedItems = UIHelper.getSelectedMediaItems();
-                console.log("Selected items to replace:", selectedItems);
-                let i = 1;
-                for (const item of selectedItems) {
-                    this.setProgressText(`Replacing track ${i} of ${selectedItems.length}...`);
-                    if (item.replacementMedia && item.replacementMedia.videoId) {
-                        try {
-                            const originalItemDetails = item.originalMedia;
-                            const replacementItemDetails = item.replacementMedia;
-                            console.log("Original item details for adding:", originalItemDetails);
-                            console.log("Replacement item details for adding:", replacementItemDetails);
-
-                            await this.ytMusicAPI.addItemToPlaylist(playlistId, replacementItemDetails.videoId);
-                            await this.ytMusicAPI.removeItemFromPlaylist(playlistId, originalItemDetails.videoId, originalItemDetails.playlistSetVideoId);
-                            console.log(`Replaced item ${originalItemDetails.name} with ${replacementItemDetails.name} in the playlist`);
-                            UIHelper.removeMediaGridRow(originalItemDetails); // Remove the item from the UI immediately after replacement
-                        } catch (error) {
-                            console.error(`Error replacing item ${originalItemDetails.name} with ${replacementItemDetails.name} in the playlist:`, error);
-                        }
-                    } else {
-                        console.warn(`No replacement found for item ${originalItemDetails.name}, skipping replacement.`);
-                    }
-                    i++;
-                }
-                const countOfItemsReplaced = selectedItems.filter(item => item.replacementMedia && item.replacementMedia.videoId).length;
-                const progressText = countOfItemsReplaced > 0 ? `All replacements completed. Replaced ${countOfItemsReplaced} items in the playlist.` : "All replacements completed. No valid replacements were made to the playlist.";
-                this.setProgressText(progressText);
-                console.log('All replacements completed.');
-            }
-            catch (error) {
-                console.error('Error replacing selected items:', error);
-                this.setProgressText("Error occurred while replacing items. Check console for details.");
-            }
-            finally {
-                this.afterActionsOnSelectedItems();
-            }
-        }
-        async addSelectedItems() {
-            this.beforeActionsOnSelectedItems();
-            this.setProgressText("Adding selected items...");
-            try {
-                // This function will be called when the user clicks the "Add Selected" button in the popup
-                // It should gather the selected items in the UI, get their corresponding replacement media, and call the API to add them to the playlist
-                console.log("Add Selected button clicked");
-                const playlistId = this.currentSelectedPlaylist ? this.currentSelectedPlaylist.id : this.ytMusicAPI.getCurrentPlaylistIdFromURL();
-                if (!playlistId) {
-                    console.error("Could not determine current playlist ID from URL or selected playlist");
-                    return;
-                }
-                const selectedItems = UIHelper.getSelectedMediaItems();
-                console.log("Selected items to add:", selectedItems);
-                let i = 1;
-                for (const item of selectedItems) {
-                    this.setProgressText(`Adding track ${i} of ${selectedItems.length}...`);
-                    const originalItemDetails = item.originalMedia;
-                    const replacementItemDetails = item.replacementMedia;
-                    console.log("Original item details for adding:", originalItemDetails);
-                    console.log("Replacement item details for adding:", replacementItemDetails);
-                    if (replacementItemDetails && replacementItemDetails.videoId) {
-                        try {
-                            await this.ytMusicAPI.addItemToPlaylist(playlistId, replacementItemDetails.videoId);
-                            console.log(`Added item ${replacementItemDetails.name} to the playlist`);
-                        } catch (error) {
-                            console.error(`Error adding item ${replacementItemDetails.name} to the playlist:`, error);
-                        }
-                    } else {
-                        console.warn(`No valid replacement found for item ${originalItemDetails.name}, skipping addition.`);
-                    }
-                    i++;
-                }
-                const countOfItemsAdded = selectedItems.filter(item => item.replacementMedia && item.replacementMedia.videoId).length;
-                const progressText = countOfItemsAdded > 0 ? `All additions completed. Added ${countOfItemsAdded} items to the playlist.` : "All additions completed. No valid items were added to the playlist.";
-                this.setProgressText(progressText);
-                console.log('All additions completed.');
-            }
-            catch (error) {
-                console.error('Error adding selected items:', error);
-                this.setProgressText("Error occurred while adding items. Check console for details.");
-            }
-            finally {
-                this.afterActionsOnSelectedItems();
-            }
-        }
-
-        async removeSelectedItems() {
-            try {
-                this.beforeActionsOnSelectedItems();
-                this.setProgressText("Removing selected items...");
-
-                // This function will be called when the user clicks the "Remove Selected" button in the popup
-                // It should gather the selected items in the UI and call the API to remove them from the playlist
-                const playlistId = this.currentSelectedPlaylist ? this.currentSelectedPlaylist.id : this.ytMusicAPI.getCurrentPlaylistIdFromURL();
-                if (!playlistId) {
-                    console.error("Could not determine current playlist ID from URL or selected playlist");
-                    return;
-                }
-                console.log("Remove Selected button clicked");
-                const selectedItems = UIHelper.getSelectedMediaItems();
-                console.log("Selected items to remove:", selectedItems);
-                let i = 1;
-                for (const item of selectedItems) {
-                    this.setProgressText(`Removing track ${i} of ${selectedItems.length}...`);
-                    try {
-                        const originalItemDetails = item.originalMedia;
-                        const replacementItemDetails = item.replacementMedia;
-                        console.log("Original item details for removal:", originalItemDetails);
-                        console.log("Replacement item details for removal:", replacementItemDetails);
-
-                        await this.ytMusicAPI.removeItemFromPlaylist(playlistId, originalItemDetails.videoId, originalItemDetails.playlistSetVideoId);
-                        console.log(`Removed item ${originalItemDetails.name} from the playlist`);
-                        UIHelper.removeMediaGridRow(originalItemDetails); // Remove the item from the UI immediately after removal
-                    } catch (error) {
-                        console.error(`Error removing item ${originalItemDetails.name} from the playlist:`, error);
-                    }
-                    i++;
-                }
-                const countOfItemsRemoved = selectedItems.length;
-                const progressText = countOfItemsRemoved > 0 ? `All removals completed. Removed ${countOfItemsRemoved} items from the playlist.` : "No items were removed from the playlist.";
-                this.setProgressText(progressText);
-                console.log('All removals completed. Removed', countOfItemsRemoved, 'items');
-            }
-            catch (error) {
-                console.error('Error removing selected items:', error);
-                this.setProgressText("Error occurred while removing items. Check console for details.");
-            }
-            finally {
-                this.afterActionsOnSelectedItems();
-            }
-        }
+    /**
+     * Disables page reload during API operations
+     */
+    disableReload() {
+      if (this.isReloadDisabled) return;
+      this.isReloadDisabled = true;
+      window.addEventListener('beforeunload', this.preventUnloadListener);
     }
-    window.bridgeInstance = new Bridge(); // Expose the Bridge class to the global scope
 
+    /**
+     * Enables page reload after API operations
+     * @param {boolean} shouldReload - Whether to reload the page
+     */
+    enableReload(shouldReload = false) {
+      if (!this.isReloadDisabled) return;
+      this.isReloadDisabled = false;
+      window.removeEventListener('beforeunload', this.preventUnloadListener);
 
-    // Listen for messages from content script (page context)
-    window.addEventListener('message', (event) => {
-        if (event.source !== window) return;
+      if (shouldReload) {
+        window.location.reload();
+      }
+    }
+
+    /**
+     * Sets authentication token and initializes UI elements
+     * @param {string} token - Authorization token
+     */
+    setAuthToken(token) {
+      this.ytMusicAPI.setAuthToken(token);
+      this.addEventListeners();
+      this.injectActionButtons();
+      this.showTriggerButtons();
+    }
+
+    /**
+     * Injects action buttons into the YouTube Music page header
+     */
+    injectActionButtons() {
+      if (this.extSettings?.showPlaylistButton === false) {
+        return;
+      }
+
+      const existingButtons = document.getElementById('yt-music-plus-action-buttons');
+      if (existingButtons) {
+        return;
+      }
+
+      const header = document.querySelector('ytmusic-responsive-header-renderer');
+      if (!header) {
+        return;
+      }
+
+      const actionButtons = UIHelper.createActionButtons();
+      actionButtons.addEventListener('click', () => this.showPopup());
+
+      header.appendChild(actionButtons);
+    }
+
+    /**
+     * Shows or hides trigger buttons based on settings
+     */
+    showTriggerButtons() {
+      const navBarBtn = document.getElementById('yt-music-plus-nav-btn');
+      if (navBarBtn) {
+        const shouldShow = !this.extSettings || this.extSettings.showNavButton !== false;
+        navBarBtn.classList.toggle('hidden', !shouldShow);
+      }
+
+      const actionBtn = document.getElementById('yt-music-plus-action-buttons');
+      if (actionBtn) {
+        const shouldShow = !this.extSettings || this.extSettings.showPlaylistButton !== false;
+        actionBtn.classList.toggle('hidden', !shouldShow);
+      }
+    }
+
+    /**
+     * Shows popup and loads playlist data
+     * @async
+     */
+    async showPopup() {
+      const popupElement = document.getElementById('yt-music-plus-popup');
+      if (popupElement) {
+        popupElement.classList.remove('hidden');
+      }
+
+      await this.initPlaylistFetching();
+
+      const currentPlaylistId = this.ytMusicAPI.getCurrentPlaylistIdFromURL();
+      if (currentPlaylistId) {
+        const playlistFromCache = this.playlistsCache.find(pl => pl.id === currentPlaylistId);
+        if (playlistFromCache) {
+          this.onPlaylistSelected(playlistFromCache);
+        }
+      }
+    }
+
+    /**
+     * Hides popup and re-enables page reload
+     */
+    hidePopup() {
+      const popupElement = document.getElementById('yt-music-plus-popup');
+      if (popupElement) {
+        popupElement.classList.add('hidden');
+      }
+      this.enableReload();
+    }
+
+    /**
+     * Adds event listeners for popup buttons and navigation
+     */
+    addEventListeners() {
+      // Navigation listener for playlist page detection
+      navigation?.addEventListener('navigate', (event) => {
+        if (event.navigationType !== 'push') return;
+
+        const isPlaylistPage = event.destination?.url?.startsWith(Bridge.PLAYLIST_PAGE_PATH);
+        if (isPlaylistPage) {
+          setTimeout(() => {
+            if (!this.extSettings || this.extSettings.showPlaylistButton !== false) {
+              this.injectActionButtons();
+              this.showTriggerButtons();
+            }
+          }, Bridge.PAGE_LOAD_TIMEOUT);
+        }
+      });
+
+      // Nav bar button listener
+      const navBarBtn = document.getElementById('yt-music-plus-nav-btn');
+      if (navBarBtn) {
+        navBarBtn.addEventListener('click', () => this.showPopup());
+      }
+
+      // Popup close listeners
+      const popupElement = document.getElementById('yt-music-plus-popup');
+      const closeBtn = popupElement?.querySelector('#closePopupBtn');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => this.hidePopup());
+
+        popupElement?.addEventListener('click', (event) => {
+          if (event.target === popupElement) {
+            this.hidePopup();
+          }
+        });
+
+        // Escape key handler
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && !popupElement?.classList.contains('hidden')) {
+            this.hidePopup();
+          }
+        });
+      }
+
+      // Action button listeners
+      this.attachButtonListener('findUnavailableBtn', () => this.findUnavailableTracks());
+      this.attachButtonListener('findVideoTracksBtn', () => this.findVideoTracks());
+      this.attachButtonListener('replaceSelectedBtn', () => this.replaceSelectedItems());
+      this.attachButtonListener('addSelectedBtn', () => this.addSelectedItems());
+      this.attachButtonListener('removeSelectedBtn', () => this.removeSelectedItems());
+    }
+
+    /**
+     * Helper to attach click listeners to buttons
+     * @param {string} buttonId - Button element ID
+     * @param {Function} handler - Click handler
+     */
+    attachButtonListener(buttonId, handler) {
+      const button = document.getElementById(buttonId);
+      if (button) {
+        button.addEventListener('click', handler);
+      }
+    }
+
+    /**
+     * Toggles search progress indicator visibility
+     * @param {boolean} show - Whether to show the indicator
+     */
+    toggleSearchProgress(show) {
+      const el = document.getElementById('searchProgress');
+      if (el) {
+        el.classList.toggle('hidden', !show);
+      }
+
+      // Disable/enable buttons during search
+      const buttonIds = [
+        'findUnavailableBtn',
+        'findVideoTracksBtn',
+        'replaceSelectedBtn',
+        'addSelectedBtn',
+        'removeSelectedBtn',
+        'backButton'
+      ];
+
+      buttonIds.forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.disabled = show;
+      });
+
+      this.updateCheckAllCheckbox();
+    }
+
+    /**
+     * Updates select-all checkbox state
+     */
+    updateCheckAllCheckbox() {
+      const popupElement = document.querySelector('.yt-music-extended-popup-container');
+      if (!popupElement) return;
+
+      const selectAllCheckbox = popupElement.querySelector('#yt-music-plus-selectAllCheckbox');
+      const checkboxes = popupElement.querySelectorAll('.item-checkbox');
+
+      const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+      if (selectAllCheckbox) selectAllCheckbox.checked = allChecked;
+
+      const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+      const actionButtons = popupElement.querySelectorAll('.action-buttons-container button');
+      actionButtons.forEach(btn => btn.disabled = !anyChecked);
+    }
+
+    /**
+     * Hides playlist loading indicator
+     */
+    hidePlaylistLoadingIndicator() {
+      const loadingIndicator = document.getElementById('playlistsLoadingIndicator');
+      if (loadingIndicator) {
+        loadingIndicator.classList.add('hidden');
+      }
+    }
+
+    /**
+     * Initializes playlist fetching and display
+     * @async
+     */
+    async initPlaylistFetching() {
+      this.playlistsCache = await this.ytMusicAPI.getEditablePlaylists();
+      this.displayPlaylistsForSelection();
+      this.hidePlaylistLoadingIndicator();
+    }
+
+    /**
+     * Displays playlists in the selection grid
+     */
+    displayPlaylistsForSelection() {
+      const playlistsGrid = document.getElementById('playlistsGrid');
+      if (!playlistsGrid) {
+        return;
+      }
+
+      playlistsGrid.replaceChildren();
+
+      if (this.playlistsCache.length === 0) {
+        const noPlaylistsMessage = UIHelper.createNoPlaylistsMessage();
+        playlistsGrid.appendChild(noPlaylistsMessage);
+        return;
+      }
+
+      this.playlistsCache.forEach((playlist) => {
+        const card = UIHelper.createPlaylistCard(playlist);
+        card.addEventListener('click', () => this.onPlaylistSelected(playlist));
+        playlistsGrid.appendChild(card);
+      });
+    }
+
+    /**
+     * Handles playlist selection
+     * @param {Object} playlist - Selected playlist object
+     */
+    onPlaylistSelected(playlist) {
+      UIHelper.setPlaylistDetails(playlist);
+
+      if (!this.currentSelectedPlaylist || this.currentSelectedPlaylist.id !== playlist.id) {
+        this.clearPlaylistItemsContainer();
+        this.currentSelectedPlaylist = playlist;
+        this.setProgressText('');
+      }
+
+      const detailsScreen = document.getElementById('playlistDetailsScreen');
+      if (detailsScreen) {
+        detailsScreen.classList.remove('hidden');
+      }
+
+      const selectionScreen = document.getElementById('playlistSelectionScreen');
+      if (selectionScreen) {
+        selectionScreen.classList.add('hidden');
+      }
+
+      this.updatePopupTitle(`Playlist: ${playlist.title}`);
+    }
+
+    /**
+     * Updates the popup title
+     * @param {string} title - New title text
+     */
+    updatePopupTitle(title) {
+      const titleElement = document.getElementById('popupTitle');
+      if (titleElement) {
+        titleElement.textContent = title;
+      }
+    }
+
+    /**
+     * Processes playlist items and finds replacements for unavailable tracks
+     * @async
+     * @param {Array} items - Playlist items to process
+     */
+    async processPlaylistItems(items) {
+      const itemsToProcess = items.slice(0, 10);
+      this.clearPlaylistItemsContainer();
+
+      let i = 1;
+      for (const item of itemsToProcess) {
+        this.setProgressText(`Processing track ${i} of ${itemsToProcess.length}`);
+
         try {
-            if (event.data && event.data.type === 'EXT_SETTINGS') {
-                // Store settings on the bridge instance
-                window.bridgeInstance._extSettings = event.data.settings;
-                console.log('Bridge received external settings:', window.bridgeInstance._extSettings);
-                window.bridgeInstance.showTriggerButtons();
-            }
-        } catch (e) {
-            console.warn('Error handling message in bridge:', e);
+          const searchResult = await this.ytMusicAPI.searchMusic(item);
+          const bestSearchResult = this.ytMusicAPI.getBestSearchResult(searchResult, item);
+          item.replacement = bestSearchResult;
+          this.addItem(item, Bridge.BASE_URL, i++);
+        } catch (error) {
+          // Skip items that fail to process
         }
-    });
-    window.postMessage({ type: 'BRIDGE_LOADED' }, '*');
-    console.log('Bridge script loaded and ready to fetch variables');
 
-    // Start fetching the auth token immediately after the bridge is loaded
-    fetchAuthToken();
+        await this.sleep(Bridge.TIMEOUT_DURATION);
+      }
 
+      this.setFinalProgressText(itemsToProcess);
+    }
+
+    /**
+     * Sets final progress message after processing
+     * @param {Array} greyedOutItems - Processed items
+     */
+    setFinalProgressText(greyedOutItems) {
+      if (greyedOutItems.length === 0) {
+        this.setProgressText('Processing complete. No unavailable tracks found.');
+        return;
+      }
+
+      let progressText = `Processing complete. Found ${greyedOutItems.length} unavailable tracks and their replacements.`;
+      const hasBadMatches = greyedOutItems.some(item => item.replacement && !item.replacement.isGoodMatch);
+
+      if (hasBadMatches) {
+        progressText += ' Some replacements may not be good matches, please review carefully.';
+      }
+
+      this.setProgressText(progressText);
+    }
+
+    /**
+     * Clears the playlist items container
+     */
+    clearPlaylistItemsContainer() {
+      const container = document.getElementById('yt-music-plus-itemsGridContainer');
+      if (container) {
+        container.replaceChildren();
+      }
+    }
+
+    /**
+     * Adds an item row to the display
+     * @param {Object} item - Item to add
+     * @param {string} baseUrl - Base URL for video links
+     * @param {number} index - Item index
+     * @returns {number} Next index
+     */
+    addItem(item, baseUrl, index) {
+      const originalMedia = {
+        name: item.name,
+        artist: item.artists?.join(', ') || '',
+        thumbnail: item.thumbnail,
+        url: baseUrl + item.videoId,
+        videoId: item.videoId,
+        playlistSetVideoId: item.playlistSetVideoId
+      };
+
+      const replacementMedia = item.replacement ? {
+        name: item.replacement.name,
+        artist: item.replacement.artists?.join(', ') || '',
+        thumbnail: item.replacement.thumbnail,
+        url: baseUrl + item.replacement.videoId,
+        isGoodMatch: item.replacement.isGoodMatch,
+        videoId: item.replacement.videoId,
+        playlistSetVideoId: item.replacement.playlistSetVideoId
+      } : null;
+
+      const gridRow = UIHelper.createMediaGridRow(originalMedia, replacementMedia, index);
+      document.getElementById('yt-music-plus-itemsGridContainer')?.appendChild(gridRow);
+
+      return index + 1;
+    }
+
+    /**
+     * Sets progress text in the UI
+     * @param {string} text - Progress text
+     */
+    setProgressText(text) {
+      const el = document.getElementById('progressText');
+      if (el) {
+        el.textContent = text;
+        el.classList.toggle('hidden', !text);
+      }
+    }
+
+    /**
+     * Finds and processes unavailable tracks in the playlist
+     * @async
+     */
+    async findUnavailableTracks() {
+      this.clearPlaylistItemsContainer();
+      this.toggleSearchProgress(true);
+      this.setProgressText('Finding unavailable tracks...');
+
+      try {
+        const currentPlaylistId = this.currentSelectedPlaylist?.id || 
+                                  this.ytMusicAPI.getCurrentPlaylistIdFromURL();
+
+        if (!currentPlaylistId) {
+          return;
+        }
+
+        const items = await this.ytMusicAPI.getPlaylistItems(currentPlaylistId);
+        const unavailableItems = items.filter(item => item.isGreyedOut);
+
+        this.setProgressText(`Found ${unavailableItems.length} unavailable tracks. Fetching replacements...`);
+
+        if (unavailableItems.length === 0) {
+          return;
+        }
+
+        await this.processPlaylistItems(unavailableItems);
+      } catch (error) {
+        this.setProgressText('Error occurred while finding unavailable tracks.');
+      } finally {
+        this.toggleSearchProgress(false);
+      }
+    }
+
+    /**
+     * Finds and processes video tracks in the playlist
+     * @async
+     */
+    async findVideoTracks() {
+      this.clearPlaylistItemsContainer();
+      this.toggleSearchProgress(true);
+      this.setProgressText('Finding video tracks...');
+
+      try {
+        const currentPlaylistId = this.currentSelectedPlaylist?.id || 
+                                  this.ytMusicAPI.getCurrentPlaylistIdFromURL();
+
+        if (!currentPlaylistId) {
+          return;
+        }
+
+        const items = await this.ytMusicAPI.getPlaylistItems(currentPlaylistId);
+        const videoTracks = items.filter(item => item.isVideo);
+
+        this.setProgressText(`Found ${videoTracks.length} video tracks. Fetching replacements...`);
+
+        if (videoTracks.length === 0) {
+          return;
+        }
+
+        this.clearPlaylistItemsContainer();
+        let i = 1;
+
+        for (const track of videoTracks) {
+          // Clean track name by removing video-specific keywords
+          track.name = track.name.replaceAll(/(official\s*)?(music\s*)?video/gi, '').trim();
+
+          try {
+            const searchResult = await this.ytMusicAPI.searchMusic(track);
+            const replacement = this.ytMusicAPI.getBestSearchResult(searchResult, track);
+            track.replacement = replacement;
+            this.addItem(track, Bridge.BASE_URL, i++);
+          } catch (error) {
+            // Skip tracks that fail to process
+          }
+
+          await this.sleep(Bridge.TIMEOUT_DURATION);
+        }
+
+        this.setVideoTrackProgressMessage(videoTracks);
+      } catch (error) {
+        this.setProgressText('Error occurred while finding video tracks.');
+      } finally {
+        this.toggleSearchProgress(false);
+      }
+    }
+
+    /**
+     * Sets progress message for video track results
+     * @param {Array} videoTracks - Processed video tracks
+     */
+    setVideoTrackProgressMessage(videoTracks) {
+      const progressText = videoTracks.length > 0 
+        ? `Processing complete. Found ${videoTracks.length} video tracks and their replacements.`
+        : 'Processing complete. No video tracks found.';
+
+      const countOfReplacements = videoTracks.filter(t => t.replacement).length;
+      const countOfGoodMatches = videoTracks.filter(t => t.replacement?.isGoodMatch).length;
+
+      if (countOfReplacements === 0) {
+        this.setProgressText(progressText + ' No replacements found.');
+      } else if (countOfGoodMatches === 0) {
+        this.setProgressText(progressText + ` ${countOfReplacements} replacements found but no good matches.`);
+      } else if (countOfGoodMatches < countOfReplacements) {
+        this.setProgressText(progressText + ` ${countOfGoodMatches}/${countOfReplacements} are good matches.`);
+      } else {
+        this.setProgressText(progressText);
+      }
+    }
+
+    /**
+     * Performs setup before modifying selected items
+     */
+    beforeActionsOnSelectedItems() {
+      this.disableReload();
+      this.toggleSearchProgress(true);
+    }
+
+    /**
+     * Performs cleanup after modifying selected items
+     */
+    afterActionsOnSelectedItems() {
+      this.enableReload();
+      this.toggleSearchProgress(false);
+    }
+
+    /**
+     * Replaces selected items in the playlist
+     * @async
+     */
+    async replaceSelectedItems() {
+      try {
+        this.beforeActionsOnSelectedItems();
+        this.setProgressText('Replacing selected items...');
+
+        const playlistId = this.currentSelectedPlaylist?.id || 
+                          this.ytMusicAPI.getCurrentPlaylistIdFromURL();
+
+        if (!playlistId) {
+          return;
+        }
+
+        const selectedItems = UIHelper.getSelectedMediaItems();
+        let i = 1;
+
+        for (const item of selectedItems) {
+          this.setProgressText(`Replacing track ${i} of ${selectedItems.length}...`);
+
+          if (item.replacementMedia?.videoId) {
+            try {
+              const originalItemDetails = item.originalMedia;
+              const replacementItemDetails = item.replacementMedia;
+
+              await this.ytMusicAPI.addItemToPlaylist(playlistId, replacementItemDetails.videoId);
+              await this.ytMusicAPI.removeItemFromPlaylist(
+                playlistId,
+                originalItemDetails.videoId,
+                originalItemDetails.playlistSetVideoId
+              );
+
+              UIHelper.removeMediaGridRow(originalItemDetails);
+            } catch (error) {
+              // Continue processing remaining items
+            }
+          }
+          i++;
+        }
+
+        const countReplaced = selectedItems.filter(item => item.replacementMedia?.videoId).length;
+        const progressText = countReplaced > 0 
+          ? `All replacements completed. Replaced ${countReplaced} items.`
+          : 'No valid replacements were made.';
+        this.setProgressText(progressText);
+      } catch (error) {
+        this.setProgressText('Error occurred while replacing items.');
+      } finally {
+        this.afterActionsOnSelectedItems();
+      }
+    }
+
+    /**
+     * Adds selected items to the playlist
+     * @async
+     */
+    async addSelectedItems() {
+      this.beforeActionsOnSelectedItems();
+      this.setProgressText('Adding selected items...');
+
+      try {
+        const playlistId = this.currentSelectedPlaylist?.id || 
+                          this.ytMusicAPI.getCurrentPlaylistIdFromURL();
+
+        if (!playlistId) {
+          return;
+        }
+
+        const selectedItems = UIHelper.getSelectedMediaItems();
+        let i = 1;
+
+        for (const item of selectedItems) {
+          this.setProgressText(`Adding track ${i} of ${selectedItems.length}...`);
+
+          if (item.replacementMedia?.videoId) {
+            try {
+              await this.ytMusicAPI.addItemToPlaylist(playlistId, item.replacementMedia.videoId);
+            } catch (error) {
+              // Continue processing remaining items
+            }
+          }
+          i++;
+        }
+
+        const countAdded = selectedItems.filter(item => item.replacementMedia?.videoId).length;
+        const progressText = countAdded > 0 
+          ? `All additions completed. Added ${countAdded} items.`
+          : 'No valid items were added.';
+        this.setProgressText(progressText);
+      } catch (error) {
+        this.setProgressText('Error occurred while adding items.');
+      } finally {
+        this.afterActionsOnSelectedItems();
+      }
+    }
+
+    /**
+     * Removes selected items from the playlist
+     * @async
+     */
+    async removeSelectedItems() {
+      try {
+        this.beforeActionsOnSelectedItems();
+        this.setProgressText('Removing selected items...');
+
+        const playlistId = this.currentSelectedPlaylist?.id || 
+                          this.ytMusicAPI.getCurrentPlaylistIdFromURL();
+
+        if (!playlistId) {
+          return;
+        }
+
+        const selectedItems = UIHelper.getSelectedMediaItems();
+        let i = 1;
+
+        for (const item of selectedItems) {
+          this.setProgressText(`Removing track ${i} of ${selectedItems.length}...`);
+
+          try {
+            const originalItemDetails = item.originalMedia;
+            await this.ytMusicAPI.removeItemFromPlaylist(
+              playlistId,
+              originalItemDetails.videoId,
+              originalItemDetails.playlistSetVideoId
+            );
+            UIHelper.removeMediaGridRow(originalItemDetails);
+          } catch (error) {
+            // Continue processing remaining items
+          }
+          i++;
+        }
+
+        const progressText = selectedItems.length > 0 
+          ? `All removals completed. Removed ${selectedItems.length} items.`
+          : 'No items were removed.';
+        this.setProgressText(progressText);
+      } catch (error) {
+        this.setProgressText('Error occurred while removing items.');
+      } finally {
+        this.afterActionsOnSelectedItems();
+      }
+    }
+  }
+
+  // Initialize bridge and expose to global scope
+  window.bridgeInstance = new Bridge();
+
+  // Listen for settings messages from content script
+  window.addEventListener('message', (event) => {
+    if (event.source !== window) return;
+
+    try {
+      if (event.data?.type === 'EXT_SETTINGS') {
+        window.bridgeInstance.extSettings = event.data.settings;
+        window.bridgeInstance.showTriggerButtons();
+      }
+    } catch (error) {
+      // Handle message errors silently
+    }
+  });
+
+  // Signal that bridge is ready
+  window.postMessage({ type: 'BRIDGE_LOADED' }, '*');
+
+  // Start auth token interception
+  fetchAuthToken();
 })();

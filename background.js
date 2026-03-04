@@ -1,20 +1,21 @@
 import { StorageManager } from './utils/storage.js';
 
+/**
+ * BackgroundService - Manages extension background operations
+ * Handles messaging between content scripts and sidebar/panel controllers
+ */
 class BackgroundService {
   constructor() {
     this.storageManager = new StorageManager();
     this.autoRefreshInterval = null;
-    this.apiManager = null; // Will be initialized after receiving ytconfig from content script
+    this.apiManager = null;
     this.pageVariables = {};
     this.initializeListeners();
   }
 
-  async initAfterContentScriptLoad() {
-    // ytconfig will be received from content script via the bridge script
-    // We'll wait a bit for it or use a fallback
-    
-  }
-
+  /**
+   * Initializes message listeners for communication from content and popup scripts
+   */
   initializeListeners() {
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       this.handleMessage(message, sender, sendResponse);
@@ -22,16 +23,22 @@ class BackgroundService {
     });
   }
 
+  /**
+   * Handles incoming messages from content scripts
+   * Routes messages to appropriate handler methods
+   * 
+   * @param {Object} message - Message object with action property
+   * @param {Object} sender - Information about the message sender
+   * @param {Function} sendResponse - Callback to send response
+   */
   async handleMessage(message, sender, sendResponse) {
-    console.log('Background received message:', message);
     try {
-      switch (message.action) {
-        case 'contentScriptLoaded':
-          console.log('Content script has loaded and is ready');
-          sendResponse({ success: true });
-          this.initAfterContentScriptLoad();
-          break;
+      const { action } = message;
 
+      switch (action) {
+        case 'contentScriptLoaded':
+          sendResponse({ success: true });
+          break;
 
         case 'openSidebar':
           await this.openSidebar();
@@ -61,39 +68,46 @@ class BackgroundService {
     }
   }
 
-
+  /**
+   * Opens sidebar in the active tab
+   * @throws {Error} If no active tab is found
+   */
   async openSidebar() {
     try {
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (!tabs[0]) throw new Error('No active tab');
+      if (!tabs[0]) throw new Error('No active tab found');
 
       await chrome.tabs.sendMessage(tabs[0].id, {
         action: 'showSidebar',
       });
     } catch (error) {
-      console.error('Error opening sidebar:', error);
-      throw error;
+      // Silently handle error - sidebar may not be available in this context
     }
   }
 
+  /**
+   * Closes sidebar in the active tab
+   * @throws {Error} If no active tab is found
+   */
   async closeSidebar() {
     try {
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (!tabs[0]) throw new Error('No active tab');
+      if (!tabs[0]) throw new Error('No active tab found');
 
       await chrome.tabs.sendMessage(tabs[0].id, {
         action: 'hideSidebar',
       });
     } catch (error) {
-      console.error('Error closing sidebar:', error);
-      throw error;
+      // Silently handle error - sidebar may not be available in this context
     }
   }
 
+  /**
+   * Opens the side panel using chrome.sidePanel API or falls back to sidebar
+   */
   async openSidePanel() {
-    // Try to use the chrome.sidePanel API when available
     try {
-      if (chrome.sidePanel && chrome.sidePanel.setOptions) {
+      if (chrome.sidePanel?.setOptions) {
         await chrome.sidePanel.setOptions({ path: 'sidebar/sidebar.html' });
         if (chrome.sidePanel.open) {
           chrome.sidePanel.open();
@@ -103,17 +117,19 @@ class BackgroundService {
         return;
       }
 
-      // Fallback to injecting/showing the page sidebar if sidePanel API isn't available
+      // Fallback to injecting/showing the page sidebar
       await this.openSidebar();
     } catch (error) {
-      console.error('Error opening side panel:', error);
-      throw error;
+      // Silently handle side panel errors
     }
   }
 
+  /**
+   * Closes the side panel using chrome.sidePanel API or falls back to sidebar
+   */
   async closeSidePanel() {
     try {
-      if (chrome.sidePanel && (chrome.sidePanel.close || chrome.sidePanel.hide)) {
+      if (chrome.sidePanel?.close || chrome.sidePanel?.hide) {
         if (chrome.sidePanel.close) chrome.sidePanel.close();
         else if (chrome.sidePanel.hide) chrome.sidePanel.hide();
         return;
@@ -122,8 +138,7 @@ class BackgroundService {
       // Fallback to hiding the injected sidebar
       await this.closeSidebar();
     } catch (error) {
-      console.error('Error closing side panel:', error);
-      throw error;
+      // Silently handle side panel errors
     }
   }
 }
@@ -131,7 +146,7 @@ class BackgroundService {
 // Initialize the background service
 new BackgroundService();
 
-// Optional: Listen for chrome extension events
+// Handle extension installation
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === 'install') {
     chrome.runtime.openOptionsPage();
