@@ -1,16 +1,21 @@
 {
   "manifest_version": 3,
-  "name": "YouTube Music Playlist Refresher",
+  "name": "YouTube Music +",
   "version": "1.0",
-  "description": "A Chrome extension to refresh YouTube Music playlists by replacing Unavailable tracks.",
+  "description": "A Chrome extension to add additional capabilities and utilities for YouTube Music. It provides utilities to remove unavailable tracks from playlist, find replacements to unavailble tracks etc.",
   "action": {
     "default_popup": "popup/popup.html",
     "default_icon": {
-      "16": "icons/favicon.ico",
-      "48": "icons/favicon.ico",
-      "128": "icons/favicon.ico"
+      "16": "icons/favicon-96x96.png",
+      "48": "icons/favicon-96x96.png",
+      "128": "icons/favicon-96x96.png"
     },
     "default_title": "YouTube Music Refresher"
+  },
+  "icons": {
+    "16": "icons/favicon-96x96.png",
+    "48": "icons/favicon-96x96.png",
+    "128": "icons/favicon-96x96.png"
   },
   "background": {
     "type": "module",
@@ -56,10 +61,5 @@
       ],
       "matches": ["https://music.youtube.com/*"]
     }
-  ],
-  "icons": {
-    "16": "icons/icon16.ico",
-    "48": "icons/icon48.ico",
-    "128": "icons/icon128.ico"
-  }
+  ]
 }
