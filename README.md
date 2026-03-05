@@ -31,18 +31,18 @@ Have you ever opened a YouTube Music playlist only to find that some of the song
 1.  **Open a Playlist:** Navigate to any of your playlists on music.youtube.com.
 2.  **Open the Extension:** Click on the extension icon in your navigation bar or below the play icon of playlist. It may take couple of seconds to show the buttons as the extension captures essesntial information for the API calls to work properly.
 
-    ![Screenshot of opening the extension](/images/Extension%20buttons.png)
+    ![Screenshot of opening the extension](/images/1.%20Extension%20buttons.png)
 3. **Select a playlist:** From the list of playlists that you have access to edit, choose one to edit. If you are on a plylist page, it will be auto selected.
-    ![Screenshot of selecting a playlist](/images/Editable%20playlists.png)
+    ![Screenshot of selecting a playlist](/images/2.%20Editable%20playlists.png)
 
 
 4.  **Scan for Unavailable Tracks:** Click the "Find Unavailable Tracks" button. This will find unavailable tracks and their replacements.
 
-    ![Screenshot of scanning a playlist](/images/Find%20and%20replace.png)
+    ![Screenshot of scanning a playlist](/images/3.%20Find%20and%20replace.png)
 
 5.  **Replace Unavailable Tracks:** Once the scan is complete, click the "Replace Selected" button.
 
-    ![Screenshot of replacing tracks](/images/Replacing.png)
+    ![Screenshot of replacing tracks](/images/4.%20Replacing.png)
 
 6. **Other Options:** You can also choose to only remove the selected tracks, or only add the replacements.
 
