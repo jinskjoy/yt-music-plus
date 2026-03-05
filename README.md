@@ -29,7 +29,7 @@ Have you ever opened a YouTube Music playlist only to find that some of the song
 ## How to Use
 
 1.  **Open a Playlist:** Navigate to any of your playlists on music.youtube.com.
-2.  **Open the Extension:** Click on the extension icon in your navigation bar or below the play icon of playlist.
+2.  **Open the Extension:** Click on the extension icon in your navigation bar or below the play icon of playlist. It may take couple of seconds to show the buttons as the extension captures essesntial information for the API calls to work properly.
 
     ![Screenshot of opening the extension](/images/Extension%20buttons.png)
 3. **Select a playlist:** From the list of playlists that you have access to edit, choose one to edit. If you are on a plylist page, it will be auto selected.
