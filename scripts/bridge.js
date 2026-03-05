@@ -404,7 +404,7 @@ import { UIHelper } from '../utils/ui-helper.js';
      * @param {Array} items - Playlist items to process
      */
     async processPlaylistItems(items) {
-      const itemsToProcess = items.slice(0, 10);
+      const itemsToProcess = items;
       this.clearPlaylistItemsContainer();
 
       let i = 1;
@@ -783,7 +783,6 @@ import { UIHelper } from '../utils/ui-helper.js';
     try {
       if (event.data?.type === 'EXT_SETTINGS') {
         window.bridgeInstance.extSettings = event.data.settings;
-        window.bridgeInstance.showTriggerButtons();
       }
     } catch (error) {
       // Handle message errors silently
