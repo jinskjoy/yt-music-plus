@@ -77,13 +77,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 4px;
-    transition: all 0.2s ease;
+border-radius: 0;
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
 
 .close-btn:hover {
     background-color: #f0f0f0;
     color: #333;
+    transform: translateY(-1px);
 }
 
 .close-btn:active {
@@ -193,16 +194,16 @@
 .btn {
     padding: 8px 16px;
     border: none;
-    border-radius: 20px;
+    border-radius: 0;
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background-color 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
     white-space: nowrap;
 }
 
 .btn:hover {
-    opacity: 0.9;
+    opacity: 0.95;
     transform: translateY(-1px);
 }
 
@@ -665,7 +666,7 @@
 }
 .warning-message {
     background-color: #fff3cd;
-    color: #856404;
+    color: #000;
     padding: 12px;
     border-radius: 4px;
     border: 1px solid #ffeeba;

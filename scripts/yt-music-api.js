@@ -7,6 +7,9 @@ import { UIHelper } from '../utils/ui-helper.js';
 export class YTMusicAPI {
   // Constants
   static INNERTUBE_ENDPOINT = 'https://music.youtube.com';
+  static PLAYLIST_BROWSE_IDS = [
+    'FEmusic_liked_playlists'
+  ];
   static SIMILARITY_THRESHOLD = 0.5;
   static FILTER_TEXTS = [', ', ' & ', ' - ', 'Song', 'Video', ' • '];
 
@@ -36,11 +39,15 @@ export class YTMusicAPI {
       url.searchParams.append(key, value);
     });
 
+    const headers = {};
+    if (this.authToken) {
+      headers.Authorization = this.authToken;
+    }
+
     const response = await fetch(url, {
       method: 'GET',
-      headers: {
-        'Authorization': this.authToken || ''
-      }
+      credentials: 'same-origin',
+      headers
     });
 
     if (!response.ok) {
@@ -60,13 +67,19 @@ export class YTMusicAPI {
   async makePostRequest(endpoint, body = {}) {
     const url = this.baseURL + endpoint;
 
+    const headers = {
+      'Content-Type': 'application/json',
+      accept: '*/*'
+    };
+
+    if (this.authToken) {
+      headers.Authorization = this.authToken;
+    }
+
     const response = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'accept': '*/*',
-        'Authorization': this.authToken || ''
-      },
+      credentials: 'same-origin',
+      headers,
       body: JSON.stringify(body)
     });
 
@@ -90,17 +103,37 @@ export class YTMusicAPI {
    * @async
    * @returns {Promise<Array>} Array of playlist objects
    */
-  async getEditablePlaylists() {
-    try {
-      const response = await this.makePostRequest('/youtubei/v1/browse?prettyPrint=false', {
-        context: window.ytcfg.data_.INNERTUBE_CONTEXT,
-        browseId: 'FEmusic_liked_playlists'
-      });
+  getInnertubeContext() {
+    return window.ytcfg?.data_?.INNERTUBE_CONTEXT || window.ytcfg?.INNERTUBE_CONTEXT || {};
+  }
 
-      return this.parseEditablePlaylistsFromResponse(response);
-    } catch (error) {
-      throw error;
+  async fetchBrowsePlaylists(browseId) {
+    return this.makePostRequest('/youtubei/v1/browse?prettyPrint=false', {
+      context: this.getInnertubeContext(),
+      browseId: browseId
+    });
+  }
+
+  async getEditablePlaylists() {
+    let lastError = null;
+
+    for (const browseId of YTMusicAPI.PLAYLIST_BROWSE_IDS) {
+      try {
+        const response = await this.fetchBrowsePlaylists(browseId);
+        const playlists = this.parseEditablePlaylistsFromResponse(response);
+        if (playlists.length > 0) {
+          return playlists;
+        }
+      } catch (error) {
+        lastError = error;
+      }
     }
+
+    if (lastError) {
+      throw lastError;
+    }
+
+    return [];
   }
 
   /**
@@ -110,46 +143,40 @@ export class YTMusicAPI {
    */
   parseEditablePlaylistsFromResponse(data) {
     const playlists = [];
+    if (!data) {
+      return playlists;
+    }
 
     try {
-      const items = data?.contents?.singleColumnBrowseResultsRenderer?.tabs?.[0]?.tabRenderer?.content
-        ?.sectionListRenderer?.contents?.[0]?.gridRenderer?.items || [];
+      const sections = data?.contents?.singleColumnBrowseResultsRenderer?.tabs?.[0]?.tabRenderer?.content
+        ?.sectionListRenderer?.contents || [];
+
+      const items = [];
+      sections.forEach((section) => {
+        if (section?.gridRenderer?.items) {
+          items.push(...section.gridRenderer.items);
+        }
+
+        if (section?.musicShelfRenderer?.contents) {
+          items.push(...section.musicShelfRenderer.contents);
+        }
+
+        if (section?.itemSectionRenderer?.contents) {
+          items.push(...section.itemSectionRenderer.contents);
+        }
+
+        if (section?.carouselShelfRenderer?.contents) {
+          items.push(...section.carouselShelfRenderer.contents);
+        }
+      });
 
       items.forEach((item) => {
-        const renderer = item?.musicTwoRowItemRenderer;
+        const renderer = item?.musicTwoRowItemRenderer || this.findRenderer(item, 'musicTwoRowItemRenderer');
         if (!renderer) return;
 
-        // Check for edit permissions
-        const menu = renderer?.menu?.menuRenderer?.items || [];
-        const hasEditPermission = menu.some((menuItem) =>
-          menuItem?.menuNavigationItemRenderer?.navigationEndpoint?.playlistEditorEndpoint?.playlistId
-        );
-
-        if (!hasEditPermission) return;
-
-        // Extract playlist ID
-        let playlistId = null;
-        menu.forEach((menuItem) => {
-          if (menuItem?.menuNavigationItemRenderer?.navigationEndpoint?.playlistEditorEndpoint?.playlistId) {
-            playlistId = menuItem.menuNavigationItemRenderer.navigationEndpoint.playlistEditorEndpoint.playlistId;
-          }
-        });
-
-        // Extract playlist details
-        const title = renderer?.title?.runs?.[0]?.text || '';
-        const subtitleRuns = renderer?.subtitle?.runs || [];
-        const subtitle = subtitleRuns.map((run) => run?.text || '').join('').trim();
-        const owner = subtitleRuns?.[0]?.text || '';
-        const thumbnail = renderer?.thumbnailRenderer?.musicThumbnailRenderer?.thumbnail?.thumbnails?.pop()?.url || '';
-
-        if (title && playlistId) {
-          playlists.push({
-            id: playlistId,
-            title: title,
-            subtitle: subtitle,
-            owner: owner,
-            thumbnail: thumbnail
-          });
+        const playlist = this.extractPlaylistFromMusicTwoRowRenderer(renderer);
+        if (playlist) {
+          playlists.push(playlist);
         }
       });
     } catch (error) {
@@ -157,6 +184,92 @@ export class YTMusicAPI {
     }
 
     return playlists;
+  }
+
+  findRenderer(obj, key) {
+    if (!obj || typeof obj !== 'object') {
+      return null;
+    }
+
+    if (obj[key]) {
+      return obj[key];
+    }
+
+    for (const value of Object.values(obj)) {
+      if (typeof value === 'object') {
+        const found = this.findRenderer(value, key);
+        if (found) {
+          return found;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  extractPlaylistFromMusicTwoRowRenderer(renderer) {
+    const menuItems = renderer?.menu?.menuRenderer?.items || [];
+    const playlistId = this.getPlaylistIdFromMenuItems(menuItems);
+    if (!playlistId) {
+      return null;
+    }
+
+    const title = this.parseTextField(renderer?.title);
+    if (!title) {
+      return null;
+    }
+
+    const subtitleRuns = renderer?.subtitle?.runs || [];
+    const subtitle = subtitleRuns.map((run) => run?.text || '').join('').trim();
+    const owner = subtitleRuns?.[0]?.text || '';
+    const thumbnail = renderer?.thumbnailRenderer?.musicThumbnailRenderer?.thumbnail?.thumbnails?.slice(-1)?.[0]?.url || '';
+
+    return {
+      id: playlistId,
+      title,
+      subtitle,
+      owner,
+      thumbnail
+    };
+  }
+
+  getPlaylistIdFromMenuItems(menuItems) {
+    for (const menuItem of menuItems) {
+      const endpoint = menuItem?.menuNavigationItemRenderer?.navigationEndpoint || menuItem?.navigationEndpoint;
+      if (!endpoint) {
+        continue;
+      }
+
+      const playlistId = endpoint?.playlistEditorEndpoint?.playlistId
+        || endpoint?.playlistEditEndpoint?.playlistId
+        || endpoint?.browseEndpoint?.browseId;
+
+      if (playlistId) {
+        return playlistId;
+      }
+    }
+
+    return null;
+  }
+
+  parseTextField(field) {
+    if (!field) {
+      return '';
+    }
+
+    if (typeof field === 'string') {
+      return field;
+    }
+
+    if (field.simpleText) {
+      return field.simpleText;
+    }
+
+    if (Array.isArray(field.runs)) {
+      return field.runs.map((run) => run?.text || '').join('');
+    }
+
+    return '';
   }
 
   /**
@@ -168,7 +281,7 @@ export class YTMusicAPI {
   async getContinuationItems(continuationToken) {
     try {
       const response = await this.makePostRequest('/youtubei/v1/browse?prettyPrint=false', {
-        context: window.ytcfg.data_.INNERTUBE_CONTEXT,
+        context: this.getInnertubeContext(),
         continuation: continuationToken
       });
 
@@ -187,7 +300,7 @@ export class YTMusicAPI {
   async getPlaylistItems(playlistId) {
     try {
       const response = await this.makePostRequest('/youtubei/v1/browse?prettyPrint=false', {
-        context: window.ytcfg.data_.INNERTUBE_CONTEXT,
+        context: this.getInnertubeContext(),
         browseId: `VL${playlistId}`
       });
 
@@ -306,7 +419,7 @@ export class YTMusicAPI {
 
     try {
       const response = await this.makePostRequest('/youtubei/v1/search?prettyPrint=false', {
-        context: window.ytcfg.data_.INNERTUBE_CONTEXT,
+        context: this.getInnertubeContext(),
         query: queryString.trim()
       });
 
@@ -476,7 +589,7 @@ export class YTMusicAPI {
   async addItemToPlaylist(playlistId, videoId) {
     try {
       const response = await this.makePostRequest('/youtubei/v1/browse/edit_playlist?prettyPrint=false', {
-        context: window.ytcfg.data_.INNERTUBE_CONTEXT,
+        context: this.getInnertubeContext(),
         actions: [
           {
             action: 'ACTION_ADD_VIDEO',
@@ -504,7 +617,7 @@ export class YTMusicAPI {
   async removeItemFromPlaylist(playlistId, videoId, playlistSetVideoId) {
     try {
       const response = await this.makePostRequest('/youtubei/v1/browse/edit_playlist?prettyPrint=false', {
-        context: window.ytcfg.data_.INNERTUBE_CONTEXT,
+        context: this.getInnertubeContext(),
         actions: [
           {
             action: 'ACTION_REMOVE_VIDEO',

@@ -32,12 +32,13 @@
   cursor: pointer;
   color: #ffffff;
   padding: 4px 8px;
-  border-radius: 4px;
-  transition: all 0.2s ease;
+border-radius: 0;
+	transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
 .close-btn:hover {
   background: #333333;
+  transform: translateY(-1px);
 }
 
 .sidebar-content {
@@ -164,11 +165,11 @@
   background: #ffffff;
   color: #000000;
   border: none;
-  border-radius: 8px;
+  border-radius: 0;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .btn-primary:hover {

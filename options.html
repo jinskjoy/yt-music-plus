@@ -123,11 +123,11 @@
     button {
       padding: 10px 24px;
       border: none;
-      border-radius: 6px;
+      border-radius: 0;
       font-size: 14px;
       font-weight: 500;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
     }
 
     .btn-save {
@@ -152,6 +152,7 @@
 
     .btn-reset:hover {
       background: #444444;
+      transform: translateY(-1px);
     }
 
     .status-message {

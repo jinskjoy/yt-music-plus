@@ -2,6 +2,8 @@
  * UIHelper - Handles UI utilities and helper functions
  */
 export class UIHelper {
+  static ISSUE_URL = 'https://github.com/jinskjoy/yt-music-plus/issues';
+
   /* --------------------------------------------------------------------------
    * Core DOM helpers (private)
    * --------------------------------------------------------------------------
@@ -582,7 +584,22 @@ export class UIHelper {
    * @returns {HTMLElement}
    */
   static createNoPlaylistsMessage() {
-    const msg = UIHelper._createElement('div', { text: 'No editable playlists found' });
+    const msg = UIHelper._createElement('div');
+    msg.appendChild(
+      UIHelper._createElement('span', {
+        text: 'No editable playlists found. Google changes their API frequently, if you think this is not correct, please report an issue on ',
+      })
+    );
+    msg.appendChild(
+      UIHelper._createElement('a', {
+        text: 'GitHub',
+        attrs: {
+          href: UIHelper.ISSUE_URL,
+          target: '_blank',
+          rel: 'noopener noreferrer',
+        },
+      })
+    );
     Object.assign(msg.style, {
       gridColumn: '1/-1',
       padding: '20px',
