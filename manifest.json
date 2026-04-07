@@ -27,10 +27,7 @@
   "options_page": "options.html",
   "permissions": [
     "activeTab",
-    "scripting",
-    "storage",
-    "tabs",
-    "alarms"
+    "storage"
   ],
   "host_permissions": [
     "https://music.youtube.com/*"

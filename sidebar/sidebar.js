@@ -1,6 +1,7 @@
 import { StorageManager } from '../utils/storage.js';
 import { MessageManager } from '../utils/messages.js';
 import { DOMHelper } from '../utils/dom-helper.js';
+import { UIHelper } from '../utils/ui-helper.js';
 
 /**
  * SidebarController - Manages the sidebar panel interface
@@ -199,7 +200,7 @@ class SidebarController {
   showEmptyState() {
     const listContainer = document.getElementById('playlistList');
     if (listContainer) {
-      listContainer.innerHTML = '<div class="empty-state">No playlists found</div>';
+      listContainer.innerHTML = `<div class="empty-state">No playlists found. If you think this is wrong, please report an issue on <a href="${UIHelper.ISSUE_URL}" target="_blank" rel="noopener noreferrer">GitHub</a>.</div>`;
     }
   }
 
