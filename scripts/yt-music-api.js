@@ -478,7 +478,9 @@ export class YTMusicAPI {
 
     const name = cardShelf?.title?.runs?.[0]?.text || '';
     const thumbnail = cardShelf?.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails?.[0]?.url || '';
-    const videoId = cardShelf?.title?.runs?.[0]?.navigationEndpoint?.watchEndpoint?.videoId || '';
+    const videoId = cardShelf?.title?.runs?.[0]?.navigationEndpoint?.watchEndpoint?.videoId 
+      || cardShelf?.buttons?.[0]?.buttonRenderer?.command?.watchEndpoint?.videoId 
+      || '';
     const subtitleRuns = cardShelf?.subtitle?.runs || [];
     const subtitleText = subtitleRuns.map(run => run.text).join('');
 
@@ -545,7 +547,10 @@ export class YTMusicAPI {
         ?.text?.runs?.[0]?.text || '';
 
       const thumbnailUrl = musicItemRenderer?.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails?.[0]?.url || '';
-      const videoId = musicItemRenderer?.playlistItemData?.videoId || '';
+      const videoId = musicItemRenderer?.playlistItemData?.videoId 
+        || musicItemRenderer?.flexColumns?.[0]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs?.[0]?.navigationEndpoint?.watchEndpoint?.videoId 
+        || musicItemRenderer?.overlay?.musicItemThumbnailOverlayRenderer?.content?.musicPlayButtonRenderer?.playNavigationEndpoint?.watchEndpoint?.videoId 
+        || '';
 
       if (name) {
         return {

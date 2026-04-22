@@ -2,7 +2,7 @@
  * UIHelper - Handles UI utilities and helper functions
  */
 export class UIHelper {
-  static ISSUE_URL = 'https://github.com/jinskjoy/yt-music-plus/issues';
+  static ISSUE_URL = 'https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc/support';
 
   /* --------------------------------------------------------------------------
    * Core DOM helpers (private)
@@ -229,7 +229,7 @@ export class UIHelper {
     if (media.url) {
       const link = UIHelper._createElement('a', {
         classes: 'media-link',
-        attrs: { href: media.url, target: '_blank' },
+        attrs: { href: media.url, target: 'yt-music-plus-preview' },
       });
       link.appendChild(
         UIHelper._createElement('span', {
@@ -288,11 +288,32 @@ export class UIHelper {
     const checkboxCol = makeCol('grid-col-checkbox');
     const checkbox = UIHelper._createElement('input', { attrs: { type: 'checkbox' } });
     checkbox.classList.add('item-checkbox');
-    checkbox.checked = !!replacementMedia;
+
+    const isListOnlyMode = document.querySelector('.items-grid-wrapper')?.classList.contains('list-only-mode');
+    const hasReplacement = replacementMedia && replacementMedia.videoId;
+    const isPending = replacementMedia && replacementMedia.isPending;
+    const isGoodMatch = replacementMedia ? replacementMedia.isGoodMatch !== false : true;
+
+    checkbox.checked = replacementMedia && replacementMedia.isChecked !== undefined 
+      ? replacementMedia.isChecked 
+      : (!!hasReplacement && isGoodMatch);
+
+    if (!isListOnlyMode && !hasReplacement && !isPending) {
+      checkbox.disabled = true;
+    }
+
     checkboxCol.appendChild(checkbox);
 
     // original
     const originalCol = makeCol('grid-col-original');
+    originalCol.style.cursor = 'pointer';
+    originalCol.addEventListener('click', (e) => {
+      if (e.target.closest('a')) return;
+      if (!checkbox.disabled) {
+        checkbox.checked = !checkbox.checked;
+        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    });
     originalCol.appendChild(UIHelper.createMediaItem(originalMedia));
 
     // replacement
@@ -366,7 +387,13 @@ export class UIHelper {
 
     container.querySelectorAll('.grid-row').forEach((row) => {
       const data = JSON.parse(row.dataset.originalMedia || '{}');
-      if (data.videoId === originalRecord.videoId) row.remove();
+      let isMatch = false;
+      if (data.videoId && originalRecord.videoId) {
+        isMatch = data.videoId === originalRecord.videoId;
+      } else {
+        isMatch = data.name === originalRecord.name;
+      }
+      if (isMatch) row.remove();
     });
   }
 
@@ -387,6 +414,43 @@ export class UIHelper {
     map.forEach(([id, prop, value]) => {
       const el = document.getElementById(id);
       if (el && value != null) el[prop] = value;
+    });
+  }
+
+  /**
+   * Shows error message in the replacement column for a specific item
+   * @param {Object} originalRecord 
+   * @param {string} errorMessage 
+   * @param {string} containerId 
+   */
+  static showErrorInGridRow(originalRecord, errorMessage, containerId = 'yt-music-plus-itemsGridContainer') {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    container.querySelectorAll('.grid-row').forEach((row) => {
+      const data = JSON.parse(row.dataset.originalMedia || '{}');
+      let isMatch = false;
+      if (data.videoId && originalRecord.videoId) {
+        isMatch = data.videoId === originalRecord.videoId;
+      } else {
+        isMatch = data.name === originalRecord.name;
+      }
+      if (isMatch) {
+        const replacementCol = row.querySelector('.grid-col-replacement');
+        if (replacementCol) {
+          if (replacementCol.querySelector('.error-message')) return;
+
+          const errorDiv = UIHelper._createElement('div', {
+            classes: 'error-message',
+            text: `Error: ${errorMessage}`
+          });
+          errorDiv.style.color = 'red';
+          errorDiv.style.fontSize = '12px';
+          errorDiv.style.fontWeight = '500';
+          errorDiv.style.marginTop = '4px';
+          replacementCol.appendChild(errorDiv);
+        }
+      }
     });
   }
   /**
@@ -592,7 +656,7 @@ export class UIHelper {
     );
     msg.appendChild(
       UIHelper._createElement('a', {
-        text: 'GitHub',
+        text: 'the Chrome Web Store',
         attrs: {
           href: UIHelper.ISSUE_URL,
           target: '_blank',

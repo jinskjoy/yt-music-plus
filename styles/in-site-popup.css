@@ -87,6 +87,17 @@ border-radius: 0;
     transform: translateY(-1px);
 }
 
+.report-issue-link {
+    color: grey;
+    text-decoration: none;
+    font-size: 13px;
+}
+
+.report-issue-link:hover {
+    color: darkgrey;
+    text-decoration: none;
+}
+
 .close-btn:active {
     background-color: #e0e0e0;
 }
@@ -217,21 +228,23 @@ border-radius: 0;
 }
 
 .btn-primary {
-    background-color: var(--yt-spec-dark-green);
+    background-color: black;
     color: white;
+    border: 1px solid black;
 }
 
 .btn-primary:hover:not(:disabled) {
-    background-color: var(--light-theme-base-color);
+    background-color: white;
+    color: black;
 }
 
 .btn-danger {
-    background-color: var(--error-color);
+    background-color: red;
     color: white;
 }
 
 .btn-danger:hover:not(:disabled) {
-    background-color: var(--error-color);
+    background-color: darkred;
 }
 
 .btn-toggle {
@@ -257,8 +270,15 @@ border-radius: 0;
 /* Playlist Action Buttons */
 .playlist-action-buttons {
     display: flex;
+    flex-direction: column;
     gap: 8px;
     margin-top: 12px;
+}
+
+.action-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
 }
 
 /* Grid Wrapper and Container */
@@ -310,6 +330,13 @@ border-radius: 0;
 
 .grid-row:hover {
     background-color: #fafafa;
+}
+
+/* List only mode (hide replacement column) */
+.list-only-mode .grid-col-replacement,
+.list-only-mode .grid-header-replacement {
+    opacity: 0 !important;
+    pointer-events: none;
 }
 
 .grid-row:last-child {

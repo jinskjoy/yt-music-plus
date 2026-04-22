@@ -117,6 +117,45 @@ class ContentScriptController {
       popupContainer.className = 'yt-music-extended-popup-container-holder hidden';
       popupContainer.id = 'yt-music-plus-popup';
       popupContainer.innerHTML = htmlText;
+
+      // Inject 'Report a problem' link before the close button
+      const closeBtn = popupContainer.querySelector('#closePopupBtn') || popupContainer.querySelector('.close-btn');
+      if (closeBtn && closeBtn.parentNode) {
+        const actionsWrapper = document.createElement('div');
+        actionsWrapper.className = 'header-actions-wrapper';
+        actionsWrapper.style.display = 'flex';
+        actionsWrapper.style.alignItems = 'center';
+        actionsWrapper.style.gap = '16px';
+
+        closeBtn.parentNode.insertBefore(actionsWrapper, closeBtn);
+
+        const reportLink = document.createElement('a');
+        reportLink.href = 'https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc/support';
+        reportLink.target = '_blank';
+        reportLink.rel = 'noopener noreferrer';
+        reportLink.textContent = 'Report a problem';
+        reportLink.className = 'report-issue-link';
+        actionsWrapper.appendChild(reportLink);
+        actionsWrapper.appendChild(closeBtn);
+      }
+
+      // Convert main popup title to a link to the Chrome Web Store
+      const popupMainTitle = popupContainer.querySelector('.popup-header h2') || 
+                             Array.from(popupContainer.querySelectorAll('h2')).find(el => el.id !== 'popupTitle');
+      
+      if (popupMainTitle) {
+        const originalHTML = popupMainTitle.innerHTML;
+        popupMainTitle.innerHTML = '';
+        const titleLink = document.createElement('a');
+        titleLink.href = 'https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc';
+        titleLink.target = '_blank';
+        titleLink.rel = 'noopener noreferrer';
+        titleLink.innerHTML = originalHTML;
+        titleLink.style.textDecoration = 'none';
+        titleLink.style.color = 'inherit';
+        popupMainTitle.appendChild(titleLink);
+      }
+
       document.body.appendChild(popupContainer);
 
       this.setupPopupListeners();
@@ -136,7 +175,7 @@ class ContentScriptController {
     const selectAllCheckbox = popupElement.querySelector('#yt-music-plus-selectAllCheckbox');
     if (selectAllCheckbox) {
       selectAllCheckbox.addEventListener('change', (e) => {
-        const checkboxes = popupElement.querySelectorAll('.item-checkbox');
+        const checkboxes = popupElement.querySelectorAll('.item-checkbox:not([disabled])');
         checkboxes.forEach(cb => cb.checked = e.target.checked);
       });
     }
@@ -144,7 +183,8 @@ class ContentScriptController {
     // Individual checkbox change handler with delegation
     popupElement.addEventListener('change', (e) => {
       const isRelevantCheckbox = e.target.classList.contains('item-checkbox') ||
-                                  e.target.classList.contains('select-all-checkbox');
+                                  e.target.classList.contains('select-all-checkbox') ||
+                                  e.target.id === 'yt-music-plus-selectAllCheckbox';
       if (isRelevantCheckbox) {
         this.updateCheckAllCheckbox();
       }
@@ -166,16 +206,34 @@ class ContentScriptController {
     if (!popupElement) return;
 
     const selectAllCheckbox = popupElement.querySelector('#yt-music-plus-selectAllCheckbox');
-    const checkboxes = popupElement.querySelectorAll('.item-checkbox');
+    const checkboxes = popupElement.querySelectorAll('.item-checkbox:not([disabled])');
+    const allCheckboxes = popupElement.querySelectorAll('.item-checkbox');
     
     // Update select-all checkbox state
-    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
-    selectAllCheckbox.checked = allChecked;
+    if (selectAllCheckbox) {
+      selectAllCheckbox.checked = checkboxes.length > 0 && Array.from(checkboxes).every(cb => cb.checked);
+    }
 
     // Enable/disable action buttons based on selection
-    const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
-    const actionButtons = popupElement.querySelectorAll('.action-buttons-container button');
-    actionButtons.forEach(btn => btn.disabled = !anyChecked);
+    const anyChecked = Array.from(allCheckboxes).some(cb => cb.checked);
+    const anyCheckedWithReplacement = Array.from(allCheckboxes).some(cb => {
+      if (!cb.checked) return false;
+      const row = cb.closest('.grid-row');
+      if (!row) return false;
+      const replacement = JSON.parse(row.dataset.replacementMedia || '{}');
+      return !!replacement.videoId;
+    });
+
+    const isListOnlyMode = popupElement.querySelector('.items-grid-wrapper')?.classList.contains('list-only-mode');
+
+    const removeBtn = popupElement.querySelector('#removeSelectedBtn');
+    if (removeBtn) removeBtn.disabled = !anyChecked;
+
+    const addBtn = popupElement.querySelector('#addSelectedBtn');
+    if (addBtn) addBtn.disabled = isListOnlyMode ? true : !anyCheckedWithReplacement;
+
+    const replaceBtn = popupElement.querySelector('#replaceSelectedBtn');
+    if (replaceBtn) replaceBtn.disabled = isListOnlyMode ? true : !anyCheckedWithReplacement;
   }
 
   /**
