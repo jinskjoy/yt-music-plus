@@ -80,10 +80,12 @@ import { UIHelper } from '../utils/ui-helper.js';
       this.currentSelectedPlaylist = null;
       this.playlistsCache = [];
       this.isReloadDisabled = false;
+      this.localTracks = [];
       this.extSettings = {
         showPlaylistButton: true,
         showNavButton: true
       };
+      this.cancelSearch = false;
       this.preventUnloadListener = (e) => {
         if (this.isReloadDisabled) {
           e.preventDefault();
@@ -257,6 +259,24 @@ import { UIHelper } from '../utils/ui-helper.js';
       this.attachButtonListener('replaceSelectedBtn', () => this.replaceSelectedItems());
       this.attachButtonListener('addSelectedBtn', () => this.addSelectedItems());
       this.attachButtonListener('removeSelectedBtn', () => this.removeSelectedItems());
+      this.attachButtonListener('importFromFolderBtn', () => this.importFromFolder());
+      this.attachButtonListener('findLocalReplacementsBtn', () => this.findReplacementsForLocalTracks());
+      
+      // Inject List All Tracks button if not present
+      const findUnavailableBtn = document.getElementById('findUnavailableBtn');
+      if (findUnavailableBtn && findUnavailableBtn.parentNode && !document.getElementById('listAllTracksBtn')) {
+        const listBtn = document.createElement('button');
+        listBtn.id = 'listAllTracksBtn';
+        listBtn.className = 'btn btn-primary';
+        listBtn.textContent = 'List All Tracks';
+        findUnavailableBtn.parentNode.insertBefore(listBtn, findUnavailableBtn.nextSibling);
+      }
+      this.attachButtonListener('listAllTracksBtn', () => this.listAllTracks());
+
+      this.attachButtonListener('cancelSearchBtn', () => {
+        this.cancelSearch = true;
+        this.setProgressText('Cancelling search... Please wait.');
+      });
     }
 
     /**
@@ -274,11 +294,17 @@ import { UIHelper } from '../utils/ui-helper.js';
     /**
      * Toggles search progress indicator visibility
      * @param {boolean} show - Whether to show the indicator
+     * @param {boolean} isSearch - Whether the operation is an active search
      */
-    toggleSearchProgress(show) {
+    toggleSearchProgress(show, isSearch = false) {
       const el = document.getElementById('searchProgress');
       if (el) {
         el.classList.toggle('hidden', !show);
+      }
+
+      const cancelBtn = document.getElementById('cancelSearchBtn');
+      if (cancelBtn) {
+        cancelBtn.classList.toggle('hidden', !(show && isSearch));
       }
 
       // Disable/enable buttons during search
@@ -288,7 +314,10 @@ import { UIHelper } from '../utils/ui-helper.js';
         'replaceSelectedBtn',
         'addSelectedBtn',
         'removeSelectedBtn',
-        'backButton'
+        'backButton',
+        'importFromFolderBtn',
+        'findLocalReplacementsBtn',
+        'listAllTracksBtn'
       ];
 
       buttonIds.forEach(id => {
@@ -384,6 +413,20 @@ import { UIHelper } from '../utils/ui-helper.js';
         selectionScreen.classList.add('hidden');
       }
 
+      // Reset button visibility for local import feature
+      document.getElementById('findLocalReplacementsBtn')?.classList.add('hidden');
+      document.getElementById('findUnavailableBtn')?.classList.remove('hidden');
+      document.getElementById('findVideoTracksBtn')?.classList.remove('hidden');
+      document.getElementById('importFromFolderBtn')?.classList.remove('hidden');
+      document.getElementById('listAllTracksBtn')?.classList.remove('hidden');
+      
+      // Ensure action buttons are visible for normal playlists
+      document.getElementById('replaceSelectedBtn')?.classList.remove('hidden');
+      document.getElementById('removeSelectedBtn')?.classList.remove('hidden');
+      document.getElementById('addSelectedBtn')?.classList.remove('hidden');
+
+      this.localTracks = [];
+
       this.updatePopupTitle(`Playlist: ${playlist.title}`);
     }
 
@@ -404,46 +447,84 @@ import { UIHelper } from '../utils/ui-helper.js';
      * @param {Array} items - Playlist items to process
      */
     async processPlaylistItems(items) {
+      this.cancelSearch = false;
       const itemsToProcess = items;
       this.clearPlaylistItemsContainer();
 
       let i = 1;
       for (const item of itemsToProcess) {
+        item.isSearching = true;
+        item.searchCancelled = false;
+        item.replacement = null;
+        this.addItem(item, Bridge.BASE_URL, i++);
+      }
+
+      i = 1;
+      for (const item of itemsToProcess) {
+        if (this.cancelSearch) {
+          this.setProgressText('Search cancelled.');
+          break;
+        }
+
         this.setProgressText(`Processing track ${i} of ${itemsToProcess.length}`);
 
         try {
           const searchResult = await this.ytMusicAPI.searchMusic(item);
           const bestSearchResult = this.ytMusicAPI.getBestSearchResult(searchResult, item);
           item.replacement = bestSearchResult;
-          this.addItem(item, Bridge.BASE_URL, i++);
         } catch (error) {
           // Skip items that fail to process
+          item.replacement = null;
         }
+        
+        item.isSearching = false;
+        this.updateItemRow(item, Bridge.BASE_URL, i++);
 
         await this.sleep(Bridge.TIMEOUT_DURATION);
       }
+      
+      if (this.cancelSearch) {
+        for (let j = i; j <= itemsToProcess.length; j++) {
+          itemsToProcess[j - 1].isSearching = false;
+          itemsToProcess[j - 1].searchCancelled = true;
+          this.updateItemRow(itemsToProcess[j - 1], Bridge.BASE_URL, j);
+        }
+      }
 
       this.setFinalProgressText(itemsToProcess);
+      this.updateCheckAllCheckbox();
     }
 
     /**
      * Sets final progress message after processing
-     * @param {Array} greyedOutItems - Processed items
+     * @param {Array} processedItems - Processed items
      */
-    setFinalProgressText(greyedOutItems) {
-      if (greyedOutItems.length === 0) {
-        this.setProgressText('Processing complete. No unavailable tracks found.');
+    setFinalProgressText(processedItems) {
+      if (processedItems.length === 0) {
+        this.setProgressText('Processing complete. No items were processed.');
         return;
       }
 
-      let progressText = `Processing complete. Found ${greyedOutItems.length} unavailable tracks and their replacements.`;
-      const hasBadMatches = greyedOutItems.some(item => item.replacement && !item.replacement.isGoodMatch);
+      const searchedItems = processedItems.filter(item => !item.isSearching && !item.searchCancelled);
+      const isLocalImport = processedItems.some(item => item.isLocal);
+      let foundCountText;
+
+      if (isLocalImport) {
+        const replacedCount = searchedItems.filter(item => item.replacement).length;
+        foundCountText = `Found replacements for ${replacedCount} of ${searchedItems.length} local tracks.`;
+      } else {
+        foundCountText = `Found ${searchedItems.length} unavailable tracks and their replacements.`;
+      }
+
+      let progressText = this.cancelSearch ? `Search cancelled. ${foundCountText}` : `Processing complete. ${foundCountText}`;
+      const hasBadMatches = searchedItems.some(item => item.replacement && !item.replacement.isGoodMatch);
 
       if (hasBadMatches) {
         progressText += ' Some replacements may not be good matches, please review carefully.';
       }
 
       this.setProgressText(progressText);
+      document.getElementById('findLocalReplacementsBtn')?.classList.add('hidden');
     }
 
     /**
@@ -454,6 +535,43 @@ import { UIHelper } from '../utils/ui-helper.js';
       if (container) {
         container.replaceChildren();
       }
+      document.querySelector('.items-grid-wrapper')?.classList.remove('list-only-mode');
+    }
+
+    /**
+     * Creates original and replacement media objects appropriately formatted for UI
+     * @param {Object} item - Item
+     * @param {string} baseUrl - Base URL for video links
+     * @returns {Object} { originalMedia, replacementMedia }
+     */
+    _createMediaObjects(item, baseUrl) {
+      const originalMedia = {
+        name: item.name,
+        artist: item.artists?.join(', ') || '',
+        thumbnail: item.thumbnail,
+        url: item.videoId ? baseUrl + item.videoId : null,
+        videoId: item.videoId,
+        playlistSetVideoId: item.playlistSetVideoId
+      };
+
+      let replacementMedia = null;
+      if (item.isSearching) {
+        replacementMedia = { name: 'Waiting for search...', isPending: true };
+      } else if (item.searchCancelled) {
+        replacementMedia = { name: 'Search cancelled', isCancelled: true };
+      } else if (item.replacement) {
+        replacementMedia = {
+          name: item.replacement.name,
+          artist: item.replacement.artists?.join(', ') || '',
+          thumbnail: item.replacement.thumbnail,
+          url: baseUrl + item.replacement.videoId,
+          isGoodMatch: item.replacement.isGoodMatch,
+          videoId: item.replacement.videoId,
+          playlistSetVideoId: item.replacement.playlistSetVideoId
+        };
+      }
+
+      return { originalMedia, replacementMedia };
     }
 
     /**
@@ -464,29 +582,28 @@ import { UIHelper } from '../utils/ui-helper.js';
      * @returns {number} Next index
      */
     addItem(item, baseUrl, index) {
-      const originalMedia = {
-        name: item.name,
-        artist: item.artists?.join(', ') || '',
-        thumbnail: item.thumbnail,
-        url: baseUrl + item.videoId,
-        videoId: item.videoId,
-        playlistSetVideoId: item.playlistSetVideoId
-      };
-
-      const replacementMedia = item.replacement ? {
-        name: item.replacement.name,
-        artist: item.replacement.artists?.join(', ') || '',
-        thumbnail: item.replacement.thumbnail,
-        url: baseUrl + item.replacement.videoId,
-        isGoodMatch: item.replacement.isGoodMatch,
-        videoId: item.replacement.videoId,
-        playlistSetVideoId: item.replacement.playlistSetVideoId
-      } : null;
+      const { originalMedia, replacementMedia } = this._createMediaObjects(item, baseUrl);
 
       const gridRow = UIHelper.createMediaGridRow(originalMedia, replacementMedia, index);
       document.getElementById('yt-music-plus-itemsGridContainer')?.appendChild(gridRow);
 
       return index + 1;
+    }
+
+    /**
+     * Replaces an existing item row with an updated search state
+     * @param {Object} item - Updated item
+     * @param {string} baseUrl - Base URL
+     * @param {number} index - Row index corresponding to item
+     */
+    updateItemRow(item, baseUrl, index) {
+      const container = document.getElementById('yt-music-plus-itemsGridContainer');
+      const oldRow = container?.querySelector(`.grid-row[data-serial-number="${index}"]`);
+      if (oldRow) {
+        const { originalMedia, replacementMedia } = this._createMediaObjects(item, baseUrl);
+        const newRow = UIHelper.createMediaGridRow(originalMedia, replacementMedia, index);
+        container.replaceChild(newRow, oldRow);
+      }
     }
 
     /**
@@ -506,8 +623,9 @@ import { UIHelper } from '../utils/ui-helper.js';
      * @async
      */
     async findUnavailableTracks() {
+      this.cancelSearch = false;
       this.clearPlaylistItemsContainer();
-      this.toggleSearchProgress(true);
+      this.toggleSearchProgress(true, true);
       this.setProgressText('Finding unavailable tracks...');
 
       try {
@@ -540,8 +658,9 @@ import { UIHelper } from '../utils/ui-helper.js';
      * @async
      */
     async findVideoTracks() {
+      this.cancelSearch = false;
       this.clearPlaylistItemsContainer();
-      this.toggleSearchProgress(true);
+      this.toggleSearchProgress(true, true);
       this.setProgressText('Finding video tracks...');
 
       try {
@@ -561,26 +680,48 @@ import { UIHelper } from '../utils/ui-helper.js';
           return;
         }
 
-        this.clearPlaylistItemsContainer();
         let i = 1;
-
         for (const track of videoTracks) {
           // Clean track name by removing video-specific keywords
           track.name = track.name.replaceAll(/(official\s*)?(music\s*)?video/gi, '').trim();
+          track.isSearching = true;
+          track.searchCancelled = false;
+          track.replacement = null;
+          this.addItem(track, Bridge.BASE_URL, i++);
+        }
+
+        i = 1;
+        for (const track of videoTracks) {
+          if (this.cancelSearch) {
+            this.setProgressText('Search cancelled.');
+            break;
+          }
 
           try {
             const searchResult = await this.ytMusicAPI.searchMusic(track);
             const replacement = this.ytMusicAPI.getBestSearchResult(searchResult, track);
             track.replacement = replacement;
-            this.addItem(track, Bridge.BASE_URL, i++);
           } catch (error) {
             // Skip tracks that fail to process
+            track.replacement = null;
           }
+          
+          track.isSearching = false;
+          this.updateItemRow(track, Bridge.BASE_URL, i++);
 
           await this.sleep(Bridge.TIMEOUT_DURATION);
         }
+        
+        if (this.cancelSearch) {
+          for (let j = i; j <= videoTracks.length; j++) {
+            videoTracks[j - 1].isSearching = false;
+            videoTracks[j - 1].searchCancelled = true;
+            this.updateItemRow(videoTracks[j - 1], Bridge.BASE_URL, j);
+          }
+        }
 
         this.setVideoTrackProgressMessage(videoTracks);
+        this.updateCheckAllCheckbox();
       } catch (error) {
         this.setProgressText('Error occurred while finding video tracks.');
       } finally {
@@ -593,21 +734,80 @@ import { UIHelper } from '../utils/ui-helper.js';
      * @param {Array} videoTracks - Processed video tracks
      */
     setVideoTrackProgressMessage(videoTracks) {
-      const progressText = videoTracks.length > 0 
-        ? `Processing complete. Found ${videoTracks.length} video tracks and their replacements.`
-        : 'Processing complete. No video tracks found.';
+      const searchedTracks = videoTracks.filter(t => !t.isSearching && !t.searchCancelled);
+      const prefix = this.cancelSearch ? 'Search cancelled.' : 'Processing complete.';
+      
+      const progressText = searchedTracks.length > 0 
+        ? `${prefix} Found ${searchedTracks.length} video tracks and their replacements.`
+        : `${prefix} No video tracks were processed.`;
 
-      const countOfReplacements = videoTracks.filter(t => t.replacement).length;
-      const countOfGoodMatches = videoTracks.filter(t => t.replacement?.isGoodMatch).length;
+      const countOfReplacements = searchedTracks.filter(t => t.replacement).length;
+      const countOfGoodMatches = searchedTracks.filter(t => t.replacement?.isGoodMatch).length;
 
-      if (countOfReplacements === 0) {
-        this.setProgressText(progressText + ' No replacements found.');
-      } else if (countOfGoodMatches === 0) {
-        this.setProgressText(progressText + ` ${countOfReplacements} replacements found but no good matches.`);
-      } else if (countOfGoodMatches < countOfReplacements) {
-        this.setProgressText(progressText + ` ${countOfGoodMatches}/${countOfReplacements} are good matches.`);
+      if (searchedTracks.length > 0) {
+        if (countOfReplacements === 0) {
+          this.setProgressText(progressText + ' No replacements found.');
+        } else if (countOfGoodMatches === 0) {
+          this.setProgressText(progressText + ` ${countOfReplacements} replacements found but no good matches.`);
+        } else if (countOfGoodMatches < countOfReplacements) {
+          this.setProgressText(progressText + ` ${countOfGoodMatches}/${countOfReplacements} are good matches.`);
+        } else {
+          this.setProgressText(progressText);
+        }
       } else {
         this.setProgressText(progressText);
+      }
+    }
+
+    /**
+     * Lists all tracks in the playlist and enables only removal
+     * @async
+     */
+    async listAllTracks() {
+      this.cancelSearch = false;
+      this.clearPlaylistItemsContainer();
+      document.querySelector('.items-grid-wrapper')?.classList.add('list-only-mode');
+      this.toggleSearchProgress(true, true);
+      this.setProgressText('Fetching all tracks...');
+
+      try {
+        const currentPlaylistId = this.currentSelectedPlaylist?.id || 
+                                  this.ytMusicAPI.getCurrentPlaylistIdFromURL();
+
+        if (!currentPlaylistId) {
+          return;
+        }
+
+        const items = await this.ytMusicAPI.getPlaylistItems(currentPlaylistId);
+        this.setProgressText(`Found ${items.length} tracks. Select tracks to remove.`);
+
+        if (items.length === 0) {
+          return;
+        }
+
+        let i = 1;
+        for (const track of items) {
+          track.isSearching = false;
+          track.searchCancelled = false;
+          track.replacement = null;
+          this.addItem(track, Bridge.BASE_URL, i++);
+        }
+
+        document.getElementById('replaceSelectedBtn')?.classList.add('hidden');
+        document.getElementById('addSelectedBtn')?.classList.add('hidden');
+        document.getElementById('removeSelectedBtn')?.classList.remove('hidden');
+
+        document.getElementById('findLocalReplacementsBtn')?.classList.add('hidden');
+        document.getElementById('findUnavailableBtn')?.classList.remove('hidden');
+        document.getElementById('findVideoTracksBtn')?.classList.remove('hidden');
+        document.getElementById('importFromFolderBtn')?.classList.remove('hidden');
+        document.getElementById('listAllTracksBtn')?.classList.remove('hidden');
+
+        this.updateCheckAllCheckbox();
+      } catch (error) {
+        this.setProgressText('Error occurred while fetching tracks.');
+      } finally {
+        this.toggleSearchProgress(false);
       }
     }
 
@@ -616,7 +816,7 @@ import { UIHelper } from '../utils/ui-helper.js';
      */
     beforeActionsOnSelectedItems() {
       this.disableReload();
-      this.toggleSearchProgress(true);
+      this.toggleSearchProgress(true, false);
     }
 
     /**
@@ -655,15 +855,17 @@ import { UIHelper } from '../utils/ui-helper.js';
               const replacementItemDetails = item.replacementMedia;
 
               await this.ytMusicAPI.addItemToPlaylist(playlistId, replacementItemDetails.videoId);
-              await this.ytMusicAPI.removeItemFromPlaylist(
-                playlistId,
-                originalItemDetails.videoId,
-                originalItemDetails.playlistSetVideoId
-              );
+              if (originalItemDetails.videoId && originalItemDetails.playlistSetVideoId) {
+                await this.ytMusicAPI.removeItemFromPlaylist(
+                  playlistId,
+                  originalItemDetails.videoId,
+                  originalItemDetails.playlistSetVideoId
+                );
+              }
 
               UIHelper.removeMediaGridRow(originalItemDetails);
             } catch (error) {
-              // Continue processing remaining items
+              UIHelper.showErrorInGridRow(item.originalMedia, error.message || 'Failed to replace');
             }
           }
           i++;
@@ -706,8 +908,9 @@ import { UIHelper } from '../utils/ui-helper.js';
           if (item.replacementMedia?.videoId) {
             try {
               await this.ytMusicAPI.addItemToPlaylist(playlistId, item.replacementMedia.videoId);
+              UIHelper.removeMediaGridRow(item.originalMedia);
             } catch (error) {
-              // Continue processing remaining items
+              UIHelper.showErrorInGridRow(item.originalMedia, error.message || 'Failed to add');
             }
           }
           i++;
@@ -749,14 +952,16 @@ import { UIHelper } from '../utils/ui-helper.js';
 
           try {
             const originalItemDetails = item.originalMedia;
-            await this.ytMusicAPI.removeItemFromPlaylist(
-              playlistId,
-              originalItemDetails.videoId,
-              originalItemDetails.playlistSetVideoId
-            );
+            if (originalItemDetails.videoId && originalItemDetails.playlistSetVideoId) {
+              await this.ytMusicAPI.removeItemFromPlaylist(
+                playlistId,
+                originalItemDetails.videoId,
+                originalItemDetails.playlistSetVideoId
+              );
+            }
             UIHelper.removeMediaGridRow(originalItemDetails);
           } catch (error) {
-            // Continue processing remaining items
+            UIHelper.showErrorInGridRow(item.originalMedia, error.message || 'Failed to remove');
           }
           i++;
         }
@@ -769,6 +974,94 @@ import { UIHelper } from '../utils/ui-helper.js';
         this.setProgressText('Error occurred while removing items.');
       } finally {
         this.afterActionsOnSelectedItems();
+      }
+    }
+
+    /**
+     * Scans a local folder for media files and displays them.
+     * @async
+     */
+    async importFromFolder() {
+      if (!('showDirectoryPicker' in window)) {
+        this.setProgressText('Error: Your browser does not support the File System Access API.');
+        return;
+      }
+
+      try {
+        const dirHandle = await window.showDirectoryPicker();
+        this.toggleSearchProgress(true, false);
+        this.setProgressText('Scanning folder for media files...');
+
+        const mediaExtensions = ['.mp3', '.flac', '.m4a', '.ogg', '.wav', '.aac', '.wma', '.opus'];
+        const files = [];
+
+        async function getFilesRecursively(directoryHandle) {
+          for await (const entry of directoryHandle.values()) {
+            if (entry.kind === 'file') {
+              const file = await entry.getFile();
+              if (mediaExtensions.some(ext => file.name.toLowerCase().endsWith(ext))) {
+                files.push(file);
+              }
+            } else if (entry.kind === 'directory') {
+              await getFilesRecursively(entry);
+            }
+          }
+        }
+
+        await getFilesRecursively(dirHandle);
+
+        this.setProgressText(`Found ${files.length} media files. Displaying list...`);
+        this.clearPlaylistItemsContainer();
+
+        const localTracks = files.map(file => {
+          const name = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+          return {
+            name: name.replace(/[_-]/g, ' ').replace(/\s+/g, ' ').trim(),
+            artists: [],
+            album: '',
+            isLocal: true,
+            isSearching: true
+          };
+        });
+
+        this.localTracks = localTracks;
+
+        let i = 1;
+        localTracks.forEach(track => this.addItem(track, Bridge.BASE_URL, i++));
+
+        if (localTracks.length > 0) {
+          this.setProgressText(`Displayed ${localTracks.length} tracks. Click "Find Replacements" to search for them on YouTube Music.`);
+          document.getElementById('findLocalReplacementsBtn')?.classList.remove('hidden');
+          document.getElementById('findUnavailableBtn')?.classList.add('hidden');
+          document.getElementById('findVideoTracksBtn')?.classList.add('hidden');
+          document.getElementById('importFromFolderBtn')?.classList.add('hidden');
+          document.getElementById('listAllTracksBtn')?.classList.add('hidden');
+          
+          document.getElementById('replaceSelectedBtn')?.classList.add('hidden');
+          document.getElementById('removeSelectedBtn')?.classList.add('hidden');
+          document.getElementById('addSelectedBtn')?.classList.remove('hidden');
+        } else {
+          this.setProgressText('No media files found in the selected folder.');
+        }
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          this.setProgressText('Error accessing folder.');
+        } else {
+          this.setProgressText('Folder selection cancelled.');
+        }
+      } finally {
+        this.toggleSearchProgress(false);
+      }
+    }
+
+    async findReplacementsForLocalTracks() {
+      if (!this.localTracks || this.localTracks.length === 0) return;
+      this.cancelSearch = false;
+      this.toggleSearchProgress(true, true);
+      try {
+        await this.processPlaylistItems(this.localTracks);
+      } finally {
+        this.toggleSearchProgress(false);
       }
     }
   }

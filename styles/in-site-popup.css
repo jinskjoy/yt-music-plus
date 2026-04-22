@@ -217,21 +217,21 @@ border-radius: 0;
 }
 
 .btn-primary {
-    background-color: var(--yt-spec-dark-green);
+    background-color: black;
     color: white;
 }
 
 .btn-primary:hover:not(:disabled) {
-    background-color: var(--light-theme-base-color);
+    background-color: grey;
 }
 
 .btn-danger {
-    background-color: var(--error-color);
+    background-color: red;
     color: white;
 }
 
 .btn-danger:hover:not(:disabled) {
-    background-color: var(--error-color);
+    background-color: darkred;
 }
 
 .btn-toggle {
@@ -310,6 +310,13 @@ border-radius: 0;
 
 .grid-row:hover {
     background-color: #fafafa;
+}
+
+/* List only mode (hide replacement column) */
+.list-only-mode .grid-col-replacement,
+.list-only-mode .grid-header-replacement {
+    opacity: 0 !important;
+    pointer-events: none;
 }
 
 .grid-row:last-child {

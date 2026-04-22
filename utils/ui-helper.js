@@ -288,7 +288,7 @@ export class UIHelper {
     const checkboxCol = makeCol('grid-col-checkbox');
     const checkbox = UIHelper._createElement('input', { attrs: { type: 'checkbox' } });
     checkbox.classList.add('item-checkbox');
-    checkbox.checked = !!replacementMedia;
+    checkbox.checked = !!(replacementMedia && replacementMedia.videoId);
     checkboxCol.appendChild(checkbox);
 
     // original
@@ -366,7 +366,13 @@ export class UIHelper {
 
     container.querySelectorAll('.grid-row').forEach((row) => {
       const data = JSON.parse(row.dataset.originalMedia || '{}');
-      if (data.videoId === originalRecord.videoId) row.remove();
+      let isMatch = false;
+      if (data.videoId && originalRecord.videoId) {
+        isMatch = data.videoId === originalRecord.videoId;
+      } else {
+        isMatch = data.name === originalRecord.name;
+      }
+      if (isMatch) row.remove();
     });
   }
 
@@ -387,6 +393,43 @@ export class UIHelper {
     map.forEach(([id, prop, value]) => {
       const el = document.getElementById(id);
       if (el && value != null) el[prop] = value;
+    });
+  }
+
+  /**
+   * Shows error message in the replacement column for a specific item
+   * @param {Object} originalRecord 
+   * @param {string} errorMessage 
+   * @param {string} containerId 
+   */
+  static showErrorInGridRow(originalRecord, errorMessage, containerId = 'yt-music-plus-itemsGridContainer') {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    container.querySelectorAll('.grid-row').forEach((row) => {
+      const data = JSON.parse(row.dataset.originalMedia || '{}');
+      let isMatch = false;
+      if (data.videoId && originalRecord.videoId) {
+        isMatch = data.videoId === originalRecord.videoId;
+      } else {
+        isMatch = data.name === originalRecord.name;
+      }
+      if (isMatch) {
+        const replacementCol = row.querySelector('.grid-col-replacement');
+        if (replacementCol) {
+          if (replacementCol.querySelector('.error-message')) return;
+
+          const errorDiv = UIHelper._createElement('div', {
+            classes: 'error-message',
+            text: `Error: ${errorMessage}`
+          });
+          errorDiv.style.color = 'red';
+          errorDiv.style.fontSize = '12px';
+          errorDiv.style.fontWeight = '500';
+          errorDiv.style.marginTop = '4px';
+          replacementCol.appendChild(errorDiv);
+        }
+      }
     });
   }
   /**
