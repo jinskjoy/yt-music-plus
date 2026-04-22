@@ -33,11 +33,16 @@
                     <p id="yt-music-plus-playlistDescription" class="playlist-description"></p>
                 </div><!-- Playlist Action Buttons -->
                 <div class="playlist-action-buttons">
-                    <button id="findUnavailableBtn" class="btn btn-primary" type="button">Find Unavailable
-                        Tracks</button>
-                    <button id="findVideoTracksBtn" class="btn btn-primary" type="button">Find Video Tracks</button>
-                    <button id="importFromFolderBtn" class="btn btn-primary" type="button">Import from Folder</button>
-                    <button id ="findLocalReplacementsBtn" class="btn btn-primary" type="button">Find Local Replacements</button>
+                    <div class="action-row">
+                        <button id="listAllTracksBtn" class="btn btn-primary" type="button">List All Tracks</button>
+                        <button id="findUnavailableBtn" class="btn btn-primary" type="button">Find Unavailable Tracks</button>
+                        <button id="findVideoTracksBtn" class="btn btn-primary" type="button">Find Video Tracks</button>
+                    </div>
+                    <div class="action-row">
+                        <button id="importFromFolderBtn" class="btn btn-primary" type="button">Import from Folder</button>
+                        <button id="importFromFileBtn" class="btn btn-primary" type="button">Import from File</button>
+                        <input type="file" id="importFileInput" accept=".txt" style="display: none;" />
+                    </div>
                 </div>
             </div>
 
@@ -56,12 +61,13 @@
                     <button id="removeSelectedBtn" class="btn btn-danger" disabled
                         title="This action will remove the selected items from the playlist. It will not add replacements.">Remove
                         Selected</button>
+                    <button id="findLocalReplacementsBtn" class="btn btn-primary hidden" type="button">Start Search</button>
                     <!-- progress indicator shown when searches are running -->
                     <div id="progressText" class="search-progress-text hidden"></div>
                     <div id="searchProgress" class="search-progress hidden">
                         <div class="spinner"></div>
                     </div>
-                    <button id="cancelSearchBtn" class="btn btn-secondary hidden" type="button">Cancel Search</button>
+                    <button id="cancelSearchBtn" class="btn btn-primary hidden" type="button">Cancel Search</button>
                 </div>
 
                 <!-- Scrollable Grid Section -->

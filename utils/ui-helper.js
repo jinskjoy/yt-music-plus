@@ -2,7 +2,7 @@
  * UIHelper - Handles UI utilities and helper functions
  */
 export class UIHelper {
-  static ISSUE_URL = 'https://github.com/jinskjoy/yt-music-plus/issues';
+  static ISSUE_URL = 'https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc/support';
 
   /* --------------------------------------------------------------------------
    * Core DOM helpers (private)
@@ -288,11 +288,32 @@ export class UIHelper {
     const checkboxCol = makeCol('grid-col-checkbox');
     const checkbox = UIHelper._createElement('input', { attrs: { type: 'checkbox' } });
     checkbox.classList.add('item-checkbox');
-    checkbox.checked = !!(replacementMedia && replacementMedia.videoId);
+
+    const isListOnlyMode = document.querySelector('.items-grid-wrapper')?.classList.contains('list-only-mode');
+    const hasReplacement = replacementMedia && replacementMedia.videoId;
+    const isPending = replacementMedia && replacementMedia.isPending;
+    const isGoodMatch = replacementMedia ? replacementMedia.isGoodMatch !== false : true;
+
+    checkbox.checked = replacementMedia && replacementMedia.isChecked !== undefined 
+      ? replacementMedia.isChecked 
+      : (!!hasReplacement && isGoodMatch);
+
+    if (!isListOnlyMode && !hasReplacement && !isPending) {
+      checkbox.disabled = true;
+    }
+
     checkboxCol.appendChild(checkbox);
 
     // original
     const originalCol = makeCol('grid-col-original');
+    originalCol.style.cursor = 'pointer';
+    originalCol.addEventListener('click', (e) => {
+      if (e.target.closest('a')) return;
+      if (!checkbox.disabled) {
+        checkbox.checked = !checkbox.checked;
+        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    });
     originalCol.appendChild(UIHelper.createMediaItem(originalMedia));
 
     // replacement
@@ -635,7 +656,7 @@ export class UIHelper {
     );
     msg.appendChild(
       UIHelper._createElement('a', {
-        text: 'GitHub',
+        text: 'the Chrome Web Store',
         attrs: {
           href: UIHelper.ISSUE_URL,
           target: '_blank',

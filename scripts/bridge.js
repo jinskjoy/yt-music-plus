@@ -80,6 +80,7 @@ import { UIHelper } from '../utils/ui-helper.js';
       this.currentSelectedPlaylist = null;
       this.playlistsCache = [];
       this.isReloadDisabled = false;
+      this.isFetchingPlaylists = false;
       this.localTracks = [];
       this.extSettings = {
         showPlaylistButton: true,
@@ -261,22 +262,26 @@ import { UIHelper } from '../utils/ui-helper.js';
       this.attachButtonListener('removeSelectedBtn', () => this.removeSelectedItems());
       this.attachButtonListener('importFromFolderBtn', () => this.importFromFolder());
       this.attachButtonListener('findLocalReplacementsBtn', () => this.findReplacementsForLocalTracks());
-      
-      // Inject List All Tracks button if not present
-      const findUnavailableBtn = document.getElementById('findUnavailableBtn');
-      if (findUnavailableBtn && findUnavailableBtn.parentNode && !document.getElementById('listAllTracksBtn')) {
-        const listBtn = document.createElement('button');
-        listBtn.id = 'listAllTracksBtn';
-        listBtn.className = 'btn btn-primary';
-        listBtn.textContent = 'List All Tracks';
-        findUnavailableBtn.parentNode.insertBefore(listBtn, findUnavailableBtn.nextSibling);
-      }
       this.attachButtonListener('listAllTracksBtn', () => this.listAllTracks());
+      this.attachButtonListener('importFromFileBtn', () => {
+        document.getElementById('importFileInput')?.click();
+      });
+
+      const fileInput = document.getElementById('importFileInput');
+      if (fileInput) {
+        fileInput.addEventListener('change', (e) => this.importFromFile(e));
+      }
 
       this.attachButtonListener('cancelSearchBtn', () => {
         this.cancelSearch = true;
         this.setProgressText('Cancelling search... Please wait.');
       });
+
+      const cancelBtn = document.getElementById('cancelSearchBtn');
+      if (cancelBtn) {
+        cancelBtn.classList.remove('btn-secondary', 'btn-danger');
+        cancelBtn.classList.add('btn-primary');
+      }
     }
 
     /**
@@ -316,6 +321,7 @@ import { UIHelper } from '../utils/ui-helper.js';
         'removeSelectedBtn',
         'backButton',
         'importFromFolderBtn',
+        'importFromFileBtn',
         'findLocalReplacementsBtn',
         'listAllTracksBtn'
       ];
@@ -336,14 +342,32 @@ import { UIHelper } from '../utils/ui-helper.js';
       if (!popupElement) return;
 
       const selectAllCheckbox = popupElement.querySelector('#yt-music-plus-selectAllCheckbox');
-      const checkboxes = popupElement.querySelectorAll('.item-checkbox');
+      const checkboxes = popupElement.querySelectorAll('.item-checkbox:not([disabled])');
+      const allCheckboxes = popupElement.querySelectorAll('.item-checkbox');
 
-      const allChecked = Array.from(checkboxes).every(cb => cb.checked);
-      if (selectAllCheckbox) selectAllCheckbox.checked = allChecked;
+      if (selectAllCheckbox) {
+        selectAllCheckbox.checked = checkboxes.length > 0 && Array.from(checkboxes).every(cb => cb.checked);
+      }
 
-      const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
-      const actionButtons = popupElement.querySelectorAll('.action-buttons-container button');
-      actionButtons.forEach(btn => btn.disabled = !anyChecked);
+      const anyChecked = Array.from(allCheckboxes).some(cb => cb.checked);
+      const anyCheckedWithReplacement = Array.from(allCheckboxes).some(cb => {
+        if (!cb.checked) return false;
+        const row = cb.closest('.grid-row');
+        if (!row) return false;
+        const replacement = JSON.parse(row.dataset.replacementMedia || '{}');
+        return !!replacement.videoId;
+      });
+
+      const isListOnlyMode = popupElement.querySelector('.items-grid-wrapper')?.classList.contains('list-only-mode');
+
+      const removeBtn = popupElement.querySelector('#removeSelectedBtn');
+      if (removeBtn) removeBtn.disabled = !anyChecked;
+
+      const addBtn = popupElement.querySelector('#addSelectedBtn');
+      if (addBtn) addBtn.disabled = isListOnlyMode ? true : !anyCheckedWithReplacement;
+
+      const replaceBtn = popupElement.querySelector('#replaceSelectedBtn');
+      if (replaceBtn) replaceBtn.disabled = isListOnlyMode ? true : !anyCheckedWithReplacement;
     }
 
     /**
@@ -360,10 +384,74 @@ import { UIHelper } from '../utils/ui-helper.js';
      * Initializes playlist fetching and display
      * @async
      */
-    async initPlaylistFetching() {
-      this.playlistsCache = await this.ytMusicAPI.getEditablePlaylists();
-      this.displayPlaylistsForSelection();
-      this.hidePlaylistLoadingIndicator();
+    async initPlaylistFetching(forceRefresh = false) {
+      if (this.isFetchingPlaylists) return;
+
+      // Use cached playlists if available and not forcing a refresh
+      if (!forceRefresh && this.playlistsCache && this.playlistsCache.length > 0) {
+        this.displayPlaylistsForSelection();
+        this.hidePlaylistLoadingIndicator();
+        this.injectRefreshButton();
+        return;
+      }
+
+      this.isFetchingPlaylists = true;
+
+      const loadingIndicator = document.getElementById('playlistsLoadingIndicator');
+      if (loadingIndicator) loadingIndicator.classList.remove('hidden');
+      
+      const playlistsGrid = document.getElementById('playlistsGrid');
+      if (playlistsGrid) playlistsGrid.replaceChildren();
+
+      try {
+        let playlists = await this.ytMusicAPI.getEditablePlaylists();
+        
+        // Retry once if no playlists found (handles ytcfg initialization race condition)
+        if (playlists.length === 0) {
+          await this.sleep(1000);
+          playlists = await this.ytMusicAPI.getEditablePlaylists();
+        }
+        
+        this.playlistsCache = playlists;
+      } catch (error) {
+        console.error('YouTube Music +: Error fetching playlists', error);
+        this.playlistsCache = [];
+      } finally {
+        this.displayPlaylistsForSelection();
+        this.hidePlaylistLoadingIndicator();
+        this.injectRefreshButton();
+        this.isFetchingPlaylists = false;
+      }
+    }
+
+    /**
+     * Injects a refresh button into the playlist selection screen
+     */
+    injectRefreshButton() {
+      const selectionScreen = document.getElementById('playlistSelectionScreen');
+      if (selectionScreen && !document.getElementById('refreshPlaylistsBtn')) {
+        const btnContainer = document.createElement('div');
+        btnContainer.style.display = 'flex';
+        btnContainer.style.justifyContent = 'flex-end';
+        btnContainer.style.marginBottom = '12px';
+
+        const btn = document.createElement('button');
+        btn.id = 'refreshPlaylistsBtn';
+        btn.className = 'btn btn-primary';
+        btn.textContent = 'Refresh Playlists';
+        
+        btn.addEventListener('click', async () => {
+          btn.disabled = true;
+          btn.textContent = 'Refreshing...';
+          await this.initPlaylistFetching(true);
+          
+          btn.disabled = false;
+          btn.textContent = 'Refresh Playlists';
+        });
+
+        btnContainer.appendChild(btn);
+        selectionScreen.insertBefore(btnContainer, selectionScreen.firstChild);
+      }
     }
 
     /**
@@ -418,6 +506,7 @@ import { UIHelper } from '../utils/ui-helper.js';
       document.getElementById('findUnavailableBtn')?.classList.remove('hidden');
       document.getElementById('findVideoTracksBtn')?.classList.remove('hidden');
       document.getElementById('importFromFolderBtn')?.classList.remove('hidden');
+      document.getElementById('importFromFileBtn')?.classList.remove('hidden');
       document.getElementById('listAllTracksBtn')?.classList.remove('hidden');
       
       // Ensure action buttons are visible for normal playlists
@@ -453,7 +542,9 @@ import { UIHelper } from '../utils/ui-helper.js';
 
       let i = 1;
       for (const item of itemsToProcess) {
-        item.isSearching = true;
+        if (!item.isLocal) {
+          item.isSearching = !item.isGeneric;
+        }
         item.searchCancelled = false;
         item.replacement = null;
         this.addItem(item, Bridge.BASE_URL, i++);
@@ -461,6 +552,11 @@ import { UIHelper } from '../utils/ui-helper.js';
 
       i = 1;
       for (const item of itemsToProcess) {
+        if (item.isGeneric || item.isSkipped) {
+          i++;
+          continue;
+        }
+
         if (this.cancelSearch) {
           this.setProgressText('Search cancelled.');
           break;
@@ -485,9 +581,11 @@ import { UIHelper } from '../utils/ui-helper.js';
       
       if (this.cancelSearch) {
         for (let j = i; j <= itemsToProcess.length; j++) {
-          itemsToProcess[j - 1].isSearching = false;
-          itemsToProcess[j - 1].searchCancelled = true;
-          this.updateItemRow(itemsToProcess[j - 1], Bridge.BASE_URL, j);
+          if (!itemsToProcess[j - 1].isGeneric && !itemsToProcess[j - 1].isSkipped) {
+            itemsToProcess[j - 1].isSearching = false;
+            itemsToProcess[j - 1].searchCancelled = true;
+            this.updateItemRow(itemsToProcess[j - 1], Bridge.BASE_URL, j);
+          }
         }
       }
 
@@ -505,13 +603,13 @@ import { UIHelper } from '../utils/ui-helper.js';
         return;
       }
 
-      const searchedItems = processedItems.filter(item => !item.isSearching && !item.searchCancelled);
+      const searchedItems = processedItems.filter(item => !item.isSearching && !item.searchCancelled && !item.isGeneric && !item.isSkipped);
       const isLocalImport = processedItems.some(item => item.isLocal);
       let foundCountText;
 
       if (isLocalImport) {
         const replacedCount = searchedItems.filter(item => item.replacement).length;
-        foundCountText = `Found replacements for ${replacedCount} of ${searchedItems.length} local tracks.`;
+        foundCountText = `Found replacements for ${replacedCount} of ${searchedItems.length} searched tracks.`;
       } else {
         foundCountText = `Found ${searchedItems.length} unavailable tracks and their replacements.`;
       }
@@ -524,7 +622,11 @@ import { UIHelper } from '../utils/ui-helper.js';
       }
 
       this.setProgressText(progressText);
-      document.getElementById('findLocalReplacementsBtn')?.classList.add('hidden');
+      if (!(isLocalImport && this.cancelSearch)) {
+        document.getElementById('findLocalReplacementsBtn')?.classList.add('hidden');
+      } else {
+        document.getElementById('findLocalReplacementsBtn')?.classList.remove('hidden');
+      }
     }
 
     /**
@@ -555,8 +657,12 @@ import { UIHelper } from '../utils/ui-helper.js';
       };
 
       let replacementMedia = null;
-      if (item.isSearching) {
-        replacementMedia = { name: 'Waiting for search...', isPending: true };
+      if (item.isGeneric) {
+        replacementMedia = { name: 'Ignored (Generic Name)' };
+      } else if (item.isSkipped) {
+        replacementMedia = { name: 'Ignored (Not Selected)' };
+      } else if (item.isSearching) {
+        replacementMedia = { name: 'Waiting for search...', isPending: true, isChecked: true };
       } else if (item.searchCancelled) {
         replacementMedia = { name: 'Search cancelled', isCancelled: true };
       } else if (item.replacement) {
@@ -801,6 +907,7 @@ import { UIHelper } from '../utils/ui-helper.js';
         document.getElementById('findUnavailableBtn')?.classList.remove('hidden');
         document.getElementById('findVideoTracksBtn')?.classList.remove('hidden');
         document.getElementById('importFromFolderBtn')?.classList.remove('hidden');
+        document.getElementById('importFromFileBtn')?.classList.remove('hidden');
         document.getElementById('listAllTracksBtn')?.classList.remove('hidden');
 
         this.updateCheckAllCheckbox();
@@ -821,10 +928,26 @@ import { UIHelper } from '../utils/ui-helper.js';
 
     /**
      * Performs cleanup after modifying selected items
+     * @async
      */
-    afterActionsOnSelectedItems() {
-      this.enableReload();
-      this.toggleSearchProgress(false);
+    async afterActionsOnSelectedItems() {
+      try {
+        await this.initPlaylistFetching();
+        const playlistId = this.currentSelectedPlaylist?.id || 
+                          this.ytMusicAPI.getCurrentPlaylistIdFromURL();
+        if (playlistId) {
+          const updatedPlaylist = this.playlistsCache.find(p => p.id === playlistId);
+          if (updatedPlaylist) {
+            UIHelper.setPlaylistDetails(updatedPlaylist);
+            this.currentSelectedPlaylist = updatedPlaylist;
+          }
+        }
+      } catch (error) {
+        // Ignore errors during playlist info refresh
+      } finally {
+        this.enableReload();
+        this.toggleSearchProgress(false);
+      }
     }
 
     /**
@@ -879,7 +1002,7 @@ import { UIHelper } from '../utils/ui-helper.js';
       } catch (error) {
         this.setProgressText('Error occurred while replacing items.');
       } finally {
-        this.afterActionsOnSelectedItems();
+        await this.afterActionsOnSelectedItems();
       }
     }
 
@@ -924,7 +1047,7 @@ import { UIHelper } from '../utils/ui-helper.js';
       } catch (error) {
         this.setProgressText('Error occurred while adding items.');
       } finally {
-        this.afterActionsOnSelectedItems();
+        await this.afterActionsOnSelectedItems();
       }
     }
 
@@ -973,7 +1096,7 @@ import { UIHelper } from '../utils/ui-helper.js';
       } catch (error) {
         this.setProgressText('Error occurred while removing items.');
       } finally {
-        this.afterActionsOnSelectedItems();
+        await this.afterActionsOnSelectedItems();
       }
     }
 
@@ -1014,15 +1137,18 @@ import { UIHelper } from '../utils/ui-helper.js';
         this.clearPlaylistItemsContainer();
 
         const localTracks = files.map(file => {
-          const name = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+          const rawName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+          const name = rawName.replace(/[_-]/g, ' ').replace(/\s+/g, ' ').trim();
+          const isGeneric = name.length < 3 || /^\d*\s*(?:-|_)?\s*(?:(?:unknown|untitled|misc)(?:\s*artist)?\s*(?:-|_)?\s*)?(?:track|audio\s*track|unknown|untitled|misc)\s*\d*$/i.test(name);
           return {
-            name: name.replace(/[_-]/g, ' ').replace(/\s+/g, ' ').trim(),
+            name: name,
             artists: [],
             album: '',
             isLocal: true,
-            isSearching: true
+            isSearching: !isGeneric,
+            isGeneric: isGeneric
           };
-        });
+        }).sort((a, b) => (a.isGeneric === b.isGeneric ? 0 : a.isGeneric ? -1 : 1));
 
         this.localTracks = localTracks;
 
@@ -1030,16 +1156,24 @@ import { UIHelper } from '../utils/ui-helper.js';
         localTracks.forEach(track => this.addItem(track, Bridge.BASE_URL, i++));
 
         if (localTracks.length > 0) {
-          this.setProgressText(`Displayed ${localTracks.length} tracks. Click "Find Replacements" to search for them on YouTube Music.`);
+          let progressMsg = `Displayed ${localTracks.length} tracks.`;
+          const genericCount = localTracks.filter(t => t.isGeneric).length;
+          if (genericCount > 0) {
+            progressMsg += ` (${genericCount} generic names ignored).`;
+          }
+        progressMsg += ` Click "Start Search" to search for the checked tracks on YouTube Music.`;
+          this.setProgressText(progressMsg);
           document.getElementById('findLocalReplacementsBtn')?.classList.remove('hidden');
-          document.getElementById('findUnavailableBtn')?.classList.add('hidden');
-          document.getElementById('findVideoTracksBtn')?.classList.add('hidden');
-          document.getElementById('importFromFolderBtn')?.classList.add('hidden');
-          document.getElementById('listAllTracksBtn')?.classList.add('hidden');
+          document.getElementById('findUnavailableBtn')?.classList.remove('hidden');
+          document.getElementById('findVideoTracksBtn')?.classList.remove('hidden');
+          document.getElementById('importFromFolderBtn')?.classList.remove('hidden');
+          document.getElementById('importFromFileBtn')?.classList.remove('hidden');
+          document.getElementById('listAllTracksBtn')?.classList.remove('hidden');
           
           document.getElementById('replaceSelectedBtn')?.classList.add('hidden');
           document.getElementById('removeSelectedBtn')?.classList.add('hidden');
           document.getElementById('addSelectedBtn')?.classList.remove('hidden');
+          this.updateCheckAllCheckbox();
         } else {
           this.setProgressText('No media files found in the selected folder.');
         }
@@ -1054,9 +1188,91 @@ import { UIHelper } from '../utils/ui-helper.js';
       }
     }
 
+    /**
+     * Reads a track list from a text file and displays it for search.
+     * @async
+     * @param {Event} event - File input change event
+     */
+    async importFromFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      this.toggleSearchProgress(true, false);
+      this.setProgressText('Reading file...');
+
+      try {
+        const text = await file.text();
+        const lines = text.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0);
+
+        this.setProgressText(`Found ${lines.length} tracks in file. Displaying list...`);
+        this.clearPlaylistItemsContainer();
+
+        const localTracks = lines.map(line => {
+          const name = line.trim();
+          const isGeneric = name.length < 3 || /^\d*\s*(?:-|_)?\s*(?:(?:unknown|untitled|misc)(?:\s*artist)?\s*(?:-|_)?\s*)?(?:track|audio\s*track|unknown|untitled|misc)\s*\d*$/i.test(name);
+          return {
+            name: line,
+            artists: [],
+            album: '',
+            isLocal: true,
+            isSearching: !isGeneric,
+            isGeneric: isGeneric
+          };
+        }).sort((a, b) => (a.isGeneric === b.isGeneric ? 0 : a.isGeneric ? -1 : 1));
+
+        this.localTracks = localTracks;
+
+        let i = 1;
+        localTracks.forEach(track => this.addItem(track, Bridge.BASE_URL, i++));
+
+        if (localTracks.length > 0) {
+          let progressMsg = `Displayed ${localTracks.length} tracks.`;
+          const genericCount = localTracks.filter(t => t.isGeneric).length;
+          if (genericCount > 0) {
+            progressMsg += ` (${genericCount} generic names ignored).`;
+          }
+        progressMsg += ` Click "Start Search" to search for the checked tracks on YouTube Music.`;
+          this.setProgressText(progressMsg);
+          document.getElementById('findLocalReplacementsBtn')?.classList.remove('hidden');
+          document.getElementById('findUnavailableBtn')?.classList.remove('hidden');
+          document.getElementById('findVideoTracksBtn')?.classList.remove('hidden');
+          document.getElementById('importFromFolderBtn')?.classList.remove('hidden');
+          document.getElementById('importFromFileBtn')?.classList.remove('hidden');
+          document.getElementById('listAllTracksBtn')?.classList.remove('hidden');
+          
+          document.getElementById('replaceSelectedBtn')?.classList.add('hidden');
+          document.getElementById('removeSelectedBtn')?.classList.add('hidden');
+          document.getElementById('addSelectedBtn')?.classList.remove('hidden');
+          this.updateCheckAllCheckbox();
+        } else {
+          this.setProgressText('No valid tracks found in the file.');
+        }
+      } catch (error) {
+        this.setProgressText('Error reading file.');
+      } finally {
+        this.toggleSearchProgress(false);
+        event.target.value = ''; // Reset input
+      }
+    }
+
     async findReplacementsForLocalTracks() {
       if (!this.localTracks || this.localTracks.length === 0) return;
       this.cancelSearch = false;
+      
+      // Update isSkipped or isSearching based on UI selection
+      const allCheckboxes = document.querySelectorAll('#yt-music-plus-itemsGridContainer .item-checkbox');
+      allCheckboxes.forEach((cb, index) => {
+        if (this.localTracks[index]) {
+          if (!cb.checked) {
+            this.localTracks[index].isSkipped = true;
+            this.localTracks[index].isSearching = false;
+          } else {
+            this.localTracks[index].isSkipped = false;
+            this.localTracks[index].isSearching = !this.localTracks[index].isGeneric;
+          }
+        }
+      });
+
       this.toggleSearchProgress(true, true);
       try {
         await this.processPlaylistItems(this.localTracks);

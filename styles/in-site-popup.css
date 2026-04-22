@@ -87,6 +87,17 @@ border-radius: 0;
     transform: translateY(-1px);
 }
 
+.report-issue-link {
+    color: grey;
+    text-decoration: none;
+    font-size: 13px;
+}
+
+.report-issue-link:hover {
+    color: darkgrey;
+    text-decoration: none;
+}
+
 .close-btn:active {
     background-color: #e0e0e0;
 }
@@ -219,10 +230,12 @@ border-radius: 0;
 .btn-primary {
     background-color: black;
     color: white;
+    border: 1px solid black;
 }
 
 .btn-primary:hover:not(:disabled) {
-    background-color: grey;
+    background-color: white;
+    color: black;
 }
 
 .btn-danger {
@@ -257,8 +270,15 @@ border-radius: 0;
 /* Playlist Action Buttons */
 .playlist-action-buttons {
     display: flex;
+    flex-direction: column;
     gap: 8px;
     margin-top: 12px;
+}
+
+.action-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
 }
 
 /* Grid Wrapper and Container */
