@@ -130,7 +130,7 @@ class ContentScriptController {
         closeBtn.parentNode.insertBefore(actionsWrapper, closeBtn);
 
         const reportLink = document.createElement('a');
-        reportLink.href = 'https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc/support?hl=en&authuser=0';
+        reportLink.href = 'https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc/support';
         reportLink.target = '_blank';
         reportLink.rel = 'noopener noreferrer';
         reportLink.textContent = 'Report a problem';
