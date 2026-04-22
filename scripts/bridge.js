@@ -932,7 +932,7 @@ import { UIHelper } from '../utils/ui-helper.js';
      */
     async afterActionsOnSelectedItems() {
       try {
-        await this.initPlaylistFetching();
+        await this.initPlaylistFetching(true);
         const playlistId = this.currentSelectedPlaylist?.id || 
                           this.ytMusicAPI.getCurrentPlaylistIdFromURL();
         if (playlistId) {

@@ -229,7 +229,7 @@ export class UIHelper {
     if (media.url) {
       const link = UIHelper._createElement('a', {
         classes: 'media-link',
-        attrs: { href: media.url, target: '_blank' },
+        attrs: { href: media.url, target: 'yt-music-plus-preview' },
       });
       link.appendChild(
         UIHelper._createElement('span', {
