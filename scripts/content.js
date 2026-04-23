@@ -278,8 +278,19 @@ class ContentScriptController {
     const footer = popupElement.querySelector('#ytMusicPlusSelectionFooter');
     
     if (footer) {
+      const textContainer = footer.querySelector('.footer-right') || footer;
+      
       if (totalCount > 0) {
-        footer.textContent = `${checkedCount} of ${totalCount} item${totalCount !== 1 ? 's' : ''} selected`;
+        textContainer.textContent = `${checkedCount} of ${totalCount} item${totalCount !== 1 ? 's' : ''} selected`;
+        textContainer.style.display = '';
+      } else {
+        textContainer.style.display = 'none';
+      }
+
+      const isSearching = !popupElement.querySelector('#searchProgress')?.classList.contains('hidden');
+      const hasProgressText = !popupElement.querySelector('#progressText')?.classList.contains('hidden');
+
+      if (totalCount > 0 || isSearching || hasProgressText) {
         footer.classList.remove('hidden');
         footer.style.display = '';
       } else {

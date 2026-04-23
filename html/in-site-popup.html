@@ -68,12 +68,6 @@
                         title="This action will remove the selected items from the playlist. It will not add replacements.">Remove
                         Selected</button>
                     <button id="findLocalReplacementsBtn" class="btn btn-primary hidden" type="button">Start Search</button>
-                    <!-- progress indicator shown when searches are running -->
-                    <div id="progressText" class="search-progress-text hidden"></div>
-                    <div id="searchProgress" class="search-progress hidden">
-                        <div class="spinner"></div>
-                    </div>
-                    <button id="cancelSearchBtn" class="btn btn-primary hidden" type="button">Cancel Search</button>
 
                     <!-- Search Container -->
                     <div class="search-container">
@@ -97,7 +91,19 @@
 
                     </div>
                 </div>
-                <div id="ytMusicPlusSelectionFooter" class="hidden"></div>
+            <div id="ytMusicPlusSelectionFooter" class="hidden">
+                <div class="footer-left">
+                    <!-- progress indicator shown when searches are running -->
+                    <div id="progressText" class="search-progress-text hidden"></div>
+                    <div class="progress-actions">
+                        <div id="searchProgress" class="search-progress hidden">
+                            <div class="spinner"></div>
+                        </div>
+                        <button id="cancelSearchBtn" class="btn btn-primary hidden" type="button">Cancel Search</button>
+                    </div>
+                </div>
+                <div class="footer-right"></div>
+            </div>
             </form>
         </div>
     </div>
