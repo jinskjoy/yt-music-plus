@@ -184,13 +184,13 @@ class ContentScriptController {
       selectAllCheckbox.addEventListener('change', (e) => {
         const checkboxes = Array.from(popupElement.querySelectorAll('.item-checkbox:not([disabled])')).filter(cb => {
           const row = cb.closest('.grid-row');
-          return row && row.style.display !== 'none';
+          return row && !row.classList.contains('hidden');
         });
         checkboxes.forEach(cb => {
           cb.checked = e.target.checked;
           cb.dataset.userInteracted = 'true';
         });
-        this.updateCheckAllCheckbox();
+        UIHelper.updateCheckAllCheckbox();
       });
     }
 
@@ -200,7 +200,7 @@ class ContentScriptController {
                                   e.target.classList.contains('select-all-checkbox') ||
                                   e.target.id === 'yt-music-plus-selectAllCheckbox';
       if (isRelevantCheckbox) {
-        this.updateCheckAllCheckbox();
+        UIHelper.updateCheckAllCheckbox();
       }
     });
 
@@ -227,75 +227,6 @@ class ContentScriptController {
     const toggleGridBtn = popupElement.querySelector('#toggleGridBtn');
     if (toggleGridBtn) {
       toggleGridBtn.addEventListener('click', () => UIHelper.toggleGrid());
-    }
-  }
-
-  /**
-   * Updates the select-all checkbox state based on individual checkbox states
-   * Also enables/disables action buttons based on selection
-   */
-  updateCheckAllCheckbox() {
-    const popupElement = this.getPopupElement();
-    if (!popupElement) return;
-
-    const selectAllCheckbox = popupElement.querySelector('#yt-music-plus-selectAllCheckbox');
-    const checkboxes = Array.from(popupElement.querySelectorAll('.item-checkbox:not([disabled])')).filter(cb => {
-      const row = cb.closest('.grid-row');
-      return row && row.style.display !== 'none';
-    });
-    const allCheckboxes = popupElement.querySelectorAll('.item-checkbox');
-    
-    // Update select-all checkbox state
-    if (selectAllCheckbox) {
-      selectAllCheckbox.checked = checkboxes.length > 0 && Array.from(checkboxes).every(cb => cb.checked);
-    }
-
-    // Enable/disable action buttons based on selection
-    const anyChecked = Array.from(allCheckboxes).some(cb => cb.checked);
-    const anyCheckedWithReplacement = Array.from(allCheckboxes).some(cb => {
-      if (!cb.checked) return false;
-      const row = cb.closest('.grid-row');
-      if (!row) return false;
-      const replacement = JSON.parse(row.dataset.replacementMedia || '{}');
-      return !!replacement.videoId;
-    });
-
-    const isListOnlyMode = popupElement.querySelector('.items-grid-wrapper')?.classList.contains('list-only-mode');
-    const isSearching = !popupElement.querySelector('#searchProgress')?.classList.contains('hidden');
-
-    const removeBtn = popupElement.querySelector('#removeSelectedBtn');
-    if (removeBtn) removeBtn.disabled = isSearching ? true : !anyChecked;
-
-    const addBtn = popupElement.querySelector('#addSelectedBtn');
-    if (addBtn) addBtn.disabled = isSearching || isListOnlyMode ? true : !anyCheckedWithReplacement;
-
-    const replaceBtn = popupElement.querySelector('#replaceSelectedBtn');
-    if (replaceBtn) replaceBtn.disabled = isSearching || isListOnlyMode ? true : !anyCheckedWithReplacement;
-
-    const checkedCount = Array.from(allCheckboxes).filter(cb => cb.checked).length;
-    const totalCount = allCheckboxes.length;
-    
-    const footer = popupElement.querySelector('#ytMusicPlusSelectionFooter');
-    
-    if (footer) {
-      const textContainer = footer.querySelector('.footer-right') || footer;
-      
-      if (totalCount > 0) {
-        textContainer.textContent = `${checkedCount} of ${totalCount} item${totalCount !== 1 ? 's' : ''} selected`;
-        textContainer.style.display = '';
-      } else {
-        textContainer.style.display = 'none';
-      }
-
-      const isSearching = !popupElement.querySelector('#searchProgress')?.classList.contains('hidden');
-      const hasProgressText = !popupElement.querySelector('#progressText')?.classList.contains('hidden');
-
-      if (totalCount > 0 || isSearching || hasProgressText) {
-        footer.classList.remove('hidden');
-        footer.style.display = '';
-      } else {
-        footer.classList.add('hidden');
-      }
     }
   }
 

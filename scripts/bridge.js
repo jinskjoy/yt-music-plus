@@ -335,15 +335,15 @@ import { UIHelper } from '../utils/ui-helper.js';
       const rows = container.querySelectorAll('.grid-row');
       
       if (!normalizedQuery) {
-        rows.forEach(row => row.style.display = '');
+        rows.forEach(row => row.classList.remove('hidden'));
       } else {
         rows.forEach(row => {
           const searchString = row.dataset.searchString || '';
-          row.style.display = searchString.includes(normalizedQuery) ? '' : 'none';
+          row.classList.toggle('hidden', !searchString.includes(normalizedQuery));
         });
       }
 
-      this.updateCheckAllCheckbox();
+      UIHelper.updateCheckAllCheckbox();
     }
 
     /**
@@ -381,73 +381,7 @@ import { UIHelper } from '../utils/ui-helper.js';
         if (btn) btn.disabled = show;
       });
 
-      this.updateCheckAllCheckbox();
-    }
-
-    /**
-     * Updates select-all checkbox state
-     */
-    updateCheckAllCheckbox() {
-      const popupElement = document.querySelector('.yt-music-extended-popup-container');
-      if (!popupElement) return;
-
-      const selectAllCheckbox = popupElement.querySelector('#yt-music-plus-selectAllCheckbox');
-      const checkboxes = Array.from(popupElement.querySelectorAll('.item-checkbox:not([disabled])')).filter(cb => {
-        const row = cb.closest('.grid-row');
-        return row && row.style.display !== 'none';
-      });
-      const allCheckboxes = popupElement.querySelectorAll('.item-checkbox');
-
-      if (selectAllCheckbox) {
-        selectAllCheckbox.checked = checkboxes.length > 0 && Array.from(checkboxes).every(cb => cb.checked);
-      }
-
-      const anyChecked = Array.from(allCheckboxes).some(cb => cb.checked);
-      const anyCheckedWithReplacement = Array.from(allCheckboxes).some(cb => {
-        if (!cb.checked) return false;
-        const row = cb.closest('.grid-row');
-        if (!row) return false;
-        const replacement = JSON.parse(row.dataset.replacementMedia || '{}');
-        return !!replacement.videoId;
-      });
-
-      const isListOnlyMode = popupElement.querySelector('.items-grid-wrapper')?.classList.contains('list-only-mode');
-      const isSearching = !document.getElementById('searchProgress')?.classList.contains('hidden');
-
-      const removeBtn = popupElement.querySelector('#removeSelectedBtn');
-      if (removeBtn) removeBtn.disabled = isSearching ? true : !anyChecked;
-
-      const addBtn = popupElement.querySelector('#addSelectedBtn');
-      if (addBtn) addBtn.disabled = isSearching || isListOnlyMode ? true : !anyCheckedWithReplacement;
-
-      const replaceBtn = popupElement.querySelector('#replaceSelectedBtn');
-      if (replaceBtn) replaceBtn.disabled = isSearching || isListOnlyMode ? true : !anyCheckedWithReplacement;
-
-      const checkedCount = Array.from(allCheckboxes).filter(cb => cb.checked).length;
-      const totalCount = allCheckboxes.length;
-      
-      const footer = popupElement.querySelector('#ytMusicPlusSelectionFooter');
-      
-      if (footer) {
-        const textContainer = footer.querySelector('.footer-right') || footer;
-        
-        if (totalCount > 0) {
-          textContainer.textContent = `${checkedCount} of ${totalCount} item${totalCount !== 1 ? 's' : ''} selected`;
-          textContainer.style.display = '';
-        } else {
-          textContainer.style.display = 'none';
-        }
-        
-        const isSearching = !document.getElementById('searchProgress')?.classList.contains('hidden');
-        const hasProgressText = !document.getElementById('progressText')?.classList.contains('hidden');
-        
-        if (totalCount > 0 || isSearching || hasProgressText) {
-          footer.classList.remove('hidden');
-          footer.style.display = '';
-        } else {
-          footer.classList.add('hidden');
-        }
-      }
+      UIHelper.updateCheckAllCheckbox();
     }
 
     /**
@@ -508,7 +442,22 @@ import { UIHelper } from '../utils/ui-helper.js';
      * Initializes the refresh button
      */
     initRefreshButton() {
-      const btn = document.getElementById('refreshPlaylistsBtn');
+      let btn = document.getElementById('refreshPlaylistsBtn');
+      if (!btn) {
+        btn = document.createElement('button');
+        btn.id = 'refreshPlaylistsBtn';
+        btn.className = 'btn btn-secondary';
+        btn.textContent = 'Refresh Playlists';
+        
+        const playlistsGrid = document.getElementById('playlistsGrid');
+        if (playlistsGrid && playlistsGrid.parentNode) {
+          const controlsDiv = document.createElement('div');
+          controlsDiv.className = 'playlist-controls-wrapper';
+          controlsDiv.appendChild(btn);
+          playlistsGrid.parentNode.insertBefore(controlsDiv, playlistsGrid);
+        }
+      }
+
       if (btn && !btn.dataset.initialized) {
         btn.dataset.initialized = 'true';
         
@@ -670,7 +619,7 @@ import { UIHelper } from '../utils/ui-helper.js';
       }
 
       this.setFinalProgressText(itemsToProcess);
-      this.updateCheckAllCheckbox();
+      UIHelper.updateCheckAllCheckbox();
     }
 
     /**
@@ -809,7 +758,7 @@ import { UIHelper } from '../utils/ui-helper.js';
         if (searchInput && searchInput.value) {
           const normalizedQuery = searchInput.value.toLowerCase().trim();
           const searchString = newRow.dataset.searchString || '';
-          newRow.style.display = searchString.includes(normalizedQuery) ? '' : 'none';
+          newRow.classList.toggle('hidden', !searchString.includes(normalizedQuery));
         }
         container.replaceChild(newRow, oldRow);
       }
@@ -936,7 +885,7 @@ import { UIHelper } from '../utils/ui-helper.js';
         }
 
         this.setVideoTrackProgressMessage(videoTracks);
-        this.updateCheckAllCheckbox();
+        UIHelper.updateCheckAllCheckbox();
       } catch (error) {
         this.setProgressText('Error occurred while finding video tracks.');
       } finally {
@@ -1019,7 +968,7 @@ import { UIHelper } from '../utils/ui-helper.js';
         document.getElementById('importFromFileBtn')?.classList.remove('hidden');
         document.getElementById('listAllTracksBtn')?.classList.remove('hidden');
 
-        this.updateCheckAllCheckbox();
+        UIHelper.updateCheckAllCheckbox();
       } catch (error) {
         this.setProgressText('Error occurred while fetching tracks.');
       } finally {
@@ -1294,7 +1243,7 @@ import { UIHelper } from '../utils/ui-helper.js';
           document.getElementById('replaceSelectedBtn')?.classList.add('hidden');
           document.getElementById('removeSelectedBtn')?.classList.add('hidden');
           document.getElementById('addSelectedBtn')?.classList.remove('hidden');
-          this.updateCheckAllCheckbox();
+          UIHelper.updateCheckAllCheckbox();
         } else {
           this.setProgressText('No media files found in the selected folder.');
         }
@@ -1364,7 +1313,7 @@ import { UIHelper } from '../utils/ui-helper.js';
           document.getElementById('replaceSelectedBtn')?.classList.add('hidden');
           document.getElementById('removeSelectedBtn')?.classList.add('hidden');
           document.getElementById('addSelectedBtn')?.classList.remove('hidden');
-          this.updateCheckAllCheckbox();
+          UIHelper.updateCheckAllCheckbox();
         } else {
           this.setProgressText('No valid tracks found in the file.');
         }
