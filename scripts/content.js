@@ -182,8 +182,15 @@ class ContentScriptController {
     const selectAllCheckbox = popupElement.querySelector('#yt-music-plus-selectAllCheckbox');
     if (selectAllCheckbox) {
       selectAllCheckbox.addEventListener('change', (e) => {
-        const checkboxes = popupElement.querySelectorAll('.item-checkbox:not([disabled])');
-        checkboxes.forEach(cb => cb.checked = e.target.checked);
+        const checkboxes = Array.from(popupElement.querySelectorAll('.item-checkbox:not([disabled])')).filter(cb => {
+          const row = cb.closest('.grid-row');
+          return row && row.style.display !== 'none';
+        });
+        checkboxes.forEach(cb => {
+          cb.checked = e.target.checked;
+          cb.dataset.userInteracted = 'true';
+        });
+        this.updateCheckAllCheckbox();
       });
     }
 
@@ -232,7 +239,10 @@ class ContentScriptController {
     if (!popupElement) return;
 
     const selectAllCheckbox = popupElement.querySelector('#yt-music-plus-selectAllCheckbox');
-    const checkboxes = popupElement.querySelectorAll('.item-checkbox:not([disabled])');
+    const checkboxes = Array.from(popupElement.querySelectorAll('.item-checkbox:not([disabled])')).filter(cb => {
+      const row = cb.closest('.grid-row');
+      return row && row.style.display !== 'none';
+    });
     const allCheckboxes = popupElement.querySelectorAll('.item-checkbox');
     
     // Update select-all checkbox state
@@ -251,15 +261,31 @@ class ContentScriptController {
     });
 
     const isListOnlyMode = popupElement.querySelector('.items-grid-wrapper')?.classList.contains('list-only-mode');
+    const isSearching = !popupElement.querySelector('#searchProgress')?.classList.contains('hidden');
 
     const removeBtn = popupElement.querySelector('#removeSelectedBtn');
-    if (removeBtn) removeBtn.disabled = !anyChecked;
+    if (removeBtn) removeBtn.disabled = isSearching ? true : !anyChecked;
 
     const addBtn = popupElement.querySelector('#addSelectedBtn');
-    if (addBtn) addBtn.disabled = isListOnlyMode ? true : !anyCheckedWithReplacement;
+    if (addBtn) addBtn.disabled = isSearching || isListOnlyMode ? true : !anyCheckedWithReplacement;
 
     const replaceBtn = popupElement.querySelector('#replaceSelectedBtn');
-    if (replaceBtn) replaceBtn.disabled = isListOnlyMode ? true : !anyCheckedWithReplacement;
+    if (replaceBtn) replaceBtn.disabled = isSearching || isListOnlyMode ? true : !anyCheckedWithReplacement;
+
+    const checkedCount = Array.from(allCheckboxes).filter(cb => cb.checked).length;
+    const totalCount = allCheckboxes.length;
+    
+    const footer = popupElement.querySelector('#ytMusicPlusSelectionFooter');
+    
+    if (footer) {
+      if (totalCount > 0) {
+        footer.textContent = `${checkedCount} of ${totalCount} item${totalCount !== 1 ? 's' : ''} selected`;
+        footer.classList.remove('hidden');
+        footer.style.display = '';
+      } else {
+        footer.classList.add('hidden');
+      }
+    }
   }
 
   /**

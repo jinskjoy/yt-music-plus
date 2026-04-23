@@ -43,7 +43,7 @@
                     <div class="action-row">
                         <button id="importFromFolderBtn" class="btn btn-primary" type="button">Import from Folder</button>
                         <button id="importFromFileBtn" class="btn btn-primary" type="button">Import from File</button>
-                        <input type="file" id="importFileInput" accept=".txt" style="display: none;" />
+                        <input type="file" id="importFileInput" class="hidden" accept=".txt" />
                     </div>
                 </div>
             </div>
@@ -74,6 +74,12 @@
                         <div class="spinner"></div>
                     </div>
                     <button id="cancelSearchBtn" class="btn btn-primary hidden" type="button">Cancel Search</button>
+
+                    <!-- Search Container -->
+                    <div class="search-container">
+                        <input type="text" id="ytMusicPlusSearchInput" class="search-input" placeholder="Search title, artist, or album..." aria-label="Search" autocomplete="off" />
+                        <button type="button" id="ytMusicPlusClearSearchBtn" class="clear-search-btn hidden" aria-label="Clear search">✕</button>
+                    </div>
                 </div>
 
                 <!-- Scrollable Grid Section -->
@@ -91,6 +97,7 @@
 
                     </div>
                 </div>
+                <div id="ytMusicPlusSelectionFooter" class="hidden"></div>
             </form>
         </div>
     </div>

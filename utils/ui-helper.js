@@ -276,6 +276,17 @@ export class UIHelper {
     row.dataset.originalMedia = JSON.stringify(originalMedia);
     row.dataset.replacementMedia = JSON.stringify(replacementMedia || {});
 
+    // Pre-compute a lowercase search string combining both original and replacement details
+    const searchTerms = [
+      originalMedia?.name,
+      originalMedia?.artist,
+      originalMedia?.album,
+      replacementMedia?.name,
+      replacementMedia?.artist,
+      replacementMedia?.album
+    ].filter(Boolean).join(' ').toLowerCase();
+    row.dataset.searchString = searchTerms;
+
     // helper for column creation
     const makeCol = (className) =>
       UIHelper._createElement('div', { classes: ['grid-col', className] });
@@ -311,6 +322,7 @@ export class UIHelper {
       if (e.target.closest('a')) return;
       if (!checkbox.disabled) {
         checkbox.checked = !checkbox.checked;
+        checkbox.dataset.userInteracted = 'true';
         checkbox.dispatchEvent(new Event('change', { bubbles: true }));
       }
     });

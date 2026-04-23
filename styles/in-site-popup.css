@@ -773,3 +773,55 @@ border-radius: 0;
 .close-warning-btn:hover {
     color: #000;
 }
+
+/* Search Container Styles */
+.search-container {
+    position: relative;
+    margin-left: auto;
+    flex: 1;
+    max-width: 300px;
+    min-width: 200px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 8px 30px 8px 0;
+    border-radius: 0;
+    border: none;
+    border-bottom: 1px solid black;
+    background: transparent;
+    color: #000;
+    box-sizing: border-box;
+    outline: none;
+    box-shadow: none;
+}
+
+.clear-search-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@media (max-width: 768px) {
+    .search-container {
+        margin-left: 0;
+        max-width: 100%;
+    }
+}
+
+#ytMusicPlusSelectionFooter {
+    text-align: right;
+    padding: 8px 4px 0 4px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #666;
+}
