@@ -514,6 +514,9 @@ import { UIHelper } from '../utils/ui-helper.js';
       document.getElementById('removeSelectedBtn')?.classList.remove('hidden');
       document.getElementById('addSelectedBtn')?.classList.remove('hidden');
 
+      // Reset expanded grid state
+      UIHelper.toggleGrid(false);
+
       this.localTracks = [];
 
       this.updatePopupTitle(`Playlist: ${playlist.title}`);

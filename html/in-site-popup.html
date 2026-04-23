@@ -20,7 +20,9 @@
 
         <!-- Playlist Details Screen -->
         <div id="playlistDetailsScreen" class="playlist-details-screen hidden">
-            <button id="backButton" class="btn btn-primary back-button" aria-label="Back to playlists">← Back</button>
+            <div class="details-header">
+                <button id="backButton" class="btn btn-primary back-button" aria-label="Back to playlists">← Back</button>
+            </div>
 
             <!-- Playlist Info Section -->
             <div class="playlist-info-section">
@@ -48,17 +50,21 @@
 
             <form id="yt-music-plus-form">
 
-                <div class="warning-message"><span>⚠️ If a popup is shown asking whether to stay in the current page or reload, please click "Stay on this page" or "Cancel". YouTube Music may show this popup when performing operations that require reloading the page.</span></div>
+                <div class="warning-message" id="yt-music-plus-warningMessage">
+                    <span>⚠️ If a popup is shown asking whether to stay in the current page or reload, please click "Stay on this page" or "Cancel". YouTube Music may show this popup when performing operations that require reloading the page.</span>
+                    <button type="button" id="closeWarningBtn" class="close-warning-btn" aria-label="Close warning">×</button>
+                </div>
                 
                 <!-- Action Buttons Section -->
                 <div class="action-buttons-container">
-                    <button id="replaceSelectedBtn" class="btn btn-primary" disabled
+                    <button id="toggleGridBtn" class="btn btn-primary btn-icon" type="button" aria-label="Expand grid" title="Expand grid">⤢</button>
+                    <button id="replaceSelectedBtn" class="btn btn-primary" type="button" disabled
                         title="This action will remove the unavailable item and replace it with best match.">Replace
                         Selected</button>
-                    <button id="addSelectedBtn" class="btn btn-primary" disabled
+                    <button id="addSelectedBtn" class="btn btn-primary" type="button" disabled
                         title="This action will add the replacements to the playlist, but will not remove the unavailable ones.">Add
                         Selected</button>
-                    <button id="removeSelectedBtn" class="btn btn-danger" disabled
+                    <button id="removeSelectedBtn" class="btn btn-danger" type="button" disabled
                         title="This action will remove the selected items from the playlist. It will not add replacements.">Remove
                         Selected</button>
                     <button id="findLocalReplacementsBtn" class="btn btn-primary hidden" type="button">Start Search</button>

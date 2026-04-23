@@ -651,7 +651,7 @@ export class UIHelper {
     const msg = UIHelper._createElement('div');
     msg.appendChild(
       UIHelper._createElement('span', {
-        text: 'No editable playlists found. Google changes their API frequently, if you think this is not correct, please report an issue on ',
+        text: 'No editable playlists found. Try refreshing the page. Google changes their API frequently, if you think it\'s broken, please report an issue on ',
       })
     );
     msg.appendChild(
@@ -670,5 +670,38 @@ export class UIHelper {
       textAlign: 'center',
     });
     return msg;
+  }
+
+  /**
+   * Toggles the expanded state of the items grid by hiding/showing playlist info.
+   * @param {boolean} [forceExpand] - If true, forces expanded state. If false, forces collapsed. If undefined, toggles.
+   */
+  static toggleGrid(forceExpand) {
+    const infoSection = document.querySelector('.playlist-info-section');
+    const toggleGridBtn = document.getElementById('toggleGridBtn');
+    const gridWrapper = document.querySelector('.items-grid-wrapper');
+
+    if (!infoSection) return;
+
+    const isHidden = infoSection.classList.contains('collapsed');
+    const shouldExpand = forceExpand !== undefined ? forceExpand : !isHidden;
+
+    if (shouldExpand) {
+      infoSection.classList.add('collapsed');
+      if (toggleGridBtn) {
+        toggleGridBtn.textContent = '⤡';
+        toggleGridBtn.title = 'Collapse grid';
+        toggleGridBtn.setAttribute('aria-label', 'Collapse grid');
+      }
+      if (gridWrapper) gridWrapper.style.height = 'max(460px, calc(90vh - 250px))';
+    } else {
+      infoSection.classList.remove('collapsed');
+      if (toggleGridBtn) {
+        toggleGridBtn.textContent = '⤢';
+        toggleGridBtn.title = 'Expand grid';
+        toggleGridBtn.setAttribute('aria-label', 'Expand grid');
+      }
+      if (gridWrapper) gridWrapper.style.height = '';
+    }
   }
 }
