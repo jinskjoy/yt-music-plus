@@ -276,6 +276,17 @@ export class UIHelper {
     row.dataset.originalMedia = JSON.stringify(originalMedia);
     row.dataset.replacementMedia = JSON.stringify(replacementMedia || {});
 
+    // Pre-compute a lowercase search string combining both original and replacement details
+    const searchTerms = [
+      originalMedia?.name,
+      originalMedia?.artist,
+      originalMedia?.album,
+      replacementMedia?.name,
+      replacementMedia?.artist,
+      replacementMedia?.album
+    ].filter(Boolean).join(' ').toLowerCase();
+    row.dataset.searchString = searchTerms;
+
     // helper for column creation
     const makeCol = (className) =>
       UIHelper._createElement('div', { classes: ['grid-col', className] });
@@ -311,6 +322,7 @@ export class UIHelper {
       if (e.target.closest('a')) return;
       if (!checkbox.disabled) {
         checkbox.checked = !checkbox.checked;
+        checkbox.dataset.userInteracted = 'true';
         checkbox.dispatchEvent(new Event('change', { bubbles: true }));
       }
     });
@@ -544,6 +556,75 @@ export class UIHelper {
   }
 
   /**
+   * Updates the select-all checkbox state based on individual checkbox states
+   * Also enables/disables action buttons based on selection
+   */
+  static updateCheckAllCheckbox() {
+    const popupElement = document.querySelector('.yt-music-extended-popup-container');
+    if (!popupElement) return;
+
+    const selectAllCheckbox = popupElement.querySelector('#yt-music-plus-selectAllCheckbox');
+    const checkboxes = Array.from(popupElement.querySelectorAll('.item-checkbox:not([disabled])')).filter(cb => {
+      const row = cb.closest('.grid-row');
+      return row && !row.classList.contains('hidden');
+    });
+    const allCheckboxes = popupElement.querySelectorAll('.item-checkbox');
+    
+    // Update select-all checkbox state
+    if (selectAllCheckbox) {
+      selectAllCheckbox.checked = checkboxes.length > 0 && Array.from(checkboxes).every(cb => cb.checked);
+    }
+
+    // Enable/disable action buttons based on selection
+    const anyChecked = Array.from(allCheckboxes).some(cb => cb.checked);
+    const anyCheckedWithReplacement = Array.from(allCheckboxes).some(cb => {
+      if (!cb.checked) return false;
+      const row = cb.closest('.grid-row');
+      if (!row) return false;
+      const replacement = JSON.parse(row.dataset.replacementMedia || '{}');
+      return !!replacement.videoId;
+    });
+
+    const isListOnlyMode = popupElement.querySelector('.items-grid-wrapper')?.classList.contains('list-only-mode');
+    const searchProgress = document.getElementById('searchProgress');
+    const isSearching = searchProgress && !searchProgress.classList.contains('hidden');
+
+    const removeBtn = popupElement.querySelector('#removeSelectedBtn');
+    if (removeBtn) removeBtn.disabled = isSearching ? true : !anyChecked;
+
+    const addBtn = popupElement.querySelector('#addSelectedBtn');
+    if (addBtn) addBtn.disabled = isSearching || isListOnlyMode ? true : !anyCheckedWithReplacement;
+
+    const replaceBtn = popupElement.querySelector('#replaceSelectedBtn');
+    if (replaceBtn) replaceBtn.disabled = isSearching || isListOnlyMode ? true : !anyCheckedWithReplacement;
+
+    const checkedCount = Array.from(allCheckboxes).filter(cb => cb.checked).length;
+    const totalCount = allCheckboxes.length;
+    
+    const footer = popupElement.querySelector('#ytMusicPlusSelectionFooter');
+    
+    if (footer) {
+      const textContainer = footer.querySelector('.footer-right') || footer;
+      
+      if (totalCount > 0) {
+        textContainer.textContent = `${checkedCount} of ${totalCount} item${totalCount !== 1 ? 's' : ''} selected`;
+        textContainer.classList.remove('hidden');
+      } else {
+        textContainer.classList.add('hidden');
+      }
+
+      const progressText = document.getElementById('progressText');
+      const hasProgressText = progressText && !progressText.classList.contains('hidden');
+
+      if (totalCount > 0 || isSearching || hasProgressText) {
+        footer.classList.remove('hidden');
+      } else {
+        footer.classList.add('hidden');
+      }
+    }
+  }
+
+  /**
    * Read the current set of checked rows from the grid and return their
    * original+replacement metadata. The return value is suitable for
    * processing when the user clicks a "apply changes" button, etc.
@@ -693,7 +774,7 @@ export class UIHelper {
         toggleGridBtn.title = 'Collapse grid';
         toggleGridBtn.setAttribute('aria-label', 'Collapse grid');
       }
-      if (gridWrapper) gridWrapper.style.height = 'max(460px, calc(90vh - 250px))';
+      if (gridWrapper) gridWrapper.classList.add('expanded');
     } else {
       infoSection.classList.remove('collapsed');
       if (toggleGridBtn) {
@@ -701,7 +782,7 @@ export class UIHelper {
         toggleGridBtn.title = 'Expand grid';
         toggleGridBtn.setAttribute('aria-label', 'Expand grid');
       }
-      if (gridWrapper) gridWrapper.style.height = '';
+      if (gridWrapper) gridWrapper.classList.remove('expanded');
     }
   }
 }

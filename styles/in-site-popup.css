@@ -300,7 +300,13 @@ border-radius: 0;
     border-radius: 4px;
     overflow: hidden;
     background: white;
-    transition: height 0.3s ease-in-out;
+    transition: height 0.3s ease-in-out, flex-grow 0.3s ease-in-out;
+}
+
+.items-grid-wrapper.expanded {
+    flex: 1;
+    height: auto;
+    min-height: 0;
 }
 
 .playlist-info-section {
@@ -740,9 +746,6 @@ border-radius: 0;
     padding: 10px;
 }
 
-.search-progress-text{
-    max-width: 40%;
-}
 .warning-message {
     background-color: #fff3cd;
     color: #000;
@@ -766,4 +769,97 @@ border-radius: 0;
 }
 .close-warning-btn:hover {
     color: #000;
+}
+
+/* Search Container Styles */
+.search-container {
+    position: relative;
+    margin-left: auto;
+    flex: 1;
+    max-width: 300px;
+    min-width: 200px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 8px 30px 8px 0;
+    border-radius: 0;
+    border: none;
+    border-bottom: 1px solid black;
+    background: transparent;
+    color: #000;
+    box-sizing: border-box;
+    outline: none;
+    box-shadow: none;
+}
+
+.clear-search-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@media (max-width: 768px) {
+    .search-container {
+        margin-left: 0;
+        max-width: 100%;
+    }
+}
+
+#ytMusicPlusSelectionFooter {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-top: 1px solid #e0e0e0;
+    background-color: #fff;
+}
+
+.footer-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+    justify-content: space-between;
+}
+
+.footer-right {
+    text-align: right;
+    font-size: 13px;
+    font-weight: 500;
+    color: #666;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-left: 16px;
+}
+
+.progress-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+#progressText {
+    font-size: 13px;
+    color: #555;
+    white-space: normal;
+    word-break: break-word;
+}
+
+#cancelSearchBtn {
+    flex-shrink: 0;
+}
+
+.footer-left .search-progress {
+    margin-left: 0;
 }

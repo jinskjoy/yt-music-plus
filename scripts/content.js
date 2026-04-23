@@ -182,8 +182,15 @@ class ContentScriptController {
     const selectAllCheckbox = popupElement.querySelector('#yt-music-plus-selectAllCheckbox');
     if (selectAllCheckbox) {
       selectAllCheckbox.addEventListener('change', (e) => {
-        const checkboxes = popupElement.querySelectorAll('.item-checkbox:not([disabled])');
-        checkboxes.forEach(cb => cb.checked = e.target.checked);
+        const checkboxes = Array.from(popupElement.querySelectorAll('.item-checkbox:not([disabled])')).filter(cb => {
+          const row = cb.closest('.grid-row');
+          return row && !row.classList.contains('hidden');
+        });
+        checkboxes.forEach(cb => {
+          cb.checked = e.target.checked;
+          cb.dataset.userInteracted = 'true';
+        });
+        UIHelper.updateCheckAllCheckbox();
       });
     }
 
@@ -193,7 +200,7 @@ class ContentScriptController {
                                   e.target.classList.contains('select-all-checkbox') ||
                                   e.target.id === 'yt-music-plus-selectAllCheckbox';
       if (isRelevantCheckbox) {
-        this.updateCheckAllCheckbox();
+        UIHelper.updateCheckAllCheckbox();
       }
     });
 
@@ -221,45 +228,6 @@ class ContentScriptController {
     if (toggleGridBtn) {
       toggleGridBtn.addEventListener('click', () => UIHelper.toggleGrid());
     }
-  }
-
-  /**
-   * Updates the select-all checkbox state based on individual checkbox states
-   * Also enables/disables action buttons based on selection
-   */
-  updateCheckAllCheckbox() {
-    const popupElement = this.getPopupElement();
-    if (!popupElement) return;
-
-    const selectAllCheckbox = popupElement.querySelector('#yt-music-plus-selectAllCheckbox');
-    const checkboxes = popupElement.querySelectorAll('.item-checkbox:not([disabled])');
-    const allCheckboxes = popupElement.querySelectorAll('.item-checkbox');
-    
-    // Update select-all checkbox state
-    if (selectAllCheckbox) {
-      selectAllCheckbox.checked = checkboxes.length > 0 && Array.from(checkboxes).every(cb => cb.checked);
-    }
-
-    // Enable/disable action buttons based on selection
-    const anyChecked = Array.from(allCheckboxes).some(cb => cb.checked);
-    const anyCheckedWithReplacement = Array.from(allCheckboxes).some(cb => {
-      if (!cb.checked) return false;
-      const row = cb.closest('.grid-row');
-      if (!row) return false;
-      const replacement = JSON.parse(row.dataset.replacementMedia || '{}');
-      return !!replacement.videoId;
-    });
-
-    const isListOnlyMode = popupElement.querySelector('.items-grid-wrapper')?.classList.contains('list-only-mode');
-
-    const removeBtn = popupElement.querySelector('#removeSelectedBtn');
-    if (removeBtn) removeBtn.disabled = !anyChecked;
-
-    const addBtn = popupElement.querySelector('#addSelectedBtn');
-    if (addBtn) addBtn.disabled = isListOnlyMode ? true : !anyCheckedWithReplacement;
-
-    const replaceBtn = popupElement.querySelector('#replaceSelectedBtn');
-    if (replaceBtn) replaceBtn.disabled = isListOnlyMode ? true : !anyCheckedWithReplacement;
   }
 
   /**

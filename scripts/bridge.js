@@ -297,6 +297,56 @@ import { UIHelper } from '../utils/ui-helper.js';
     }
 
     /**
+     * Initializes search box event listeners
+     */
+    initSearchBox() {
+      const searchInput = document.getElementById('ytMusicPlusSearchInput');
+      const clearBtn = document.getElementById('ytMusicPlusClearSearchBtn');
+
+      if (!searchInput || !clearBtn) return;
+      if (searchInput.dataset.initialized) return;
+      searchInput.dataset.initialized = 'true';
+
+      // Use UIHelper's debouncer to avoid hanging the UI
+      const debouncedSearch = UIHelper.debounce((e) => this.filterGridItems(e.target.value), 250);
+      
+      searchInput.addEventListener('input', (e) => {
+        debouncedSearch(e);
+        clearBtn.classList.toggle('hidden', !e.target.value);
+      });
+
+      clearBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        clearBtn.classList.add('hidden');
+        this.filterGridItems('');
+        searchInput.focus();
+      });
+    }
+
+    /**
+     * Filters grid items based on search query
+     * @param {string} query - Search query
+     */
+    filterGridItems(query) {
+      const normalizedQuery = query.toLowerCase().trim();
+      const container = document.getElementById('yt-music-plus-itemsGridContainer');
+      if (!container) return;
+
+      const rows = container.querySelectorAll('.grid-row');
+      
+      if (!normalizedQuery) {
+        rows.forEach(row => row.classList.remove('hidden'));
+      } else {
+        rows.forEach(row => {
+          const searchString = row.dataset.searchString || '';
+          row.classList.toggle('hidden', !searchString.includes(normalizedQuery));
+        });
+      }
+
+      UIHelper.updateCheckAllCheckbox();
+    }
+
+    /**
      * Toggles search progress indicator visibility
      * @param {boolean} show - Whether to show the indicator
      * @param {boolean} isSearch - Whether the operation is an active search
@@ -331,43 +381,7 @@ import { UIHelper } from '../utils/ui-helper.js';
         if (btn) btn.disabled = show;
       });
 
-      this.updateCheckAllCheckbox();
-    }
-
-    /**
-     * Updates select-all checkbox state
-     */
-    updateCheckAllCheckbox() {
-      const popupElement = document.querySelector('.yt-music-extended-popup-container');
-      if (!popupElement) return;
-
-      const selectAllCheckbox = popupElement.querySelector('#yt-music-plus-selectAllCheckbox');
-      const checkboxes = popupElement.querySelectorAll('.item-checkbox:not([disabled])');
-      const allCheckboxes = popupElement.querySelectorAll('.item-checkbox');
-
-      if (selectAllCheckbox) {
-        selectAllCheckbox.checked = checkboxes.length > 0 && Array.from(checkboxes).every(cb => cb.checked);
-      }
-
-      const anyChecked = Array.from(allCheckboxes).some(cb => cb.checked);
-      const anyCheckedWithReplacement = Array.from(allCheckboxes).some(cb => {
-        if (!cb.checked) return false;
-        const row = cb.closest('.grid-row');
-        if (!row) return false;
-        const replacement = JSON.parse(row.dataset.replacementMedia || '{}');
-        return !!replacement.videoId;
-      });
-
-      const isListOnlyMode = popupElement.querySelector('.items-grid-wrapper')?.classList.contains('list-only-mode');
-
-      const removeBtn = popupElement.querySelector('#removeSelectedBtn');
-      if (removeBtn) removeBtn.disabled = !anyChecked;
-
-      const addBtn = popupElement.querySelector('#addSelectedBtn');
-      if (addBtn) addBtn.disabled = isListOnlyMode ? true : !anyCheckedWithReplacement;
-
-      const replaceBtn = popupElement.querySelector('#replaceSelectedBtn');
-      if (replaceBtn) replaceBtn.disabled = isListOnlyMode ? true : !anyCheckedWithReplacement;
+      UIHelper.updateCheckAllCheckbox();
     }
 
     /**
@@ -391,7 +405,7 @@ import { UIHelper } from '../utils/ui-helper.js';
       if (!forceRefresh && this.playlistsCache && this.playlistsCache.length > 0) {
         this.displayPlaylistsForSelection();
         this.hidePlaylistLoadingIndicator();
-        this.injectRefreshButton();
+        this.initRefreshButton();
         return;
       }
 
@@ -419,26 +433,33 @@ import { UIHelper } from '../utils/ui-helper.js';
       } finally {
         this.displayPlaylistsForSelection();
         this.hidePlaylistLoadingIndicator();
-        this.injectRefreshButton();
+        this.initRefreshButton();
         this.isFetchingPlaylists = false;
       }
     }
 
     /**
-     * Injects a refresh button into the playlist selection screen
+     * Initializes the refresh button
      */
-    injectRefreshButton() {
-      const selectionScreen = document.getElementById('playlistSelectionScreen');
-      if (selectionScreen && !document.getElementById('refreshPlaylistsBtn')) {
-        const btnContainer = document.createElement('div');
-        btnContainer.style.display = 'flex';
-        btnContainer.style.justifyContent = 'flex-end';
-        btnContainer.style.marginBottom = '12px';
-
-        const btn = document.createElement('button');
+    initRefreshButton() {
+      let btn = document.getElementById('refreshPlaylistsBtn');
+      if (!btn) {
+        btn = document.createElement('button');
         btn.id = 'refreshPlaylistsBtn';
-        btn.className = 'btn btn-primary';
+        btn.className = 'btn btn-secondary';
         btn.textContent = 'Refresh Playlists';
+        
+        const playlistsGrid = document.getElementById('playlistsGrid');
+        if (playlistsGrid && playlistsGrid.parentNode) {
+          const controlsDiv = document.createElement('div');
+          controlsDiv.className = 'playlist-controls-wrapper';
+          controlsDiv.appendChild(btn);
+          playlistsGrid.parentNode.insertBefore(controlsDiv, playlistsGrid);
+        }
+      }
+
+      if (btn && !btn.dataset.initialized) {
+        btn.dataset.initialized = 'true';
         
         btn.addEventListener('click', async () => {
           btn.disabled = true;
@@ -448,9 +469,6 @@ import { UIHelper } from '../utils/ui-helper.js';
           btn.disabled = false;
           btn.textContent = 'Refresh Playlists';
         });
-
-        btnContainer.appendChild(btn);
-        selectionScreen.insertBefore(btnContainer, selectionScreen.firstChild);
       }
     }
 
@@ -520,6 +538,14 @@ import { UIHelper } from '../utils/ui-helper.js';
       this.localTracks = [];
 
       this.updatePopupTitle(`Playlist: ${playlist.title}`);
+      
+      this.initSearchBox();
+      const searchInput = document.getElementById('ytMusicPlusSearchInput');
+      if (searchInput) {
+        searchInput.value = '';
+        document.getElementById('ytMusicPlusClearSearchBtn')?.classList.add('hidden');
+        this.filterGridItems('');
+      }
     }
 
     /**
@@ -593,7 +619,7 @@ import { UIHelper } from '../utils/ui-helper.js';
       }
 
       this.setFinalProgressText(itemsToProcess);
-      this.updateCheckAllCheckbox();
+      UIHelper.updateCheckAllCheckbox();
     }
 
     /**
@@ -641,6 +667,10 @@ import { UIHelper } from '../utils/ui-helper.js';
         container.replaceChildren();
       }
       document.querySelector('.items-grid-wrapper')?.classList.remove('list-only-mode');
+
+      document.getElementById('replaceSelectedBtn')?.classList.remove('hidden');
+      document.getElementById('addSelectedBtn')?.classList.remove('hidden');
+      document.getElementById('removeSelectedBtn')?.classList.remove('hidden');
     }
 
     /**
@@ -653,6 +683,7 @@ import { UIHelper } from '../utils/ui-helper.js';
       const originalMedia = {
         name: item.name,
         artist: item.artists?.join(', ') || '',
+        album: item.album || '',
         thumbnail: item.thumbnail,
         url: item.videoId ? baseUrl + item.videoId : null,
         videoId: item.videoId,
@@ -672,6 +703,7 @@ import { UIHelper } from '../utils/ui-helper.js';
         replacementMedia = {
           name: item.replacement.name,
           artist: item.replacement.artists?.join(', ') || '',
+          album: item.replacement.album || '',
           thumbnail: item.replacement.thumbnail,
           url: baseUrl + item.replacement.videoId,
           isGoodMatch: item.replacement.isGoodMatch,
@@ -709,8 +741,25 @@ import { UIHelper } from '../utils/ui-helper.js';
       const container = document.getElementById('yt-music-plus-itemsGridContainer');
       const oldRow = container?.querySelector(`.grid-row[data-serial-number="${index}"]`);
       if (oldRow) {
+        const oldCheckbox = oldRow.querySelector('.item-checkbox');
+        const userInteracted = oldCheckbox?.dataset.userInteracted === 'true';
+        const wasChecked = oldCheckbox ? oldCheckbox.checked : false;
+
         const { originalMedia, replacementMedia } = this._createMediaObjects(item, baseUrl);
         const newRow = UIHelper.createMediaGridRow(originalMedia, replacementMedia, index);
+        
+        const newCheckbox = newRow.querySelector('.item-checkbox');
+        if (newCheckbox && oldCheckbox && userInteracted) {
+          newCheckbox.checked = wasChecked;
+          newCheckbox.dataset.userInteracted = 'true';
+        }
+
+        const searchInput = document.getElementById('ytMusicPlusSearchInput');
+        if (searchInput && searchInput.value) {
+          const normalizedQuery = searchInput.value.toLowerCase().trim();
+          const searchString = newRow.dataset.searchString || '';
+          newRow.classList.toggle('hidden', !searchString.includes(normalizedQuery));
+        }
         container.replaceChild(newRow, oldRow);
       }
     }
@@ -724,6 +773,12 @@ import { UIHelper } from '../utils/ui-helper.js';
       if (el) {
         el.textContent = text;
         el.classList.toggle('hidden', !text);
+        
+        const footer = document.getElementById('ytMusicPlusSelectionFooter');
+        if (footer && text) {
+          footer.classList.remove('hidden');
+          footer.style.display = '';
+        }
       }
     }
 
@@ -830,7 +885,7 @@ import { UIHelper } from '../utils/ui-helper.js';
         }
 
         this.setVideoTrackProgressMessage(videoTracks);
-        this.updateCheckAllCheckbox();
+        UIHelper.updateCheckAllCheckbox();
       } catch (error) {
         this.setProgressText('Error occurred while finding video tracks.');
       } finally {
@@ -913,7 +968,7 @@ import { UIHelper } from '../utils/ui-helper.js';
         document.getElementById('importFromFileBtn')?.classList.remove('hidden');
         document.getElementById('listAllTracksBtn')?.classList.remove('hidden');
 
-        this.updateCheckAllCheckbox();
+        UIHelper.updateCheckAllCheckbox();
       } catch (error) {
         this.setProgressText('Error occurred while fetching tracks.');
       } finally {
@@ -958,6 +1013,13 @@ import { UIHelper } from '../utils/ui-helper.js';
      * @async
      */
     async replaceSelectedItems() {
+      const selectedItems = UIHelper.getSelectedMediaItems();
+      if (selectedItems.length === 0) return;
+
+      if (!confirm(`Are you sure you want to replace ${selectedItems.length} selected item${selectedItems.length !== 1 ? 's' : ''}?`)) {
+        return;
+      }
+
       try {
         this.beforeActionsOnSelectedItems();
         this.setProgressText('Replacing selected items...');
@@ -969,7 +1031,6 @@ import { UIHelper } from '../utils/ui-helper.js';
           return;
         }
 
-        const selectedItems = UIHelper.getSelectedMediaItems();
         let i = 1;
 
         for (const item of selectedItems) {
@@ -1059,6 +1120,13 @@ import { UIHelper } from '../utils/ui-helper.js';
      * @async
      */
     async removeSelectedItems() {
+      const selectedItems = UIHelper.getSelectedMediaItems();
+      if (selectedItems.length === 0) return;
+
+      if (!confirm(`Are you sure you want to remove ${selectedItems.length} selected item${selectedItems.length !== 1 ? 's' : ''}?`)) {
+        return;
+      }
+
       try {
         this.beforeActionsOnSelectedItems();
         this.setProgressText('Removing selected items...');
@@ -1070,7 +1138,6 @@ import { UIHelper } from '../utils/ui-helper.js';
           return;
         }
 
-        const selectedItems = UIHelper.getSelectedMediaItems();
         let i = 1;
 
         for (const item of selectedItems) {
@@ -1176,7 +1243,7 @@ import { UIHelper } from '../utils/ui-helper.js';
           document.getElementById('replaceSelectedBtn')?.classList.add('hidden');
           document.getElementById('removeSelectedBtn')?.classList.add('hidden');
           document.getElementById('addSelectedBtn')?.classList.remove('hidden');
-          this.updateCheckAllCheckbox();
+          UIHelper.updateCheckAllCheckbox();
         } else {
           this.setProgressText('No media files found in the selected folder.');
         }
@@ -1246,7 +1313,7 @@ import { UIHelper } from '../utils/ui-helper.js';
           document.getElementById('replaceSelectedBtn')?.classList.add('hidden');
           document.getElementById('removeSelectedBtn')?.classList.add('hidden');
           document.getElementById('addSelectedBtn')?.classList.remove('hidden');
-          this.updateCheckAllCheckbox();
+          UIHelper.updateCheckAllCheckbox();
         } else {
           this.setProgressText('No valid tracks found in the file.');
         }

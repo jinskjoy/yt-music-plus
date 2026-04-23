@@ -16,6 +16,9 @@
                 <div id="playlistsGrid" class="playlists-grid">
                 </div>
             </div>
+            <div class="details-header" style="justify-content: flex-end;">
+                <button id="refreshPlaylistsBtn" class="btn btn-primary" aria-label="Refresh playlists" type="button">Refresh Playlists</button>
+            </div>
         </div>
 
         <!-- Playlist Details Screen -->
@@ -36,14 +39,14 @@
                 </div><!-- Playlist Action Buttons -->
                 <div class="playlist-action-buttons">
                     <div class="action-row">
-                        <button id="listAllTracksBtn" class="btn btn-primary" type="button">List All Tracks</button>
-                        <button id="findUnavailableBtn" class="btn btn-primary" type="button">Find Unavailable Tracks</button>
-                        <button id="findVideoTracksBtn" class="btn btn-primary" type="button">Find Video Tracks</button>
+                        <button id="listAllTracksBtn" class="btn btn-primary" type="button" title="View all tracks in this playlist to easily select and remove multiple items at once.">List All Tracks</button>
+                        <button id="findUnavailableBtn" class="btn btn-primary" type="button" title="Scan this playlist for greyed-out (unavailable) tracks and find working replacements.">Find Unavailable Tracks</button>
+                        <button id="findVideoTracksBtn" class="btn btn-primary" type="button" title="Scan this playlist for music videos and find their official audio replacements.">Find Video Tracks</button>
                     </div>
                     <div class="action-row">
-                        <button id="importFromFolderBtn" class="btn btn-primary" type="button">Import from Folder</button>
-                        <button id="importFromFileBtn" class="btn btn-primary" type="button">Import from File</button>
-                        <input type="file" id="importFileInput" accept=".txt" style="display: none;" />
+                        <button id="importFromFolderBtn" class="btn btn-primary" type="button" title="Scan a local folder on your computer for audio files to search and add to this playlist.">Import from Folder</button>
+                        <button id="importFromFileBtn" class="btn btn-primary" type="button" title="Import a text file containing a list of song titles to search and add to this playlist. The file should contain one song title per line.">Import from File</button>
+                        <input type="file" id="importFileInput" class="hidden" accept=".txt" />
                     </div>
                 </div>
             </div>
@@ -68,12 +71,12 @@
                         title="This action will remove the selected items from the playlist. It will not add replacements.">Remove
                         Selected</button>
                     <button id="findLocalReplacementsBtn" class="btn btn-primary hidden" type="button">Start Search</button>
-                    <!-- progress indicator shown when searches are running -->
-                    <div id="progressText" class="search-progress-text hidden"></div>
-                    <div id="searchProgress" class="search-progress hidden">
-                        <div class="spinner"></div>
+
+                    <!-- Search Container -->
+                    <div class="search-container">
+                        <input type="text" id="ytMusicPlusSearchInput" class="search-input" placeholder="Search title, artist, or album..." aria-label="Search" autocomplete="off" />
+                        <button type="button" id="ytMusicPlusClearSearchBtn" class="clear-search-btn hidden" aria-label="Clear search">✕</button>
                     </div>
-                    <button id="cancelSearchBtn" class="btn btn-primary hidden" type="button">Cancel Search</button>
                 </div>
 
                 <!-- Scrollable Grid Section -->
@@ -91,6 +94,19 @@
 
                     </div>
                 </div>
+            <div id="ytMusicPlusSelectionFooter" class="hidden">
+                <div class="footer-left">
+                    <!-- progress indicator shown when searches are running -->
+                    <div id="progressText" class="search-progress-text hidden"></div>
+                    <div class="progress-actions">
+                        <div id="searchProgress" class="search-progress hidden">
+                            <div class="spinner"></div>
+                        </div>
+                        <button id="cancelSearchBtn" class="btn btn-primary hidden" type="button">Cancel Search</button>
+                    </div>
+                </div>
+                <div class="footer-right"></div>
+            </div>
             </form>
         </div>
     </div>
