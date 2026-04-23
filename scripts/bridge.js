@@ -1064,6 +1064,13 @@ import { UIHelper } from '../utils/ui-helper.js';
      * @async
      */
     async replaceSelectedItems() {
+      const selectedItems = UIHelper.getSelectedMediaItems();
+      if (selectedItems.length === 0) return;
+
+      if (!confirm(`Are you sure you want to replace ${selectedItems.length} selected item${selectedItems.length !== 1 ? 's' : ''}?`)) {
+        return;
+      }
+
       try {
         this.beforeActionsOnSelectedItems();
         this.setProgressText('Replacing selected items...');
@@ -1075,7 +1082,6 @@ import { UIHelper } from '../utils/ui-helper.js';
           return;
         }
 
-        const selectedItems = UIHelper.getSelectedMediaItems();
         let i = 1;
 
         for (const item of selectedItems) {
@@ -1165,6 +1171,13 @@ import { UIHelper } from '../utils/ui-helper.js';
      * @async
      */
     async removeSelectedItems() {
+      const selectedItems = UIHelper.getSelectedMediaItems();
+      if (selectedItems.length === 0) return;
+
+      if (!confirm(`Are you sure you want to remove ${selectedItems.length} selected item${selectedItems.length !== 1 ? 's' : ''}?`)) {
+        return;
+      }
+
       try {
         this.beforeActionsOnSelectedItems();
         this.setProgressText('Removing selected items...');
@@ -1176,7 +1189,6 @@ import { UIHelper } from '../utils/ui-helper.js';
           return;
         }
 
-        const selectedItems = UIHelper.getSelectedMediaItems();
         let i = 1;
 
         for (const item of selectedItems) {

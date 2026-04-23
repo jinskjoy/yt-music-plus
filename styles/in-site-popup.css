@@ -840,6 +840,7 @@ border-radius: 0;
     color: #666;
     white-space: nowrap;
     flex-shrink: 0;
+    margin-left: 16px;
 }
 
 .progress-actions {
