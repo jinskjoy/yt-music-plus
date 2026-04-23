@@ -1,6 +1,7 @@
 import { DOMModifier } from '../utils/dom-modifier.js';
 import { MessageManager } from '../utils/messages.js';
 import { StorageManager } from '../utils/storage.js';
+import { UIHelper } from '../utils/ui-helper.js';
 
 /**
  * ContentScriptController - Manages content script operations
@@ -26,7 +27,8 @@ class ContentScriptController {
     this.storageManager = new StorageManager();
     this.extSettings = { 
       showNavButton: true, 
-      showPlaylistButton: true 
+      showPlaylistButton: true,
+      hideWarningMessage: false
     };
     this.sidebarElement = null;
 
@@ -58,7 +60,7 @@ class ContentScriptController {
       this.extSettings = { ...this.extSettings, ...stored };
     } catch (error) {
       // Use default settings if load fails
-      this.extSettings = { showNavButton: true, showPlaylistButton: true };
+      this.extSettings = { showNavButton: true, showPlaylistButton: true, hideWarningMessage: false };
     }
   }
 
@@ -158,6 +160,11 @@ class ContentScriptController {
 
       document.body.appendChild(popupContainer);
 
+      const warningMessage = popupContainer.querySelector('#yt-music-plus-warningMessage');
+      if (warningMessage && this.extSettings.hideWarningMessage) {
+        warningMessage.classList.add('hidden');
+      }
+
       this.setupPopupListeners();
     } catch (error) {
       // Popup injection failed - extension will continue without in-page popup
@@ -194,6 +201,25 @@ class ContentScriptController {
     const backButton = popupElement.querySelector('#backButton');
     if (backButton) {
       backButton.addEventListener('click', () => this.showPlaylistSelection());
+    }
+
+    // Close warning message handler
+    const closeWarningBtn = popupElement.querySelector('#closeWarningBtn');
+    if (closeWarningBtn) {
+      closeWarningBtn.addEventListener('click', async () => {
+        const warningMessage = popupElement.querySelector('#yt-music-plus-warningMessage');
+        if (warningMessage) {
+          warningMessage.classList.add('hidden');
+          this.extSettings.hideWarningMessage = true;
+          await this.storageManager.set({ hideWarningMessage: true });
+        }
+      });
+    }
+
+    // Toggle grid button handler
+    const toggleGridBtn = popupElement.querySelector('#toggleGridBtn');
+    if (toggleGridBtn) {
+      toggleGridBtn.addEventListener('click', () => UIHelper.toggleGrid());
     }
   }
 
