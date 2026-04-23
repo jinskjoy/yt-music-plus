@@ -693,7 +693,7 @@ export class UIHelper {
         toggleGridBtn.title = 'Collapse grid';
         toggleGridBtn.setAttribute('aria-label', 'Collapse grid');
       }
-      if (gridWrapper) gridWrapper.style.height = 'max(460px, calc(90vh - 250px))';
+      if (gridWrapper) gridWrapper.classList.add('expanded');
     } else {
       infoSection.classList.remove('collapsed');
       if (toggleGridBtn) {
@@ -701,7 +701,7 @@ export class UIHelper {
         toggleGridBtn.title = 'Expand grid';
         toggleGridBtn.setAttribute('aria-label', 'Expand grid');
       }
-      if (gridWrapper) gridWrapper.style.height = '';
+      if (gridWrapper) gridWrapper.classList.remove('expanded');
     }
   }
 }

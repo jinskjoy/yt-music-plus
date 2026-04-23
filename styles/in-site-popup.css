@@ -300,7 +300,13 @@ border-radius: 0;
     border-radius: 4px;
     overflow: hidden;
     background: white;
-    transition: height 0.3s ease-in-out;
+    transition: height 0.3s ease-in-out, flex-grow 0.3s ease-in-out;
+}
+
+.items-grid-wrapper.expanded {
+    flex: 1;
+    height: auto;
+    min-height: 0;
 }
 
 .playlist-info-section {
