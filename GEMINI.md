@@ -2,6 +2,9 @@
 
 Follow the coding style guidelines below when modifying or adding to the codebase.
 
+## Versioning
+- **Sync Versions:** Always keep the `version` field in `package.json` and `manifest.json` in sync. When updating one, update the other to match.
+
 ## JavaScript (JS)
 - **Structured Functions:** Write modular, properly structured functions with a single responsibility. Use clear naming conventions and include JSDoc comments where appropriate.
 - **DOM Manipulation:** Avoid creating complex elements purely through JavaScript (e.g., long chains of `document.createElement`). If a structure can be defined in an HTML file or template, do so and inject it.
