@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "YouTube Music +",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Chrome extension for YouTube Music with utilities to remove unavailable tracks, find replacements, and more.",
   "action": {
     "default_popup": "popup/popup.html",
@@ -35,7 +35,7 @@
   "content_scripts": [
     {
       "matches": ["https://music.youtube.com/*"],
-      "js": ["scripts/content-loader.js"],
+      "js": ["scripts/content.js"],
       "all_frames": false,
       "run_at": "document_idle"
     }

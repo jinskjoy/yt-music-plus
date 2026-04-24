@@ -2,6 +2,10 @@ import { DOMModifier } from '../utils/dom-modifier.js';
 import { MessageManager } from '../utils/messages.js';
 import { StorageManager } from '../utils/storage.js';
 import { UIHelper } from '../utils/ui-helper.js';
+import bridgeUrl from './bridge.js?script&module';
+import popupHtmlUrl from '../html/in-site-popup.html?url';
+import popupCssUrl from '../styles/in-site-popup.css?url';
+import sidebarUrl from '../sidebar/sidebar.html?url';
 
 /**
  * ContentScriptController - Manages content script operations
@@ -88,7 +92,7 @@ class ContentScriptController {
     try {
       const script = document.createElement('script');
       script.type = 'module';
-      script.src = chrome.runtime.getURL('scripts/bridge.js');
+      script.src = chrome.runtime.getURL(bridgeUrl);
       (document.head || document.documentElement).appendChild(script);
     } catch (error) {
       // Script injection may fail in certain page contexts
@@ -104,14 +108,14 @@ class ContentScriptController {
   async injectPopup() {
     try {
       // Inject popup styles
-      const cssUrl = chrome.runtime.getURL('styles/in-site-popup.css');
+      const cssUrl = chrome.runtime.getURL(popupCssUrl);
       const cssLink = document.createElement('link');
       cssLink.rel = 'stylesheet';
       cssLink.href = cssUrl;
       document.head.appendChild(cssLink);
 
       // Fetch and inject popup HTML
-      const htmlUrl = chrome.runtime.getURL('html/in-site-popup.html');
+      const htmlUrl = chrome.runtime.getURL(popupHtmlUrl);
       const response = await fetch(htmlUrl);
       const htmlText = await response.text();
 
@@ -394,7 +398,7 @@ class ContentScriptController {
 
     // Create sidebar iframe
     const iframe = document.createElement('iframe');
-    iframe.src = chrome.runtime.getURL('sidebar/sidebar.html');
+    iframe.src = chrome.runtime.getURL(sidebarUrl);
     iframe.id = 'extension-sidebar';
     iframe.style.cssText = ContentScriptController.SIDEBAR_STYLES;
 

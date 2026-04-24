@@ -1,22 +1,19 @@
+# OS
 .DS_Store
-node_modules
-dist
-build
-*.log
-*.tmp
-*.bak
-*.swp
-*.swo
-*.DS_Store
-.idea
-.vscode
-*.iml
-*.sublime-project
-*.sublime-workspace
-*.env
-.env.local
-.env.*.local
-coverage
+Thumbs.db
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Build and Bundles
+dist/
+dist-zip/
+build/
 *.zip
 *.tar.gz
 *.7z
@@ -25,9 +22,39 @@ coverage
 *.dll
 *.so
 *.dylib
+
+# Environments
+.env
+*.env
+.env.local
+.env.*.local
+
+# IDEs and Editors
+.idea/
+.vscode/
+*.iml
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+.DS_Store
+
+# Logs and Temporaries
+*.log
+*.tmp
+*.bak
+coverage/
+
+# Certificates
 *.pem
 *.key
 *.crt
 *.p12
 *.pfx
-*.cer       
+*.cer
+
+# Gemini and CI
+.gemini/
+.github/commands/
+.github/workflows/
+gha-creds-*.json
