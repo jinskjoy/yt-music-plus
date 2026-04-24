@@ -4,4 +4,11 @@ import manifest from './manifest.json'
 
 export default defineConfig({
   plugins: [crx({ manifest })],
+  server: {
+    cors: true,
+    port: 5173,
+    hmr: {
+      host: 'localhost',
+    },
+  },
 })
