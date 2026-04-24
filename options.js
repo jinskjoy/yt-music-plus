@@ -1,4 +1,4 @@
-import { StorageManager } from '../utils/storage.js';
+import { StorageManager } from './utils/storage.js';
 
 /**
  * OptionsPage - Manages the extension's options/settings page
