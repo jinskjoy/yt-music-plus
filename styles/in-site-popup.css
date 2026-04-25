@@ -758,7 +758,7 @@ border-radius: 0;
 .chrome-store-link:active,
 .chrome-store-link:hover {
     text-decoration: none;
-    color: white;
+    color: black;
 }
 
 .chrome-store-link {
@@ -771,7 +771,8 @@ border-radius: 0;
 }
 
 .extension-title {
-    background-color: black;
+    background-color: transparent;
+    color: black;
     margin: 0;
     padding: 0;
 }
