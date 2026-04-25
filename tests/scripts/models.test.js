@@ -55,10 +55,10 @@ describe('Track Class', () => {
 
   it('should check match correctly', () => {
     const track = new Track({ name: 'Shake It Off' });
-    expect(track.checkMatch('Shake It Off')).toBe(true);
+    expect(track.updateMatchStatus('Shake It Off')).toBe(true);
     expect(track.isGoodMatch).toBe(true);
     
-    expect(track.checkMatch('completely different song name')).toBe(false);
+    expect(track.updateMatchStatus('completely different song name')).toBe(false);
     expect(track.isGoodMatch).toBe(false);
   });
 });

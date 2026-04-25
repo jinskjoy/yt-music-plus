@@ -69,6 +69,8 @@ export class MediaGridRow {
     const row = clone.querySelector('.grid-row');
     
     row.dataset.serialNumber = serialNumber;
+    row.dataset.videoId = originalMedia.videoId || '';
+    row.dataset.name = originalMedia.name || '';
     row.dataset.originalMedia = JSON.stringify(originalMedia);
     row.dataset.replacementMedia = JSON.stringify(replacementMedia || {});
 
@@ -238,16 +240,18 @@ export class UIHelper {
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    container.querySelectorAll('.grid-row').forEach((row) => {
-      const data = JSON.parse(row.dataset.originalMedia || '{}');
-      let isMatch = false;
-      if (data.videoId && originalRecord.videoId) {
-        isMatch = data.videoId === originalRecord.videoId;
-      } else {
-        isMatch = data.name === originalRecord.name;
-      }
-      if (isMatch) row.remove();
-    });
+    let row;
+    if (originalRecord.videoId) {
+      row = container.querySelector(`.grid-row[data-video-id="${originalRecord.videoId}"]`);
+    } else {
+      // Fallback to name if no videoId (e.g. local files)
+      row = Array.from(container.querySelectorAll('.grid-row')).find(r => r.dataset.name === originalRecord.name);
+    }
+
+    if (row) {
+      row.remove();
+      UIHelper.updateCheckAllCheckbox();
+    }
   }
 
   /**
@@ -274,26 +278,24 @@ export class UIHelper {
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    container.querySelectorAll('.grid-row').forEach((row) => {
-      const data = JSON.parse(row.dataset.originalMedia || '{}');
-      let isMatch = false;
-      if (data.videoId && originalRecord.videoId) {
-        isMatch = data.videoId === originalRecord.videoId;
-      } else {
-        isMatch = data.name === originalRecord.name;
+    let row;
+    if (originalRecord.videoId) {
+      row = container.querySelector(`.grid-row[data-video-id="${originalRecord.videoId}"]`);
+    } else {
+      row = Array.from(container.querySelectorAll('.grid-row')).find(r => r.dataset.name === originalRecord.name);
+    }
+
+    if (row) {
+      const replacementCol = row.querySelector('.grid-col-replacement');
+      if (replacementCol && !replacementCol.querySelector('.error-message')) {
+        const template = document.getElementById('yt-music-plus-error-message-template');
+        if (!template) throw new Error('Template "yt-music-plus-error-message-template" not found');
+        
+        const errorDiv = template.content.cloneNode(true).querySelector('.error-message');
+        errorDiv.textContent = `Error: ${errorMessage}`;
+        replacementCol.appendChild(errorDiv);
       }
-      if (isMatch) {
-        const replacementCol = row.querySelector('.grid-col-replacement');
-        if (replacementCol && !replacementCol.querySelector('.error-message')) {
-          const template = document.getElementById('yt-music-plus-error-message-template');
-          if (!template) throw new Error('Template "yt-music-plus-error-message-template" not found');
-          
-          const errorDiv = template.content.cloneNode(true).querySelector('.error-message');
-          errorDiv.textContent = `Error: ${errorMessage}`;
-          replacementCol.appendChild(errorDiv);
-        }
-      }
-    });
+    }
   }
 
   /**

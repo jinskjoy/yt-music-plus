@@ -142,7 +142,7 @@ export class YTMusicParser {
             ?.text?.runs?.[0]?.text || '';
 
           const artists = musicItemRenderer?.flexColumns?.[1]?.musicResponsiveListItemFlexColumnRenderer
-            ?.text?.runs?.map(run => run.text).filter(text => text !== ', ' && text !== ' & ') || [];
+            ?.text?.runs?.map(run => run.text).filter(text => !this.FILTER_TEXTS.includes(text)) || [];
 
           const album = musicItemRenderer?.flexColumns?.[2]?.musicResponsiveListItemFlexColumnRenderer
             ?.text?.runs?.[0]?.text || '';
@@ -257,7 +257,7 @@ export class YTMusicParser {
       videoId,
       isVideo
     });
-    track.checkMatch(originalTitle, threshold);
+    track.updateMatchStatus(originalTitle, threshold);
 
     return track;
   }
@@ -314,7 +314,7 @@ export class YTMusicParser {
           videoId,
           isVideo
         });
-        track.checkMatch(originalTitle, threshold);
+        track.updateMatchStatus(originalTitle, threshold);
         potentialTracks.push(track);
       }
     }

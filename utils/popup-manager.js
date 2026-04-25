@@ -32,8 +32,6 @@ export class PopupManager {
       popupContainer.id = 'yt-music-plus-popup';
       popupContainer.innerHTML = htmlText;
 
-      this.enrichPopupContent(popupContainer);
-
       document.body.appendChild(popupContainer);
 
       const warningMessage = popupContainer.querySelector('#yt-music-plus-warningMessage');
@@ -46,30 +44,6 @@ export class PopupManager {
     } catch (error) {
       console.error('YouTube Music +: Popup injection failed', error);
       return null;
-    }
-  }
-
-  /**
-   * Enriches popup content with external links and structured wrappers
-   * @param {HTMLElement} container 
-   */
-  enrichPopupContent(container) {
-    // Inject 'Report a problem' link before the close button
-    const closeBtn = container.querySelector('#closePopupBtn') || container.querySelector('.close-btn');
-    if (closeBtn && closeBtn.parentNode) {
-      const actionsWrapper = document.createElement('div');
-      actionsWrapper.className = 'header-actions-wrapper';
-
-      closeBtn.parentNode.insertBefore(actionsWrapper, closeBtn);
-
-      const reportLink = document.createElement('a');
-      reportLink.href = 'https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc/support';
-      reportLink.target = '_blank';
-      reportLink.rel = 'noopener noreferrer';
-      reportLink.textContent = 'Report a problem';
-      reportLink.className = 'report-issue-link';
-      actionsWrapper.appendChild(reportLink);
-      actionsWrapper.appendChild(closeBtn);
     }
   }
 

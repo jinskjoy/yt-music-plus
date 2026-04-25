@@ -7,6 +7,7 @@ import { BrowserUtils } from '../utils/utils.js';
 export class BridgeUI {
   constructor(bridge) {
     this.bridge = bridge;
+    this.rowMap = new Map();
   }
 
   /**
@@ -30,6 +31,7 @@ export class BridgeUI {
    * Clears the playlist items container
    */
   clearPlaylistItemsContainer() {
+    this.rowMap.clear();
     const container = document.getElementById('yt-music-plus-itemsGridContainer');
     if (container) {
       container.replaceChildren();
@@ -49,14 +51,14 @@ export class BridgeUI {
 
     const gridRow = MediaGridRow.render(originalMedia, replacementMedia, index);
     document.getElementById('yt-music-plus-itemsGridContainer')?.appendChild(gridRow);
+    this.rowMap.set(index, gridRow);
   }
 
   /**
    * Updates an existing item row
    */
   updateItemRow(item, baseUrl, index) {
-    const container = document.getElementById('yt-music-plus-itemsGridContainer');
-    const oldRow = container?.querySelector(`.grid-row[data-serial-number="${index}"]`);
+    const oldRow = this.rowMap.get(index);
     if (oldRow) {
       const oldCheckbox = oldRow.querySelector('.item-checkbox');
       const userInteracted = oldCheckbox?.dataset.userInteracted === 'true';
@@ -77,7 +79,8 @@ export class BridgeUI {
         const searchString = newRow.dataset.searchString || '';
         newRow.classList.toggle('hidden', !searchString.includes(normalizedQuery));
       }
-      container.replaceChild(newRow, oldRow);
+      oldRow.parentNode?.replaceChild(newRow, oldRow);
+      this.rowMap.set(index, newRow);
     }
   }
 

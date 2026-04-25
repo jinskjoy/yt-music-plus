@@ -1,11 +1,14 @@
 <div class="yt-music-extended-popup-container" role="dialog" aria-modal="true" aria-labelledby="popupTitle">
     <div class="yt-music-extended-popup-content">
         <div class="popup-header">
-            <h2 class="extension-title">
+            <p class="extension-branding-title">
                 <a href="https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc" target="_blank" rel="noopener noreferrer" class="chrome-store-link">YouTube Music +</a>
-            </h2>
+            </p>
             <h2 id="popupTitle"></h2>
-            <button id="closePopupBtn" class="close-btn" aria-label="Close popup">×</button>
+            <div class="header-actions-wrapper">
+                <a href="https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc/support" target="_blank" rel="noopener noreferrer" class="report-issue-link">Report a problem</a>
+                <button id="closePopupBtn" class="close-btn" aria-label="Close popup">×</button>
+            </div>
         </div>
 
         <!-- Playlist Selection Screen -->
@@ -128,7 +131,7 @@
             <div class="media-info">
                 <div class="media-title"></div>
                 <div class="media-artist"></div>
-                <a class="media-link" target="yt-music-plus-preview">
+                <a class="media-link" target="_blank" rel="noopener noreferrer">
                     <span class="link-icon">🔗 Link</span>
                 </a>
             </div>
@@ -164,8 +167,7 @@
 
     <template id="yt-music-plus-no-playlists-template">
         <div class="no-playlists-message">
-            <span>No editable playlists found. Try refreshing the page. Google changes their API frequently, if you think it's broken, please report an issue on </span>
-            <a class="report-issue-link" href="https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc/support" target="_blank" rel="noopener noreferrer">the Chrome Web Store</a>
+            <span>No editable playlists found. Try refreshing the page. Google changes their API frequently, if you think it's broken, please <a class="report-issue-link" href="https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc/support" target="_blank" rel="noopener noreferrer">report an issue on the Chrome Web Store</a>.</span>
         </div>
     </template>
 </div>

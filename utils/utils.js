@@ -50,9 +50,14 @@ export class TextSimilarity {
 
     const jaro =
       (matches / s1Len + matches / s2Len + (matches - transpositions) / matches) / 3;
-    const prefixLen = Math.min(4, [...s1].findIndex((c, i) => c !== s2[i]));
-    const scaling = 0.1;
+    
+    let prefixLen = 0;
+    for (let i = 0; i < Math.min(4, s1Len, s2Len); i++) {
+      if (s1[i] === s2[i]) prefixLen++;
+      else break;
+    }
 
+    const scaling = 0.1;
     return jaro + prefixLen * scaling * (1 - jaro);
   }
 

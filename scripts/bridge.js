@@ -13,9 +13,12 @@ import { TrackProcessor } from './track-processor.js';
    * AuthInterceptor - Intercepts authorization tokens from XMLHttpRequest and Fetch API calls
    */
   class AuthInterceptor {
-    constructor(onTokenFound) {
+    constructor(onTokenFound, shouldIntercept) {
       this.onTokenFound = onTokenFound;
+      this.shouldIntercept = shouldIntercept || (() => true);
       this.isIntercepting = true;
+      this.originalSetRequestHeader = null;
+      this.originalFetch = null;
     }
 
     start() {
@@ -25,32 +28,40 @@ import { TrackProcessor } from './track-processor.js';
 
     stop() {
       this.isIntercepting = false;
+      if (this.originalSetRequestHeader) {
+        XMLHttpRequest.prototype.setRequestHeader = this.originalSetRequestHeader;
+        this.originalSetRequestHeader = null;
+      }
+      if (this.originalFetch) {
+        window.fetch = this.originalFetch;
+        this.originalFetch = null;
+      }
     }
 
     interceptXHR() {
       const self = this;
-      const originalSetRequestHeader = XMLHttpRequest.prototype.setRequestHeader;
+      this.originalSetRequestHeader = XMLHttpRequest.prototype.setRequestHeader;
 
       XMLHttpRequest.prototype.setRequestHeader = function (header, value) {
-        if (!self.isIntercepting || window.bridgeInstance?.ytMusicAPI.isAuthTokenSet()) {
-          return originalSetRequestHeader.apply(this, arguments);
+        if (!self.isIntercepting || !self.shouldIntercept()) {
+          return self.originalSetRequestHeader.apply(this, arguments);
         }
 
         if (header.toLowerCase() === 'authorization') {
           self.onTokenFound(value);
         }
 
-        return originalSetRequestHeader.apply(this, arguments);
+        return self.originalSetRequestHeader.apply(this, arguments);
       };
     }
 
     interceptFetch() {
       const self = this;
-      const { fetch: originalFetch } = window;
+      this.originalFetch = window.fetch;
 
       window.fetch = async (...args) => {
-        if (!self.isIntercepting || window.bridgeInstance?.ytMusicAPI.isAuthTokenSet()) {
-          return originalFetch(...args);
+        if (!self.isIntercepting || !self.shouldIntercept()) {
+          return self.originalFetch.apply(window, args);
         }
 
         try {
@@ -71,9 +82,9 @@ import { TrackProcessor } from './track-processor.js';
             }
           }
 
-          return originalFetch(...args);
+          return self.originalFetch.apply(window, args);
         } catch (error) {
-          return originalFetch(...args);
+          return self.originalFetch.apply(window, args);
         }
       };
     }
@@ -685,8 +696,11 @@ import { TrackProcessor } from './track-processor.js';
   window.postMessage({ type: 'BRIDGE_LOADED' }, '*');
 
   // Start auth token interception
-  const interceptor = new AuthInterceptor((token) => {
-    window.bridgeInstance?.setAuthToken(token);
-  });
+  const interceptor = new AuthInterceptor(
+    (token) => {
+      window.bridgeInstance?.setAuthToken(token);
+    },
+    () => !window.bridgeInstance?.ytMusicAPI.isAuthTokenSet()
+  );
   interceptor.start();
 })();

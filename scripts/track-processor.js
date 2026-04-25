@@ -181,7 +181,6 @@ export class TrackProcessor {
 
       let i = 1;
       for (const track of videoTracks) {
-        track.name = track.name.replaceAll(/(official\s*)?(music\s*)?video/gi, '').trim();
         track.isSearching = true;
         track.searchCancelled = false;
         track.replacement = null;
@@ -319,7 +318,7 @@ export class TrackProcessor {
       const localTracks = files.map(file => {
         const rawName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
         const name = rawName.replace(/[_-]/g, ' ').replace(/\s+/g, ' ').trim();
-        const isGeneric = name.length < 3 || /^\d*\s*(?:-|_)?\s*(?:(?:unknown|untitled|misc)(?:\s*artist)?\s*(?:-|_)?\s*)?(?:track|audio\s*track|unknown|untitled|misc)\s*\d*$/i.test(name);
+        const isGeneric = name.length < 3 || Track.GENERIC_NAME_REGEX.test(name);
         return new Track({
           name: name,
           artists: [],
@@ -377,7 +376,7 @@ export class TrackProcessor {
 
       const localTracks = lines.map(line => {
         const name = line.trim();
-        const isGeneric = name.length < 3 || /^\d*\s*(?:-|_)?\s*(?:(?:unknown|untitled|misc)(?:\s*artist)?\s*(?:-|_)?\s*)?(?:track|audio\s*track|unknown|untitled|misc)\s*\d*$/i.test(name);
+        const isGeneric = name.length < 3 || Track.GENERIC_NAME_REGEX.test(name);
         return new Track({
           name: name,
           artists: [],
