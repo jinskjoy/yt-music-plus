@@ -223,4 +223,3 @@ class ContentScriptController {
 
 // Initialize content script
 new ContentScriptController();
-
