@@ -84,8 +84,7 @@ export class PopupManager {
       titleLink.target = '_blank';
       titleLink.rel = 'noopener noreferrer';
       titleLink.innerHTML = originalHTML;
-      titleLink.style.textDecoration = 'none';
-      titleLink.style.color = 'inherit';
+      titleLink.classList.add('chrome-store-link');
       popupMainTitle.appendChild(titleLink);
     }
   }

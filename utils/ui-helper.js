@@ -97,9 +97,8 @@ export class MediaGridRow {
     if (!isListOnlyMode && !hasReplacement && !isPending) {
       checkbox.disabled = true;
     }
-
     const originalCol = row.querySelector('.grid-col-original');
-    originalCol.style.cursor = 'pointer';
+    originalCol.classList.add('clickable-column');
     originalCol.addEventListener('click', (e) => {
       if (e.target.closest('a')) return;
       if (!checkbox.disabled) {

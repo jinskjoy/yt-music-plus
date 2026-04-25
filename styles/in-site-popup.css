@@ -753,6 +753,15 @@ border-radius: 0;
     background-color: #fff3cd;
 }
 
+.chrome-store-link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.clickable-column {
+    cursor: pointer;
+}
+
 .error-message {
     color: red;
     font-size: 12px;
