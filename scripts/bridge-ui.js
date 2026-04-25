@@ -1,4 +1,5 @@
 import { UIHelper } from '../utils/ui-helper.js';
+import { BrowserUtils } from '../utils/utils.js';
 
 /**
  * BridgeUI - Handles all DOM interactions for the Bridge script within the page context
@@ -127,7 +128,7 @@ export class BridgeUI {
     if (searchInput.dataset.initialized) return;
     searchInput.dataset.initialized = 'true';
 
-    const debouncedSearch = UIHelper.debounce((e) => this.filterGridItems(e.target.value), 250);
+    const debouncedSearch = BrowserUtils.debounce((e) => this.filterGridItems(e.target.value), 250);
     
     searchInput.addEventListener('input', (e) => {
       debouncedSearch(e);

@@ -16,7 +16,7 @@ export class TrackProcessor {
    * @param {Array<Track>} items - Playlist tracks to process
    */
   async processPlaylistItems(items) {
-    this.bridge.cancelSearch = false;
+    this.bridge.session.start(items.length);
     const itemsToProcess = items;
     this.bridge.ui.clearPlaylistItemsContainer();
 
@@ -32,17 +32,18 @@ export class TrackProcessor {
 
     i = 1;
     for (const item of itemsToProcess) {
+      this.bridge.session.updateProgress();
       if (item.isGeneric || item.isSkipped) {
         i++;
         continue;
       }
 
-      if (this.bridge.cancelSearch) {
+      if (this.bridge.session.isCancelled) {
         this.bridge.ui.setProgressText('Search cancelled.');
         break;
       }
 
-      this.bridge.ui.setProgressText(`Processing track ${i} of ${itemsToProcess.length}`);
+      this.bridge.ui.setProgressText(this.bridge.session.progressText);
 
       try {
         const searchResult = await this.ytMusicAPI.searchMusic(item);
@@ -58,7 +59,7 @@ export class TrackProcessor {
       await this.bridge.sleep(this.bridge.constructor.TIMEOUT_DURATION);
     }
     
-    if (this.bridge.cancelSearch) {
+    if (this.bridge.session.isCancelled) {
       for (let j = i; j <= itemsToProcess.length; j++) {
         if (!itemsToProcess[j - 1].isGeneric && !itemsToProcess[j - 1].isSkipped) {
           itemsToProcess[j - 1].isSearching = false;
@@ -68,6 +69,7 @@ export class TrackProcessor {
       }
     }
 
+    this.bridge.session.stop();
     this.setFinalProgressText(itemsToProcess);
     UIHelper.updateCheckAllCheckbox();
   }
@@ -112,7 +114,7 @@ export class TrackProcessor {
    * @async
    */
   async findUnavailableTracks() {
-    this.bridge.cancelSearch = false;
+    this.bridge.session.isCancelled = false;
     this.bridge.ui.clearPlaylistItemsContainer();
     this.bridge.ui.toggleSearchProgress(true, true);
     this.bridge.ui.setProgressText('Finding unavailable tracks...');
@@ -143,7 +145,7 @@ export class TrackProcessor {
    * @async
    */
   async findVideoTracks() {
-    this.bridge.cancelSearch = false;
+    this.bridge.session.isCancelled = false;
     this.bridge.ui.clearPlaylistItemsContainer();
     this.bridge.ui.toggleSearchProgress(true, true);
     this.bridge.ui.setProgressText('Finding video tracks...');
@@ -171,8 +173,10 @@ export class TrackProcessor {
       }
 
       i = 1;
+      this.bridge.session.start(videoTracks.length);
       for (const track of videoTracks) {
-        if (this.bridge.cancelSearch) {
+        this.bridge.session.updateProgress();
+        if (this.bridge.session.isCancelled) {
           this.bridge.ui.setProgressText('Search cancelled.');
           break;
         }
@@ -191,7 +195,7 @@ export class TrackProcessor {
         await this.bridge.sleep(this.bridge.constructor.TIMEOUT_DURATION);
       }
       
-      if (this.bridge.cancelSearch) {
+      if (this.bridge.session.isCancelled) {
         for (let j = i; j <= videoTracks.length; j++) {
           videoTracks[j - 1].isSearching = false;
           videoTracks[j - 1].searchCancelled = true;
@@ -199,6 +203,7 @@ export class TrackProcessor {
         }
       }
 
+      this.bridge.session.stop();
       this.setVideoTrackProgressMessage(videoTracks);
       UIHelper.updateCheckAllCheckbox();
     } catch (error) {
@@ -213,7 +218,7 @@ export class TrackProcessor {
    */
   setVideoTrackProgressMessage(videoTracks) {
     const searchedTracks = videoTracks.filter(t => !t.isSearching && !t.searchCancelled);
-    const prefix = this.bridge.cancelSearch ? 'Search cancelled.' : 'Processing complete.';
+    const prefix = this.bridge.session.isCancelled ? 'Search cancelled.' : 'Processing complete.';
     
     const progressText = searchedTracks.length > 0 
       ? `${prefix} Found ${searchedTracks.length} video tracks and their replacements.`
@@ -242,7 +247,7 @@ export class TrackProcessor {
    * @async
    */
   async listAllTracks() {
-    this.bridge.cancelSearch = false;
+    this.bridge.session.isCancelled = false;
     this.bridge.ui.clearPlaylistItemsContainer();
     document.querySelector('.items-grid-wrapper')?.classList.add('list-only-mode');
     this.bridge.ui.toggleSearchProgress(true, true);

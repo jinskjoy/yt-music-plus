@@ -12,59 +12,148 @@ import { Track } from './models/track.js';
 
 (function () {
   /**
-   * Intercepts authorization tokens from XMLHttpRequest and Fetch API calls
+   * AuthInterceptor - Intercepts authorization tokens from XMLHttpRequest and Fetch API calls
    */
-  function fetchAuthToken() {
-    const originalSetRequestHeader = XMLHttpRequest.prototype.setRequestHeader;
+  class AuthInterceptor {
+    constructor(onTokenFound) {
+      this.onTokenFound = onTokenFound;
+      this.isIntercepting = true;
+    }
 
-    // Intercept XMLHttpRequest headers
-    XMLHttpRequest.prototype.setRequestHeader = function (header, value) {
-      if (window.bridgeInstance?.ytMusicAPI.isAuthTokenSet()) {
-        XMLHttpRequest.prototype.setRequestHeader = originalSetRequestHeader;
-        return originalSetRequestHeader.apply(this, arguments);
-      }
+    start() {
+      this.interceptXHR();
+      this.interceptFetch();
+    }
 
-      if (header.toLowerCase() === 'authorization') {
-        window.bridgeInstance?.setAuthToken(value);
-        XMLHttpRequest.prototype.setRequestHeader = originalSetRequestHeader;
-      }
+    stop() {
+      this.isIntercepting = false;
+    }
 
-      return originalSetRequestHeader.apply(this, arguments);
-    };
+    interceptXHR() {
+      const self = this;
+      const originalSetRequestHeader = XMLHttpRequest.prototype.setRequestHeader;
 
-    // Intercept Fetch API headers
-    const { fetch: originalFetch } = window;
-
-    window.fetch = async (...args) => {
-      if (window.bridgeInstance?.ytMusicAPI.isAuthTokenSet()) {
-        window.fetch = originalFetch;
-        return originalFetch(...args);
-      }
-
-      try {
-        const request = args[0];
-        const headers = request?.headers;
-
-        if (headers && request?.url?.includes('music.youtube.com')) {
-          let authToken = null;
-
-          if (headers instanceof Headers) {
-            authToken = headers.get('Authorization');
-          } else {
-            authToken = headers['Authorization'] || headers['authorization'];
-          }
-
-          if (authToken) {
-            window.bridgeInstance?.setAuthToken(authToken);
-            window.fetch = originalFetch;
-          }
+      XMLHttpRequest.prototype.setRequestHeader = function (header, value) {
+        if (!self.isIntercepting || window.bridgeInstance?.ytMusicAPI.isAuthTokenSet()) {
+          return originalSetRequestHeader.apply(this, arguments);
         }
 
-        return originalFetch(...args);
-      } catch (error) {
-        return originalFetch(...args);
+        if (header.toLowerCase() === 'authorization') {
+          self.onTokenFound(value);
+        }
+
+        return originalSetRequestHeader.apply(this, arguments);
+      };
+    }
+
+    interceptFetch() {
+      const self = this;
+      const { fetch: originalFetch } = window;
+
+      window.fetch = async (...args) => {
+        if (!self.isIntercepting || window.bridgeInstance?.ytMusicAPI.isAuthTokenSet()) {
+          return originalFetch(...args);
+        }
+
+        try {
+          const request = args[0];
+          const headers = request?.headers;
+
+          if (headers && request?.url?.includes('music.youtube.com')) {
+            let authToken = null;
+
+            if (headers instanceof Headers) {
+              authToken = headers.get('Authorization');
+            } else {
+              authToken = headers['Authorization'] || headers['authorization'];
+            }
+
+            if (authToken) {
+              self.onTokenFound(authToken);
+            }
+          }
+
+          return originalFetch(...args);
+        } catch (error) {
+          return originalFetch(...args);
+        }
+      };
+    }
+  }
+
+  /**
+   * DisplayTrack - Represents a track formatted for the UI
+   */
+  class DisplayTrack {
+    constructor(item, baseUrl, isReplacement = false) {
+      this.name = item.name;
+      this.artist = item.artistsString || (Array.isArray(item.artists) ? item.artists.join(', ') : '');
+      this.album = item.album || '';
+      this.thumbnail = item.thumbnail;
+      this.url = item.videoId ? baseUrl + item.videoId : null;
+      this.videoId = item.videoId;
+      this.playlistSetVideoId = item.playlistSetVideoId;
+      this.isGoodMatch = item.isGoodMatch;
+      this.isPending = false;
+      this.isCancelled = false;
+      this.isChecked = item.isChecked;
+    }
+
+    static createReplacement(item, baseUrl) {
+      if (!item) return null;
+      
+      if (item.isGeneric) {
+        return { name: 'Ignored (Generic Name)' };
       }
-    };
+      if (item.isSkipped) {
+        return { name: 'Ignored (Not Selected)' };
+      }
+      if (item.isSearching) {
+        return { name: 'Waiting for search...', isPending: true, isChecked: true };
+      }
+      if (item.searchCancelled) {
+        return { name: 'Search cancelled', isCancelled: true };
+      }
+      if (item.replacement) {
+        return new DisplayTrack(item.replacement, baseUrl, true);
+      }
+      return null;
+    }
+  }
+
+  /**
+   * SearchSession - Manages the state of a search or processing operation
+   */
+  class SearchSession {
+    constructor() {
+      this.isCancelled = false;
+      this.isActive = false;
+      this.totalItems = 0;
+      this.processedItems = 0;
+    }
+
+    start(total) {
+      this.isActive = true;
+      this.isCancelled = false;
+      this.totalItems = total;
+      this.processedItems = 0;
+    }
+
+    cancel() {
+      this.isCancelled = true;
+    }
+
+    stop() {
+      this.isActive = false;
+    }
+
+    updateProgress() {
+      this.processedItems++;
+    }
+
+    get progressText() {
+      return `Processing track ${this.processedItems} of ${this.totalItems}`;
+    }
   }
 
   /**
@@ -82,6 +171,7 @@ import { Track } from './models/track.js';
       this.ytMusicAPI = new YTMusicAPI();
       this.ui = new BridgeUI(this);
       this.processor = new TrackProcessor(this);
+      this.session = new SearchSession();
       
       this.currentSelectedPlaylist = null;
       this.playlistsCache = [];
@@ -92,13 +182,22 @@ import { Track } from './models/track.js';
         showPlaylistButton: true,
         showNavButton: true
       };
-      this.cancelSearch = false;
+      
       this.preventUnloadListener = (e) => {
         if (this.isReloadDisabled) {
           e.preventDefault();
           e.returnValue = '';
         }
       };
+    }
+
+    get cancelSearch() {
+      return this.session.isCancelled;
+    }
+
+    set cancelSearch(value) {
+      if (value) this.session.cancel();
+      else this.session.isCancelled = false;
     }
 
     /**
@@ -363,37 +462,8 @@ import { Track } from './models/track.js';
      * Creates original and replacement media objects appropriately formatted for UI
      */
     _createMediaObjects(item, baseUrl) {
-      const originalMedia = {
-        name: item.name,
-        artist: item.artistsString,
-        album: item.album || '',
-        thumbnail: item.thumbnail,
-        url: item.videoId ? baseUrl + item.videoId : null,
-        videoId: item.videoId,
-        playlistSetVideoId: item.playlistSetVideoId
-      };
-
-      let replacementMedia = null;
-      if (item.isGeneric) {
-        replacementMedia = { name: 'Ignored (Generic Name)' };
-      } else if (item.isSkipped) {
-        replacementMedia = { name: 'Ignored (Not Selected)' };
-      } else if (item.isSearching) {
-        replacementMedia = { name: 'Waiting for search...', isPending: true, isChecked: true };
-      } else if (item.searchCancelled) {
-        replacementMedia = { name: 'Search cancelled', isCancelled: true };
-      } else if (item.replacement) {
-        replacementMedia = {
-          name: item.replacement.name,
-          artist: item.replacement.artistsString,
-          album: item.replacement.album || '',
-          thumbnail: item.replacement.thumbnail,
-          url: baseUrl + item.replacement.videoId,
-          isGoodMatch: item.replacement.isGoodMatch,
-          videoId: item.replacement.videoId,
-          playlistSetVideoId: item.replacement.playlistSetVideoId
-        };
-      }
+      const originalMedia = new DisplayTrack(item, baseUrl);
+      const replacementMedia = DisplayTrack.createReplacement(item, baseUrl);
 
       return { originalMedia, replacementMedia };
     }
@@ -573,7 +643,7 @@ import { Track } from './models/track.js';
 
     async findReplacementsForLocalTracks() {
       if (!this.localTracks || this.localTracks.length === 0) return;
-      this.cancelSearch = false;
+      this.session.isCancelled = false;
       
       const allCheckboxes = document.querySelectorAll('#yt-music-plus-itemsGridContainer .item-checkbox');
       allCheckboxes.forEach((cb, index) => {
@@ -617,5 +687,8 @@ import { Track } from './models/track.js';
   window.postMessage({ type: 'BRIDGE_LOADED' }, '*');
 
   // Start auth token interception
-  fetchAuthToken();
+  const interceptor = new AuthInterceptor((token) => {
+    window.bridgeInstance?.setAuthToken(token);
+  });
+  interceptor.start();
 })();

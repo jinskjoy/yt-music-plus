@@ -1,4 +1,4 @@
-import * as Utils from '../../utils/utils.js';
+import { TextSimilarity } from '../../utils/utils.js';
 
 /**
  * Track - Represents a music track in YouTube Music
@@ -106,7 +106,7 @@ export class Track {
    * @returns {boolean}
    */
   checkMatch(otherTitle, threshold = 0.5) {
-    this.isGoodMatch = Utils.isGoodMatch(otherTitle, this.name, threshold);
+    this.isGoodMatch = TextSimilarity.isGoodMatch(otherTitle, this.name, threshold);
     return this.isGoodMatch;
   }
 
