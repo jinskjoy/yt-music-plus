@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { YTMusicAPI } from '../../scripts/yt-music-api.js';
+import { Track } from '../../scripts/models/track.js';
 
 describe('YTMusicAPI', () => {
   let api;
@@ -42,19 +43,19 @@ describe('YTMusicAPI', () => {
   });
 
   describe('searchMusic', () => {
-    it('should build query string correctly', async () => {
+    it('should build query string correctly using Track instance', async () => {
       global.fetch.mockResolvedValue({
         ok: true,
         json: async () => ({}),
       });
 
-      const query = {
+      const track = new Track({
         name: 'Shake It Off',
         artists: ['Taylor Swift'],
         album: '1989'
-      };
+      });
 
-      await api.searchMusic(query);
+      await api.searchMusic(track);
 
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/search'),

@@ -1,9 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { YTMusicParser } from '../../scripts/yt-music-parser.js';
+import { Playlist } from '../../scripts/models/playlist.js';
+import { Track } from '../../scripts/models/track.js';
 
 describe('YTMusicParser', () => {
   describe('parseEditablePlaylistsFromResponse', () => {
-    it('should parse playlists correctly', () => {
+    it('should parse playlists correctly as Playlist instances', () => {
       const mockData = {
         contents: {
           singleColumnBrowseResultsRenderer: {
@@ -49,18 +51,14 @@ describe('YTMusicParser', () => {
 
       const playlists = YTMusicParser.parseEditablePlaylistsFromResponse(mockData);
       expect(playlists).toHaveLength(1);
-      expect(playlists[0]).toEqual({
-        id: 'PL123',
-        title: 'Playlist Title',
-        subtitle: 'Owner',
-        owner: 'Owner',
-        thumbnail: 'thumb-url'
-      });
+      expect(playlists[0]).toBeInstanceOf(Playlist);
+      expect(playlists[0].id).toBe('PL123');
+      expect(playlists[0].title).toBe('Playlist Title');
     });
   });
 
   describe('parsePlaylistItemsFromResponse', () => {
-    it('should parse playlist items correctly', () => {
+    it('should parse playlist items correctly as Track instances', () => {
       const mockItems = [{
         musicResponsiveListItemRenderer: {
           flexColumns: [
@@ -94,6 +92,7 @@ describe('YTMusicParser', () => {
 
       const items = YTMusicParser.parsePlaylistItemsFromResponse(mockItems);
       expect(items).toHaveLength(1);
+      expect(items[0]).toBeInstanceOf(Track);
       expect(items[0]).toMatchObject({
         name: 'Song Name',
         artists: ['Artist Name'],

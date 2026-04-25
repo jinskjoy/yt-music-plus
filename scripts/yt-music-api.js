@@ -107,6 +107,7 @@ export class YTMusicAPI {
   /**
    * Fetches all editable playlists for the current user
    * @async
+   * @returns {Promise<Array<Playlist>>}
    */
   async getEditablePlaylists() {
     let lastError = null;
@@ -147,6 +148,8 @@ export class YTMusicAPI {
   /**
    * Fetches all items in a playlist, handling pagination
    * @async
+   * @param {string} playlistId - The ID of the playlist
+   * @returns {Promise<Array<Track>>}
    */
   async getPlaylistItems(playlistId) {
     try {
@@ -191,9 +194,9 @@ export class YTMusicAPI {
    * @async
    */
   async searchMusic(query) {
-    let queryString = query.name;
-    if (query.album) queryString += ' - ' + query.album;
-    if (query.artists?.length > 0) queryString += ' - ' + query.artists.join(' ');
+    const queryString = typeof query.toSearchQuery === 'function' 
+      ? query.toSearchQuery() 
+      : (query.name + (query.album ? ' - ' + query.album : '') + (query.artists?.length > 0 ? ' - ' + query.artists.join(' ') : ''));
 
     try {
       return await this.makePostRequest('/youtubei/v1/search?prettyPrint=false', {
@@ -207,6 +210,10 @@ export class YTMusicAPI {
 
   /**
    * Finds the best search result from search response
+   * @param {Object} searchResponse - API search response
+   * @param {Object|Track} originalQuery - The original query
+   * @param {number} similarityThreshold - Similarity threshold
+   * @returns {Track|null}
    */
   getBestSearchResult(searchResponse, originalQuery, similarityThreshold = YTMusicAPI.SIMILARITY_THRESHOLD) {
     return YTMusicParser.getBestSearchResult(searchResponse, originalQuery, similarityThreshold);

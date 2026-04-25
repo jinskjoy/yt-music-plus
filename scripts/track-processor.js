@@ -1,4 +1,5 @@
 import { UIHelper } from '../utils/ui-helper.js';
+import { Track } from './models/track.js';
 
 /**
  * TrackProcessor - Handles the logic for processing tracks and finding replacements
@@ -12,7 +13,7 @@ export class TrackProcessor {
   /**
    * Processes playlist items and finds replacements for unavailable tracks
    * @async
-   * @param {Array} items - Playlist items to process
+   * @param {Array<Track>} items - Playlist tracks to process
    */
   async processPlaylistItems(items) {
     this.bridge.cancelSearch = false;
@@ -305,14 +306,14 @@ export class TrackProcessor {
         const rawName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
         const name = rawName.replace(/[_-]/g, ' ').replace(/\s+/g, ' ').trim();
         const isGeneric = name.length < 3 || /^\d*\s*(?:-|_)?\s*(?:(?:unknown|untitled|misc)(?:\s*artist)?\s*(?:-|_)?\s*)?(?:track|audio\s*track|unknown|untitled|misc)\s*\d*$/i.test(name);
-        return {
+        return new Track({
           name: name,
           artists: [],
           album: '',
           isLocal: true,
           isSearching: !isGeneric,
           isGeneric: isGeneric
-        };
+        });
       }).sort((a, b) => (a.isGeneric === b.isGeneric ? 0 : a.isGeneric ? -1 : 1));
 
       this.bridge.localTracks = localTracks;
@@ -363,14 +364,14 @@ export class TrackProcessor {
       const localTracks = lines.map(line => {
         const name = line.trim();
         const isGeneric = name.length < 3 || /^\d*\s*(?:-|_)?\s*(?:(?:unknown|untitled|misc)(?:\s*artist)?\s*(?:-|_)?\s*)?(?:track|audio\s*track|unknown|untitled|misc)\s*\d*$/i.test(name);
-        return {
-          name: line,
+        return new Track({
+          name: name,
           artists: [],
           album: '',
           isLocal: true,
           isSearching: !isGeneric,
           isGeneric: isGeneric
-        };
+        });
       }).sort((a, b) => (a.isGeneric === b.isGeneric ? 0 : a.isGeneric ? -1 : 1));
 
       this.bridge.localTracks = localTracks;

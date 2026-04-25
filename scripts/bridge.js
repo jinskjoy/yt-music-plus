@@ -7,6 +7,8 @@ import { YTMusicAPI } from './yt-music-api.js';
 import { UIHelper } from '../utils/ui-helper.js';
 import { BridgeUI } from './bridge-ui.js';
 import { TrackProcessor } from './track-processor.js';
+import { Playlist } from './models/playlist.js';
+import { Track } from './models/track.js';
 
 (function () {
   /**
@@ -363,7 +365,7 @@ import { TrackProcessor } from './track-processor.js';
     _createMediaObjects(item, baseUrl) {
       const originalMedia = {
         name: item.name,
-        artist: item.artists?.join(', ') || '',
+        artist: item.artistsString,
         album: item.album || '',
         thumbnail: item.thumbnail,
         url: item.videoId ? baseUrl + item.videoId : null,
@@ -383,7 +385,7 @@ import { TrackProcessor } from './track-processor.js';
       } else if (item.replacement) {
         replacementMedia = {
           name: item.replacement.name,
-          artist: item.replacement.artists?.join(', ') || '',
+          artist: item.replacement.artistsString,
           album: item.replacement.album || '',
           thumbnail: item.replacement.thumbnail,
           url: baseUrl + item.replacement.videoId,

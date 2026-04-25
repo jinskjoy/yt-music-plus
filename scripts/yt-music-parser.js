@@ -1,4 +1,6 @@
 import * as Utils from '../utils/utils.js';
+import { Playlist } from './models/playlist.js';
+import { Track } from './models/track.js';
 
 /**
  * YTMusicParser - Handles parsing of YouTube Music API responses
@@ -8,6 +10,8 @@ export class YTMusicParser {
 
   /**
    * Parses editable playlists from API response
+   * @param {Object} data - API response data
+   * @returns {Array<Playlist>}
    */
   static parseEditablePlaylistsFromResponse(data) {
     const playlists = [];
@@ -67,6 +71,8 @@ export class YTMusicParser {
 
   /**
    * Extracts playlist details from musicTwoRowItemRenderer
+   * @param {Object} renderer - The renderer object
+   * @returns {Playlist|null}
    */
   static extractPlaylistFromMusicTwoRowRenderer(renderer) {
     const menuItems = renderer?.menu?.menuRenderer?.items || [];
@@ -81,13 +87,13 @@ export class YTMusicParser {
     const owner = subtitleRuns?.[0]?.text || '';
     const thumbnail = renderer?.thumbnailRenderer?.musicThumbnailRenderer?.thumbnail?.thumbnails?.slice(-1)?.[0]?.url || '';
 
-    return {
+    return new Playlist({
       id: playlistId,
       title,
       subtitle,
       owner,
       thumbnail
-    };
+    });
   }
 
   /**
@@ -122,6 +128,8 @@ export class YTMusicParser {
 
   /**
    * Parses playlist items from response
+   * @param {Array} itemRenderers - Array of item renderers
+   * @returns {Array<Track>}
    */
   static parsePlaylistItemsFromResponse(itemRenderers) {
     if (!itemRenderers) return [];
@@ -158,7 +166,7 @@ export class YTMusicParser {
           const isVideo = musicVideoType === 'MUSIC_VIDEO_TYPE_UGC';
 
           if (name) {
-            items.push({
+            items.push(new Track({
               name,
               artists,
               album,
@@ -168,7 +176,7 @@ export class YTMusicParser {
               videoId,
               playlistSetVideoId,
               isVideo
-            });
+            }));
           }
         }
       });
@@ -181,6 +189,10 @@ export class YTMusicParser {
 
   /**
    * Finds the best search result from search response
+   * @param {Object} searchResponse - API search response
+   * @param {Object|Track} originalQuery - The original query (name, artists, etc.)
+   * @param {number} similarityThreshold - Threshold for Jaro-Winkler similarity
+   * @returns {Track|null}
    */
   static getBestSearchResult(searchResponse, originalQuery, similarityThreshold) {
     try {
@@ -205,6 +217,10 @@ export class YTMusicParser {
 
   /**
    * Parses a card result from search response
+   * @param {Object} cardShelf - Card shelf renderer
+   * @param {string} originalTitle - Original track title for matching
+   * @param {number} threshold - Similarity threshold
+   * @returns {Track|null}
    */
   static parseCardResult(cardShelf, originalTitle, threshold) {
     if (!cardShelf) return null;
@@ -233,20 +249,26 @@ export class YTMusicParser {
     const isVideo = subtitleRuns.some(run => run.text.toUpperCase() === 'VIDEO');
     if (!name) return null;
 
-    return {
+    const track = new Track({
       name,
       artists,
       album: '',
       duration,
       thumbnail,
       videoId,
-      isVideo,
-      isGoodMatch: Utils.isGoodMatch(originalTitle, name, threshold)
-    };
+      isVideo
+    });
+    track.checkMatch(originalTitle, threshold);
+
+    return track;
   }
 
   /**
    * Parses shelf (list) results from search response
+   * @param {Object} musicShelf - Music shelf renderer
+   * @param {string} originalTitle - Original track title for matching
+   * @param {number} threshold - Similarity threshold
+   * @returns {Track|null}
    */
   static parseShelfResults(musicShelf, originalTitle, threshold) {
     if (!musicShelf) return null;
@@ -279,16 +301,18 @@ export class YTMusicParser {
         || '';
 
       if (name) {
-        return {
+        const track = new Track({
           name,
           artists,
           album,
           duration,
           thumbnail: thumbnailUrl,
           videoId,
-          isVideo,
-          isGoodMatch: Utils.isGoodMatch(originalTitle, name, threshold)
-        };
+          isVideo
+        });
+        track.checkMatch(originalTitle, threshold);
+
+        return track;
       }
     }
     return null;
