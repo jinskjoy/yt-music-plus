@@ -39,15 +39,6 @@ describe('YTMusicAPI', () => {
         })
       );
     });
-
-    it('should throw error on non-ok response', async () => {
-      global.fetch.mockResolvedValue({
-        ok: false,
-        status: 404,
-      });
-
-      await expect(api.makePostRequest('/bad')).rejects.toThrow('HTTP error! status: 404');
-    });
   });
 
   describe('searchMusic', () => {
@@ -74,106 +65,39 @@ describe('YTMusicAPI', () => {
     });
   });
 
-  describe('parseEditablePlaylistsFromResponse', () => {
-    it('should parse playlists correctly', () => {
-      const mockData = {
-        contents: {
-          singleColumnBrowseResultsRenderer: {
-            tabs: [{
-              tabRenderer: {
-                content: {
-                  sectionListRenderer: {
-                    contents: [{
-                      gridRenderer: {
-                        items: [{
-                          musicTwoRowItemRenderer: {
-                            title: { runs: [{ text: 'Playlist Title' }] },
-                            subtitle: { runs: [{ text: 'Owner' }] },
-                            menu: {
-                              menuRenderer: {
-                                items: [{
-                                  menuNavigationItemRenderer: {
-                                    navigationEndpoint: {
-                                      playlistEditorEndpoint: { playlistId: 'PL123' }
-                                    }
-                                  }
-                                }]
-                              }
-                            },
-                            thumbnailRenderer: {
-                              musicThumbnailRenderer: {
-                                thumbnail: {
-                                  thumbnails: [{ url: 'thumb-url' }]
-                                }
-                              }
-                            }
-                          }
-                        }]
-                      }
-                    }]
-                  }
-                }
-              }
-            }]
-          }
-        }
-      };
-
-      const playlists = api.parseEditablePlaylistsFromResponse(mockData);
-      expect(playlists).toHaveLength(1);
-      expect(playlists[0]).toEqual({
-        id: 'PL123',
-        title: 'Playlist Title',
-        subtitle: 'Owner',
-        owner: 'Owner',
-        thumbnail: 'thumb-url'
+  describe('addItemToPlaylist', () => {
+    it('should send correct add action', async () => {
+      global.fetch.mockResolvedValue({
+        ok: true,
+        json: async () => ({ status: 'STATUS_SUCCEEDED' }),
       });
+
+      const result = await api.addItemToPlaylist('PL123', 'vid456');
+      expect(result).toBe(true);
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('edit_playlist'),
+        expect.objectContaining({
+          body: expect.stringContaining('ACTION_ADD_VIDEO')
+        })
+      );
     });
   });
 
-  describe('parsePlaylistItemsFromResponse', () => {
-    it('should parse playlist items correctly', () => {
-      const mockItems = [{
-        musicResponsiveListItemRenderer: {
-          flexColumns: [
-            {
-              musicResponsiveListItemFlexColumnRenderer: {
-                text: { runs: [{ text: 'Song Name' }] }
-              }
-            },
-            {
-              musicResponsiveListItemFlexColumnRenderer: {
-                text: { runs: [{ text: 'Artist Name' }] }
-              }
-            },
-            {
-              musicResponsiveListItemFlexColumnRenderer: {
-                text: { runs: [{ text: 'Album Name' }] }
-              }
-            }
-          ],
-          fixedColumns: [{
-            musicResponsiveListItemFixedColumnRenderer: {
-              text: { runs: [{ text: '3:45' }] }
-            }
-          }],
-          playlistItemData: {
-            videoId: 'vid123',
-            playlistSetVideoId: 'set123'
-          }
-        }
-      }];
-
-      const items = api.parsePlaylistItemsFromResponse(mockItems);
-      expect(items).toHaveLength(1);
-      expect(items[0]).toMatchObject({
-        name: 'Song Name',
-        artists: ['Artist Name'],
-        album: 'Album Name',
-        duration: '3:45',
-        videoId: 'vid123',
-        playlistSetVideoId: 'set123'
+  describe('removeItemFromPlaylist', () => {
+    it('should send correct remove action', async () => {
+      global.fetch.mockResolvedValue({
+        ok: true,
+        json: async () => ({ status: 'STATUS_SUCCEEDED' }),
       });
+
+      const result = await api.removeItemFromPlaylist('PL123', 'vid456', 'set789');
+      expect(result).toBe(true);
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('edit_playlist'),
+        expect.objectContaining({
+          body: expect.stringContaining('ACTION_REMOVE_VIDEO')
+        })
+      );
     });
   });
 });

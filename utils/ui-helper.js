@@ -1,3 +1,5 @@
+import * as Utils from './utils.js';
+
 /**
  * UIHelper - Handles UI utilities and helper functions
  */
@@ -60,149 +62,51 @@ export class UIHelper {
 
 
   /**
-   * Format timestamp to readable date
-   * @param {number} timestamp - Timestamp in milliseconds
-   * @param {Object} options - Formatting options
-   * @returns {string} Formatted date string
-   */
-  /**
-   * Convert a millisecond timestamp into a human‑readable string.
-   * Supports a few common formats; falls back to toLocaleString if unknown.
-   *
-   * @param {number} timestamp - milliseconds since epoch
-   * @param {Object} [options]
-   * @param {'short'|'long'|'time'} [options.format='short']
-   * @param {string} [options.locale='en-US']
-   * @returns {string}
+   * Format timestamp to readable date (Wrapper for Utils.formatDate)
    */
   static formatDate(timestamp, options = {}) {
-    const date = new Date(timestamp);
-    const { format = 'short', locale = 'en-US' } = options;
-
-    switch (format) {
-      case 'long':
-        return date.toLocaleDateString(locale, {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        });
-      case 'time':
-        return date.toLocaleTimeString(locale);
-      case 'short':
-      default:
-        return date.toLocaleDateString(locale);
-    }
+    return Utils.formatDate(timestamp, options);
   }
 
   /**
-   * Format file size
-   * @param {number} bytes - Size in bytes
-   * @returns {string} Formatted size string
-   */
-  /**
-   * Human‑friendly file size formatter (metric base 1024).
-   * @param {number} bytes
-   * @returns {string}
+   * Human‑friendly file size formatter (Wrapper for Utils.formatFileSize)
    */
   static formatFileSize(bytes) {
-    if (bytes === 0) return '0 Bytes';
-    const units = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(1024));
-    return `${Math.round((bytes / Math.pow(1024, i)) * 100) / 100} ${units[i]}`;
+    return Utils.formatFileSize(bytes);
   }
 
   /**
-   * Debounce function calls
-   * @param {Function} func - Function to debounce
-   * @param {number} delay - Delay in milliseconds
-   * @returns {Function} Debounced function
-   */
-  /**
-   * Return a debounced version of `func` that fires after `delay` ms have passed
-   * since the last call. Useful for limiting expensive event handlers.
-   * @param {Function} func
-   * @param {number} [delay=300]
-   * @returns {Function}
+   * Return a debounced version of `func` (Wrapper for Utils.debounce)
    */
   static debounce(func, delay = 300) {
-    let timeoutId;
-    return (...args) => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => func(...args), delay);
-    };
+    return Utils.debounce(func, delay);
   }
 
   /**
-   * Throttle function calls
-   * @param {Function} func - Function to throttle
-   * @param {number} limit - Time limit in milliseconds
-   * @returns {Function} Throttled function
-   */
-  /**
-   * Throttles `func` so that it can only be invoked once every `limit` ms.
-   * Handy for scroll/resize callbacks.
-   * @param {Function} func
-   * @param {number} [limit=300]
-   * @returns {Function}
+   * Throttles `func` (Wrapper for Utils.throttle)
    */
   static throttle(func, limit = 300) {
-    let inThrottle = false;
-    return (...args) => {
-      if (!inThrottle) {
-        func(...args);
-        inThrottle = true;
-        setTimeout(() => (inThrottle = false), limit);
-      }
-    };
+    return Utils.throttle(func, limit);
   }
 
   /**
-   * Copy text to clipboard
-   * @param {string} text - Text to copy
-   * @returns {Promise<boolean>} Success status
-   */
-  /**
-   * Attempt to write `text` to the clipboard. Returns a boolean indicating
-   * whether the operation succeeded.
-   *
-   * @param {string} text
-   * @returns {Promise<boolean>}
+   * Attempt to write `text` to the clipboard (Wrapper for Utils.copyToClipboard)
    */
   static async copyToClipboard(text) {
-    try {
-      await navigator.clipboard.writeText(text);
-      return true;
-    } catch (error) {
-      console.error('Failed to copy:', error);
-      return false;
-    }
+    return Utils.copyToClipboard(text);
   }
 
   /**
-   * Get random color
-   * @returns {string} Random color in hex format
-   */
-  /**
-   * Generate a random 6‑digit hex color string.
-   * @returns {string}
+   * Generate a random 6‑digit hex color string (Wrapper for Utils.getRandomColor)
    */
   static getRandomColor() {
-    return `#${Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0')}`;
+    return Utils.getRandomColor();
   }
 
   /**
    * Creates a media item element
    * @param {Object} media - Media object (must have name, artist, thumbnail, url)
    * @returns {HTMLElement} The media item element
-   */
-  /**
-   * Build a DOM fragment representing a track/item from a media object.
-   * Accepts partial data and falls back to sane defaults so callers don't
-   * need to guard for missing values.
-   *
-   * @param {{name?:string,artist?:string,thumbnail?:string,url?:string}} media
-   * @returns {HTMLElement}
    */
   static createMediaItem(media = {}) {
     const item = UIHelper._createElement('div', { classes: 'media-item' });
@@ -259,16 +163,6 @@ export class UIHelper {
    * @param {Object} replacementMedia - The replacement media object (must have name, artist, thumbnail, url)
    * @param {number} serialNumber - The serial number for this row
    * @returns {HTMLElement} The grid row element
-   */
-  /**
-   * Construct a grid row representing a single mapping from an original
-   * media item to its replacement. Serial number and metadata are stored as
-   * data attributes for easy access later.
-   *
-   * @param {Object} originalMedia
-   * @param {Object} replacementMedia
-   * @param {number} [serialNumber=1]
-   * @returns {HTMLElement}
    */
   static createMediaGridRow(originalMedia, replacementMedia, serialNumber = 1) {
     const row = UIHelper._createElement('div', { classes: 'grid-row' });
@@ -347,12 +241,6 @@ export class UIHelper {
     return row;
   }
 
-  /**
-   * Creates grid rows for media items that need replacement
-   * @param {Array} records - Array of records, each containing originalMedia and replacementMedia objects
-   * @param {string} containerId - The ID of the container where rows should be inserted (default: 'yt-music-plus-itemsGridContainer')
-   * @returns {HTMLElement} The container with inserted rows, or null if container not found
-   */
   /**
    * Populate a grid container with rows generated from an array of records.
    * Existing rows are removed but the header row is preserved.
@@ -465,94 +353,19 @@ export class UIHelper {
       }
     });
   }
+
   /**
-   * Jaro-Winkler distance implementation for string similarity comparison
-   * @param {*} s1 
-   * @param {*} s2 
-   * @returns A similarity score between 0 and 1, where 1 means identical strings and 0 means completely different strings
-   */
-  /**
-   * Compute the Jaro‑Winkler similarity between two strings.
-   * Returns a value in [0,1] where 1 indicates identical strings.
-   *
-   * @param {string} s1
-   * @param {string} s2
-   * @returns {number}
+   * Compute the Jaro‑Winkler similarity between two strings (Wrapper for Utils.calculateJaroWinklerDistance)
    */
   static calculateJaroWinklerDistance(s1, s2) {
-    // early exits for empty strings
-    if (!s1.length) return s2.length ? 0 : 1;
-    if (!s2.length) return 0;
-
-    const s1Len = s1.length;
-    const s2Len = s2.length;
-    const matchDist = Math.floor(Math.max(s1Len, s2Len) / 2) - 1;
-
-    const s1Matches = Array(s1Len).fill(false);
-    const s2Matches = Array(s2Len).fill(false);
-    let matches = 0;
-
-    // count matches
-    for (let i = 0; i < s1Len; i++) {
-      const start = Math.max(0, i - matchDist);
-      const end = Math.min(i + matchDist + 1, s2Len);
-      for (let j = start; j < end; j++) {
-        if (s2Matches[j] || s1[i] !== s2[j]) continue;
-        s1Matches[i] = s2Matches[j] = true;
-        matches++;
-        break;
-      }
-    }
-    if (matches === 0) return 0;
-
-    // count transpositions
-    let k = 0;
-    let transpositions = 0;
-    for (let i = 0; i < s1Len; i++) {
-      if (!s1Matches[i]) continue;
-      while (!s2Matches[k]) k++;
-      if (s1[i] !== s2[k]) transpositions++;
-      k++;
-    }
-    transpositions /= 2;
-
-    const jaro =
-      (matches / s1Len + matches / s2Len + (matches - transpositions) / matches) / 3;
-    const prefixLen = Math.min(4, [...s1].findIndex((c, i) => c !== s2[i]));
-    const scaling = 0.1;
-
-    return jaro + prefixLen * scaling * (1 - jaro);
+    return Utils.calculateJaroWinklerDistance(s1, s2);
   }
 
-  // Check if the best search result is a good match for the original item based on title similarity
-  //Combine the title similarity score and the Levenshtein distance or Jaro-Winkler distance to get a more accurate similarity measure. You can experiment with different weights for each metric to see what works best for your use case.
   /**
-   * Determine whether two titles are "close enough" to consider the match
-   * valid. Currently uses only Jaro‑Winkler similarity but the implementation
-   * is written with future expansion in mind (Levenshtein, etc.).
-   *
-   * @param {string} originalTitle
-   * @param {string} replacementTitle
-   * @param {number} [similarityThreshold=0.5]
-   * @returns {boolean}
+   * Determine whether two titles are "close enough" (Wrapper for Utils.isGoodMatch)
    */
   static isGoodMatch(originalTitle, replacementTitle, similarityThreshold = 0.5) {
-    if (!replacementTitle) {
-      console.debug('Empty replacement title => not a good match');
-      return false;
-    }
-
-    try {
-      const score = UIHelper.calculateJaroWinklerDistance(
-        originalTitle,
-        replacementTitle
-      );
-      console.debug(`similarity score=${score}, threshold=${similarityThreshold}`);
-      return score >= similarityThreshold;
-    } catch (e) {
-      console.error('Error computing similarity score', e);
-      return false;
-    }
+    return Utils.isGoodMatch(originalTitle, replacementTitle, similarityThreshold);
   }
 
   /**
@@ -626,8 +439,7 @@ export class UIHelper {
 
   /**
    * Read the current set of checked rows from the grid and return their
-   * original+replacement metadata. The return value is suitable for
-   * processing when the user clicks a "apply changes" button, etc.
+   * original+replacement metadata.
    *
    * @returns {Array<{originalMedia:Object,replacementMedia:Object}>}
    */
@@ -672,13 +484,8 @@ export class UIHelper {
   }
 
   /**
-   * Creates action buttons for the header
-   * @returns {HTMLElement} The action buttons element
-   */
-  /**
    * Build and return the set of action buttons that are injected into the
-   * YouTube Music header. The element is initially hidden; callers are
-   * responsible for inserting it and toggling visibility.
+   * YouTube Music header.
    *
    * @returns {HTMLElement}
    */
@@ -718,10 +525,6 @@ export class UIHelper {
     return actionButtons;
   }
 
-  /**
-   * Creates a message element for when no playlists are found
-   * @returns {HTMLElement} The no playlists message element
-   */
   /**
    * Helper for displaying a fallback message when no playlists are
    * available in a grid layout.
@@ -786,3 +589,4 @@ export class UIHelper {
     }
   }
 }
+
