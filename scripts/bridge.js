@@ -352,7 +352,7 @@ import { TrackProcessor } from './track-processor.js';
 
         popupElement?.addEventListener('click', (event) => {
           if (event.target === popupElement) {
-            this.hidePopup();
+            this.toggleMinimize();
           }
         });
 
