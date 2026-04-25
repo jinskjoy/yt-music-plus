@@ -752,6 +752,20 @@ border-radius: 0;
 .potential-mismatch {
     background-color: #fff3cd;
 }
+
+.error-message {
+    color: red;
+    font-size: 12px;
+    font-weight: 500;
+    margin-top: 4px;
+}
+
+.no-playlists-message {
+    grid-column: 1/-1;
+    padding: 20px;
+    text-align: center;
+}
+
 .warning-icon {
     margin-right: 8px;
     font-size: 16px;

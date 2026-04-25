@@ -287,13 +287,11 @@ export class UIHelper {
       if (isMatch) {
         const replacementCol = row.querySelector('.grid-col-replacement');
         if (replacementCol && !replacementCol.querySelector('.error-message')) {
-          const errorDiv = UIHelper._createElement('div', {
-            classes: 'error-message',
-            text: `Error: ${errorMessage}`
-          });
-          Object.assign(errorDiv.style, {
-            color: 'red', fontSize: '12px', fontWeight: '500', marginTop: '4px'
-          });
+          const template = document.getElementById('yt-music-plus-error-message-template');
+          if (!template) throw new Error('Template "yt-music-plus-error-message-template" not found');
+          
+          const errorDiv = template.content.cloneNode(true).querySelector('.error-message');
+          errorDiv.textContent = `Error: ${errorMessage}`;
           replacementCol.appendChild(errorDiv);
         }
       }
@@ -386,16 +384,9 @@ export class UIHelper {
    * Create fallback message for playlists grid.
    */
   static createNoPlaylistsMessage() {
-    const msg = UIHelper._createElement('div');
-    msg.appendChild(UIHelper._createElement('span', {
-      text: 'No editable playlists found. Try refreshing the page. Google changes their API frequently, if you think it\'s broken, please report an issue on ',
-    }));
-    msg.appendChild(UIHelper._createElement('a', {
-      text: 'the Chrome Web Store',
-      attrs: { href: UIHelper.ISSUE_URL, target: '_blank', rel: 'noopener noreferrer' },
-    }));
-    Object.assign(msg.style, { gridColumn: '1/-1', padding: '20px', textAlign: 'center' });
-    return msg;
+    const template = document.getElementById('yt-music-plus-no-playlists-template');
+    if (!template) throw new Error('Template "yt-music-plus-no-playlists-template" not found');
+    return template.content.cloneNode(true).querySelector('.no-playlists-message');
   }
 
   /**

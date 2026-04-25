@@ -96,16 +96,7 @@ export class TrackProcessor {
 
     let progressText = this.bridge.cancelSearch ? `Search cancelled. ${foundCountText}` : `Processing complete. ${foundCountText}`;
     
-    const countOfReplacements = searchedItems.filter(item => item.replacement).length;
-    const countOfGoodMatches = searchedItems.filter(item => item.replacement?.isGoodMatch).length;
-
-    if (countOfReplacements > 0) {
-      if (countOfGoodMatches === 0) {
-        progressText += ` ${countOfReplacements} replacements found but no good matches. Please review carefully.`;
-      } else if (countOfGoodMatches < countOfReplacements) {
-        progressText += ` ${countOfGoodMatches}/${countOfReplacements} are good matches. Some may need review.`;
-      }
-    }
+    progressText += this.#getMatchQualityWarning(searchedItems);
 
     this.bridge.ui.setProgressText(progressText);
     if (!(isLocalImport && this.bridge.cancelSearch)) {
@@ -113,6 +104,25 @@ export class TrackProcessor {
     } else {
       document.getElementById('findLocalReplacementsBtn')?.classList.remove('hidden');
     }
+  }
+
+  /**
+   * Appends match-quality warnings based on the number of good matches.
+   * @private
+   */
+  #getMatchQualityWarning(items) {
+    const replacements = items.filter(item => item.replacement);
+    const countOfReplacements = replacements.length;
+    if (countOfReplacements === 0) return '';
+
+    const countOfGoodMatches = replacements.filter(item => item.replacement.isGoodMatch).length;
+
+    if (countOfGoodMatches === 0) {
+      return ` ${countOfReplacements} replacements found but no good matches. Please review carefully.`;
+    } else if (countOfGoodMatches < countOfReplacements) {
+      return ` ${countOfGoodMatches}/${countOfReplacements} are good matches. Some may need review.`;
+    }
+    return '';
   }
 
   /**
@@ -226,26 +236,19 @@ export class TrackProcessor {
     const searchedTracks = videoTracks.filter(t => !t.isSearching && !t.searchCancelled);
     const prefix = this.bridge.session.isCancelled ? 'Search cancelled.' : 'Processing complete.';
     
-    const progressText = searchedTracks.length > 0 
+    let progressText = searchedTracks.length > 0 
       ? `${prefix} Found ${searchedTracks.length} video tracks and their replacements.`
       : `${prefix} No video tracks were processed.`;
 
-    const countOfReplacements = searchedTracks.filter(t => t.replacement).length;
-    const countOfGoodMatches = searchedTracks.filter(t => t.replacement?.isGoodMatch).length;
-
     if (searchedTracks.length > 0) {
+      const countOfReplacements = searchedTracks.filter(t => t.replacement).length;
       if (countOfReplacements === 0) {
-        this.bridge.ui.setProgressText(progressText + ' No replacements found.');
-      } else if (countOfGoodMatches === 0) {
-        this.bridge.ui.setProgressText(progressText + ` ${countOfReplacements} replacements found but no good matches. Please review carefully.`);
-      } else if (countOfGoodMatches < countOfReplacements) {
-        this.bridge.ui.setProgressText(progressText + ` ${countOfGoodMatches}/${countOfReplacements} are good matches. Some may need review.`);
+        progressText += ' No replacements found.';
       } else {
-        this.bridge.ui.setProgressText(progressText);
+        progressText += this.#getMatchQualityWarning(searchedTracks);
       }
-    } else {
-      this.bridge.ui.setProgressText(progressText);
     }
+    this.bridge.ui.setProgressText(progressText);
   }
 
   /**

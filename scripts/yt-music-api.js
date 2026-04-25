@@ -196,7 +196,7 @@ export class YTMusicAPI {
   async searchMusic(query) {
     const queryString = typeof query.toSearchQuery === 'function' 
       ? query.toSearchQuery() 
-      : (query.name + (query.album ? ' - ' + query.album : '') + (query.artists?.length > 0 ? ' - ' + query.artists.join(' ') : ''));
+      : query.name;
 
     try {
       return await this.makePostRequest('/youtubei/v1/search?prettyPrint=false', {
