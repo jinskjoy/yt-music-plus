@@ -5,26 +5,12 @@ import { PopupManager } from '../utils/popup-manager.js';
 import bridgeUrl from './bridge.js?script&module';
 import popupHtmlUrl from '../html/in-site-popup.html?url';
 import popupCssUrl from '../styles/in-site-popup.css?url';
-import sidebarUrl from '../sidebar/sidebar.html?url';
 
 /**
  * ContentScriptController - Manages content script operations
- * Handles page interactions, DOM injection, and sidebar functionality
+ * Handles page interactions, DOM injection, and popup management
  */
 class ContentScriptController {
-  // Sidebar styling constants
-  static SIDEBAR_STYLES = `
-    position: fixed;
-    right: 0;
-    top: 0;
-    width: 400px;
-    height: 100vh;
-    border: none;
-    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
-    z-index: 2147483647;
-    border-radius: 0;
-  `;
-
   constructor() {
     this.domModifier = DOMModifier;
     this.messageManager = new MessageManager();
@@ -34,7 +20,6 @@ class ContentScriptController {
       showPlaylistButton: true,
       hideWarningMessage: false
     };
-    this.sidebarElement = null;
     this.popupManager = null;
 
     this.setupListeners();
@@ -168,16 +153,6 @@ class ContentScriptController {
           sendResponse({ success: true });
           break;
 
-        case 'showSidebar':
-          await this.showSidebar();
-          sendResponse({ success: true });
-          break;
-
-        case 'hideSidebar':
-          await this.hideSidebar();
-          sendResponse({ success: true });
-          break;
-
         case 'refreshAllPlaylists':
           sendResponse({ success: true });
           break;
@@ -187,36 +162,6 @@ class ContentScriptController {
       }
     } catch (error) {
       sendResponse({ success: false, message: error.message });
-    }
-  }
-
-  /**
-   * Shows sidebar by creating iframe or displaying existing one
-   * @async
-   */
-  async showSidebar() {
-    if (this.sidebarElement) {
-      this.sidebarElement.style.display = 'block';
-      return;
-    }
-
-    // Create sidebar iframe
-    const iframe = document.createElement('iframe');
-    iframe.src = chrome.runtime.getURL(sidebarUrl);
-    iframe.id = 'extension-sidebar';
-    iframe.style.cssText = ContentScriptController.SIDEBAR_STYLES;
-
-    document.body.appendChild(iframe);
-    this.sidebarElement = iframe;
-  }
-
-  /**
-   * Hides the sidebar iframe
-   * @async
-   */
-  async hideSidebar() {
-    if (this.sidebarElement) {
-      this.sidebarElement.style.display = 'none';
     }
   }
 }

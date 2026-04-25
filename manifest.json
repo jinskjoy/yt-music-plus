@@ -21,14 +21,10 @@
     "type": "module",
     "service_worker": "background.js"
   },
-  "side_panel": {
-    "default_path": "sidebar/sidebar.html"
-  },
   "options_page": "options.html",
   "permissions": [
     "activeTab",
-    "storage",
-    "sidePanel"
+    "storage"
   ],
   "host_permissions": [
     "https://music.youtube.com/*"
@@ -44,9 +40,6 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "sidebar/sidebar.html",
-        "sidebar/sidebar.css",
-        "sidebar/sidebar.js",
         "html/in-site-popup.html",
         "styles/in-site-popup.css",
         "scripts/bridge.js",
