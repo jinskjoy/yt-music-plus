@@ -755,9 +755,13 @@ border-radius: 0;
 
 .chrome-store-link {
     text-decoration: none;
-    color: inherit;
-    display: inline-block;
-    width: 100%;
+    color: white;
+    display: block;
+    padding: 10px;
+}
+
+.chrome-store-link:hover {
+    text-decoration: underline;
 }
 
 .clickable-column {
@@ -766,16 +770,8 @@ border-radius: 0;
 
 .extension-title {
     background-color: black;
-    color: white;
-    padding: 10px;
-}
-
-.extension-title .chrome-store-link {
-    color: white;
-}
-
-.extension-title .chrome-store-link:hover {
-    text-decoration: underline;
+    margin: 0;
+    padding: 0;
 }
 
 .error-message {

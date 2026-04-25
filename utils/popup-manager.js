@@ -71,22 +71,6 @@ export class PopupManager {
       actionsWrapper.appendChild(reportLink);
       actionsWrapper.appendChild(closeBtn);
     }
-
-    // Convert main popup title to a link to the Chrome Web Store
-    const popupMainTitle = container.querySelector('.popup-header h2') || 
-                           Array.from(container.querySelectorAll('h2')).find(el => el.id !== 'popupTitle');
-    
-    if (popupMainTitle) {
-      const originalHTML = popupMainTitle.innerHTML;
-      popupMainTitle.innerHTML = '';
-      const titleLink = document.createElement('a');
-      titleLink.href = 'https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc';
-      titleLink.target = '_blank';
-      titleLink.rel = 'noopener noreferrer';
-      titleLink.innerHTML = originalHTML;
-      titleLink.classList.add('chrome-store-link');
-      popupMainTitle.appendChild(titleLink);
-    }
   }
 
   /**

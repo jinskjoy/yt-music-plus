@@ -1,7 +1,9 @@
 <div class="yt-music-extended-popup-container" role="dialog" aria-modal="true" aria-labelledby="popupTitle">
     <div class="yt-music-extended-popup-content">
         <div class="popup-header">
-            <h2 class="extension-title">YouTube Music +</h2>
+            <h2 class="extension-title">
+                <a href="https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc" target="_blank" rel="noopener noreferrer" class="chrome-store-link">YouTube Music +</a>
+            </h2>
             <h2 id="popupTitle"></h2>
             <button id="closePopupBtn" class="close-btn" aria-label="Close popup">×</button>
         </div>
@@ -136,7 +138,7 @@
     <template id="yt-music-plus-grid-row-template">
         <div class="grid-row">
             <div class="grid-col grid-col-serial"></div>
-            <div class="grid-col grid-col-original"></div>
+            <div class="grid-col grid-col-original clickable-column"></div>
             <div class="grid-col grid-col-replacement">
                 <span class="warning-icon hidden">⚠️</span>
             </div>
