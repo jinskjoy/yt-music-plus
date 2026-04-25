@@ -32,7 +32,8 @@ This document provides a comprehensive list of features for the YouTube Music + 
 - **Screens**:
     - **Playlist Selection Screen**: Grid of playlists with thumbnails and track counts.
     - **Playlist Details Screen**: Active workspace for a selected playlist.
-- **Testable Case**: Verify navigation between selection and details screens using the "Back" button.
+- **Minimize Option**: A "−" button in the header to collapse the popup to the bottom-right corner, allowing continued interaction with the page.
+- **Testable Case**: Verify navigation between selection and details screens using the "Back" button; verify the popup minimizes and restores correctly.
 
 ### 1.5 Settings/Options Page
 - **Feature**: A dedicated page for user preferences.

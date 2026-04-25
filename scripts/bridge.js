@@ -273,8 +273,32 @@ import { TrackProcessor } from './track-processor.js';
       const popupElement = document.getElementById('yt-music-plus-popup');
       if (popupElement) {
         popupElement.classList.add('hidden');
+        // Reset minimized state when closing
+        const popupContainer = popupElement.querySelector('.yt-music-extended-popup-container');
+        if (popupContainer?.classList.contains('minimized')) {
+          this.toggleMinimize();
+        }
       }
       this.enableReload();
+    }
+
+    /**
+     * Toggles popup minimization
+     */
+    toggleMinimize() {
+      const popupHolder = document.getElementById('yt-music-plus-popup');
+      const popupContainer = popupHolder?.querySelector('.yt-music-extended-popup-container');
+      const minimizeBtn = popupHolder?.querySelector('#minimizePopupBtn');
+
+      if (popupHolder && popupContainer) {
+        const isMinimized = popupContainer.classList.toggle('minimized');
+        popupHolder.classList.toggle('minimized', isMinimized);
+        
+        if (minimizeBtn) {
+          minimizeBtn.textContent = isMinimized ? '+' : '−';
+          minimizeBtn.setAttribute('aria-label', isMinimized ? 'Restore popup' : 'Minimize popup');
+        }
+      }
     }
 
     /**
@@ -307,6 +331,24 @@ import { TrackProcessor } from './track-processor.js';
       const closeBtn = popupElement?.querySelector('#closePopupBtn');
       if (closeBtn) {
         closeBtn.addEventListener('click', () => this.hidePopup());
+
+        const minimizeBtn = popupElement?.querySelector('#minimizePopupBtn');
+        if (minimizeBtn) {
+          minimizeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleMinimize();
+          });
+        }
+
+        const header = popupElement?.querySelector('.popup-header');
+        if (header) {
+          header.addEventListener('click', () => {
+            const popupContainer = popupElement.querySelector('.yt-music-extended-popup-container');
+            if (popupContainer?.classList.contains('minimized')) {
+              this.toggleMinimize();
+            }
+          });
+        }
 
         popupElement?.addEventListener('click', (event) => {
           if (event.target === popupElement) {
