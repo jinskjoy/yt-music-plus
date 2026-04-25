@@ -10,6 +10,10 @@ export default defineConfig(({ command }) => {
     manifestConfig.content_security_policy = {
       extension_pages: "script-src 'self' http://localhost:5173; object-src 'self'; connect-src http://localhost:5173 ws://localhost:5173",
     }
+    manifestConfig.host_permissions = [
+      ...(manifestConfig.host_permissions || []),
+      'http://localhost/*',
+    ]
   }
 
   return {
@@ -20,6 +24,7 @@ export default defineConfig(({ command }) => {
       hmr: {
         port: 5173,
       },
+      cors: true,
     },
     clearScreen: false,
   }
