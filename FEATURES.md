@@ -114,6 +114,12 @@ This document provides a comprehensive list of features for the YouTube Music + 
 - **Cancellation**: A "Cancel Search" button to stop ongoing API operations.
 - **Testable Case**: Start a large scan; click "Cancel"; verify processing stops immediately.
 
+### 3.6 Integrated Track Playback
+- **Feature**: Playback controls (Play, Pause, Seek forward/backward 10s) integrated into the media grid.
+- **Behavior**: Controls appear as an overlay when hovering over the track details section (Original or Replacement media).
+- **Control**: Allows users to preview tracks directly within the popup without navigating away from the current workspace.
+- **Testable Case**: Hover over a track title in the grid; verify playback controls appear and function as expected (controlling the page's background player).
+
 ---
 
 ## 4. Safety & Reliability Features

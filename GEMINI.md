@@ -20,6 +20,9 @@ Follow the coding style guidelines below when modifying or adding to the codebas
 - **Templates Over Imperative UI:** Prefer static HTML templates for building user interfaces. It is easier to read and maintain an HTML file than tracking elements built entirely in a JavaScript function.
 - **Clean Markup:** Do not use inline styles or inline JavaScript (`onclick="..."`) attributes within the HTML elements.
 
+## Documentation & Feature Tracking
+- **Update Features List:** Always update `FEATURES.md` whenever a new feature is implemented or an existing feature's behavior is significantly changed. This ensures the features list remains a single source of truth for testing and documentation.
+
 ## UI & State Management
 - **Minimized State:** When implementing "minimize" or "collapse" functionality, use a top-level CSS class (e.g., `.minimized`) on the container. Ensure that clicking the header or a dedicated toggle button restores the state using a centralized `toggleMinimize` method.
 - **Event Delegation:** Prefer adding listeners to parent containers (like the popup header) for actions that should apply to the whole component state.

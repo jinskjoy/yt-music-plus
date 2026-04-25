@@ -7,9 +7,10 @@ export class MediaItem {
   /**
    * Build a DOM fragment representing a track/item from a media object.
    * @param {Object} media
+   * @param {Object} [playerHandler]
    * @returns {HTMLElement}
    */
-  static render(media = {}) {
+  static render(media = {}, playerHandler = null) {
     const template = document.getElementById('yt-music-plus-media-item-template');
     if (!template) {
       throw new Error('Template "yt-music-plus-media-item-template" not found');
@@ -21,11 +22,35 @@ export class MediaItem {
     const title = item.querySelector('.media-title');
     const artist = item.querySelector('.media-artist');
     const link = item.querySelector('.media-link');
+    const controls = item.querySelector('.yt-music-plus-controls');
 
     if (media.thumbnail) {
       thumb.src = media.thumbnail;
     } else {
       thumb.remove();
+    }
+
+    // Setup player controls if playerHandler and videoId are provided
+    if (playerHandler && media.videoId && controls) {
+      controls.classList.remove('hidden');
+      
+      const bindControl = (selector, action) => {
+        const btn = controls.querySelector(selector);
+        if (btn) {
+          btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            action();
+          });
+        }
+      };
+
+      bindControl('.btn-play', () => playerHandler.playTrack(media.videoId));
+      bindControl('.btn-pause', () => playerHandler.pauseTrack());
+      bindControl('.btn-seek-back', () => playerHandler.seekBy(-10));
+      bindControl('.btn-seek-forward', () => playerHandler.seekBy(10));
+    } else {
+      controls?.remove();
     }
 
     title.textContent = media.name || 'Unknown Title';
@@ -57,9 +82,10 @@ export class MediaGridRow {
    * @param {Object} originalMedia
    * @param {Object} replacementMedia
    * @param {number} [serialNumber=1]
+   * @param {Object} [playerHandler=null]
    * @returns {HTMLElement}
    */
-  static render(originalMedia, replacementMedia, serialNumber = 1) {
+  static render(originalMedia, replacementMedia, serialNumber = 1, playerHandler = null) {
     const template = document.getElementById('yt-music-plus-grid-row-template');
     if (!template) {
       throw new Error('Template "yt-music-plus-grid-row-template" not found');
@@ -101,14 +127,14 @@ export class MediaGridRow {
     }
     const originalCol = row.querySelector('.grid-col-original');
     originalCol.addEventListener('click', (e) => {
-      if (e.target.closest('a')) return;
+      if (e.target.closest('a') || e.target.closest('.yt-music-plus-control-btn')) return;
       if (!checkbox.disabled) {
         checkbox.checked = !checkbox.checked;
         checkbox.dataset.userInteracted = 'true';
         checkbox.dispatchEvent(new Event('change', { bubbles: true }));
       }
     });
-    originalCol.appendChild(MediaItem.render(originalMedia));
+    originalCol.appendChild(MediaItem.render(originalMedia, playerHandler));
 
     const replacementCol = row.querySelector('.grid-col-replacement');
     if (replacementMedia && replacementMedia.isGoodMatch === false) {
@@ -117,7 +143,8 @@ export class MediaGridRow {
     }
     replacementCol.appendChild(
       MediaItem.render(
-        replacementMedia || { name: 'No replacement found' }
+        replacementMedia || { name: 'No replacement found' },
+        playerHandler
       )
     );
 
