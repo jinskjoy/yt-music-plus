@@ -146,6 +146,10 @@
     box-shadow: none;
 }
 
+.yt-music-extended-popup-container.minimized .report-issue-link {
+    display: none !important;
+}
+
 .yt-music-extended-popup-container.minimized .extension-branding-title {
     font-size: 14px;
 }
