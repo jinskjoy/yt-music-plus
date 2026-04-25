@@ -753,7 +753,22 @@ border-radius: 0;
     background-color: #fff3cd;
 }
 .warning-icon {
-    margin-right: 4px;
+    margin-right: 8px;
+    font-size: 16px;
+    cursor: help;
+    display: inline-block;
+}
+.warning-icon:hover::after {
+    content: "Potential mismatch";
+    position: absolute;
+    background: #333;
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    white-space: nowrap;
+    z-index: 100;
+    margin-left: 8px;
 }
 .extenstion-title{
     background-color: black;

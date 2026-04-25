@@ -60,6 +60,7 @@ export class Track {
     }
 
     this._isGoodMatch = false;
+    this.matchScore = 0;
   }
 
   /**
@@ -106,7 +107,8 @@ export class Track {
    * @returns {boolean}
    */
   checkMatch(otherTitle, threshold = 0.5) {
-    this.isGoodMatch = TextSimilarity.isGoodMatch(otherTitle, this.name, threshold);
+    this.matchScore = TextSimilarity.calculateJaroWinklerDistance(otherTitle, this.name);
+    this.isGoodMatch = this.matchScore >= threshold;
     return this.isGoodMatch;
   }
 

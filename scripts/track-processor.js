@@ -95,10 +95,16 @@ export class TrackProcessor {
     }
 
     let progressText = this.bridge.cancelSearch ? `Search cancelled. ${foundCountText}` : `Processing complete. ${foundCountText}`;
-    const hasBadMatches = searchedItems.some(item => item.replacement && !item.replacement.isGoodMatch);
+    
+    const countOfReplacements = searchedItems.filter(item => item.replacement).length;
+    const countOfGoodMatches = searchedItems.filter(item => item.replacement?.isGoodMatch).length;
 
-    if (hasBadMatches) {
-      progressText += ' Some replacements may not be good matches, please review carefully.';
+    if (countOfReplacements > 0) {
+      if (countOfGoodMatches === 0) {
+        progressText += ` ${countOfReplacements} replacements found but no good matches. Please review carefully.`;
+      } else if (countOfGoodMatches < countOfReplacements) {
+        progressText += ` ${countOfGoodMatches}/${countOfReplacements} are good matches. Some may need review.`;
+      }
     }
 
     this.bridge.ui.setProgressText(progressText);
@@ -231,9 +237,9 @@ export class TrackProcessor {
       if (countOfReplacements === 0) {
         this.bridge.ui.setProgressText(progressText + ' No replacements found.');
       } else if (countOfGoodMatches === 0) {
-        this.bridge.ui.setProgressText(progressText + ` ${countOfReplacements} replacements found but no good matches.`);
+        this.bridge.ui.setProgressText(progressText + ` ${countOfReplacements} replacements found but no good matches. Please review carefully.`);
       } else if (countOfGoodMatches < countOfReplacements) {
-        this.bridge.ui.setProgressText(progressText + ` ${countOfGoodMatches}/${countOfReplacements} are good matches.`);
+        this.bridge.ui.setProgressText(progressText + ` ${countOfGoodMatches}/${countOfReplacements} are good matches. Some may need review.`);
       } else {
         this.bridge.ui.setProgressText(progressText);
       }

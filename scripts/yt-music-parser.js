@@ -272,20 +272,25 @@ export class YTMusicParser {
   static parseShelfResults(musicShelf, originalTitle, threshold) {
     if (!musicShelf) return null;
     const itemRenderers = musicShelf?.contents || [];
+    const potentialTracks = [];
 
     for (const itemWrapper of itemRenderers) {
       const musicItemRenderer = itemWrapper?.musicResponsiveListItemRenderer;
       if (!musicItemRenderer) continue;
 
+      const subtitleRuns = musicItemRenderer?.flexColumns?.[1]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs || [];
+      const isSong = subtitleRuns.some(run => run.text.toUpperCase() === 'SONG');
+      const isVideo = subtitleRuns.some(run => run.text.toUpperCase() === 'VIDEO');
+
+      // Only Audio and Video should be considered. Playlists, Artists, etc. should be ignored.
+      if (!isSong && !isVideo) continue;
+
       const name = musicItemRenderer?.flexColumns?.[0]?.musicResponsiveListItemFlexColumnRenderer
         ?.text?.runs?.[0]?.text || '';
 
-      const artists = musicItemRenderer?.flexColumns?.[1]?.musicResponsiveListItemFlexColumnRenderer
-        ?.text?.runs?.map(run => run.text)
+      const artists = subtitleRuns
+        .map(run => run.text)
         .filter(text => !this.FILTER_TEXTS.includes(text)) || [];
-
-      const isVideo = musicItemRenderer?.flexColumns?.[1]?.musicResponsiveListItemFlexColumnRenderer
-        ?.text?.runs?.some(run => run.text.toUpperCase() === 'VIDEO');
 
       const album = musicItemRenderer?.flexColumns?.[2]?.musicResponsiveListItemFlexColumnRenderer
         ?.text?.runs?.[0]?.text || '';
@@ -310,10 +315,13 @@ export class YTMusicParser {
           isVideo
         });
         track.checkMatch(originalTitle, threshold);
-
-        return track;
+        potentialTracks.push(track);
       }
     }
-    return null;
+
+    if (potentialTracks.length === 0) return null;
+
+    // Sort by match score descending and return the best one
+    return potentialTracks.sort((a, b) => b.matchScore - a.matchScore)[0];
   }
 }
