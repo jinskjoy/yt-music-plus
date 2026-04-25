@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "pack": "npm run build && mkdir -p dist-zip && cd dist && zip -r ../dist-zip/yt-music-plus-v$(node -p \"require('./manifest.json').version\").zip . && cd .."
+    "pack": "npm run build && mkdir -p dist-zip && cd dist && zip -r ../dist-zip/yt-music-plus-v$(node -p \"require('./manifest.json').version\").zip . && cd ..",
+    "test": "vitest run"
   },
   "repository": {
     "type": "git",
@@ -15,6 +16,8 @@
   "license": "MIT",
   "devDependencies": {
     "@crxjs/vite-plugin": "^2.0.0",
-    "vite": "^6.0.0"
+    "happy-dom": "^20.9.0",
+    "vite": "^6.0.0",
+    "vitest": "^4.1.5"
   }
 }
