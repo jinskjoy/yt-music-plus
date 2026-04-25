@@ -7,8 +7,6 @@ import { YTMusicAPI } from './yt-music-api.js';
 import { UIHelper } from '../utils/ui-helper.js';
 import { BridgeUI } from './bridge-ui.js';
 import { TrackProcessor } from './track-processor.js';
-import { Playlist } from './models/playlist.js';
-import { Track } from './models/track.js';
 
 (function () {
   /**
