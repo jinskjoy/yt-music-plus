@@ -753,15 +753,17 @@ border-radius: 0;
     background-color: #fff3cd;
 }
 
-.chrome-store-link {
+.chrome-store-link,
+.chrome-store-link:visited,
+.chrome-store-link:active,
+.chrome-store-link:hover {
     text-decoration: none;
     color: white;
-    display: block;
-    padding: 10px;
 }
 
-.chrome-store-link:hover {
-    text-decoration: underline;
+.chrome-store-link {
+    display: block;
+    padding: 10px;
 }
 
 .clickable-column {
