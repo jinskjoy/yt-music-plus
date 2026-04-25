@@ -58,4 +58,10 @@ describe('In-Site Popup HTML Templates', () => {
     expect(content.querySelector('.content-wrapper')).not.toBeNull();
     expect(content.querySelector('.icon')).not.toBeNull();
   });
+
+  it('should have the minimize button in the popup header', () => {
+    const minimizeBtn = document.getElementById('minimizePopupBtn');
+    expect(minimizeBtn).not.toBeNull();
+    expect(minimizeBtn.getAttribute('aria-label')).toBe('Minimize popup');
+  });
 });

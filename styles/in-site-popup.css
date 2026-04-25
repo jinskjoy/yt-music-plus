@@ -82,7 +82,7 @@
     margin-bottom: 12px;
 }
 
-.close-btn {
+.close-btn, .minimize-btn {
     background: none;
     border: none;
     font-size: 28px;
@@ -95,14 +95,18 @@
     display: flex;
     align-items: center;
     justify-content: center;
-border-radius: 0;
+    border-radius: 0;
     transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
 
-.close-btn:hover {
+.close-btn:hover, .minimize-btn:hover {
     background-color: #f0f0f0;
     color: #333;
     transform: translateY(-1px);
+}
+
+.minimize-btn {
+    font-size: 24px;
 }
 
 .report-issue-link {
@@ -115,8 +119,56 @@ border-radius: 0;
     text-decoration: none;
 }
 
-.close-btn:active {
+.close-btn:active, .minimize-btn:active {
     background-color: #e0e0e0;
+}
+
+/* Minimized state */
+.yt-music-extended-popup-container.minimized {
+    top: auto;
+    left: auto;
+    bottom: 20px;
+    right: 20px;
+    transform: none;
+    width: 350px;
+    height: auto;
+    max-height: 60px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    border: 1px solid #e0e0e0;
+}
+
+.yt-music-extended-popup-container.minimized .yt-music-extended-popup-content > *:not(.popup-header) {
+    display: none !important;
+}
+
+.yt-music-extended-popup-container.minimized .popup-header {
+    padding: 8px 16px;
+    box-shadow: none;
+}
+
+.yt-music-extended-popup-container.minimized .report-issue-link {
+    display: none !important;
+}
+
+.yt-music-extended-popup-container.minimized .extension-branding-title {
+    font-size: 14px;
+}
+
+.yt-music-extended-popup-container.minimized #popupTitle {
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
+}
+
+.yt-music-extended-popup-container-holder.minimized {
+    background-color: transparent;
+    pointer-events: none;
+}
+
+.yt-music-extended-popup-container-holder.minimized .yt-music-extended-popup-container {
+    pointer-events: auto;
 }
 
 /* Playlist Info Section */
