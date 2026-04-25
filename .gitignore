@@ -56,5 +56,4 @@ coverage/
 # Gemini and CI
 .gemini/
 .github/commands/
-.github/workflows/
 gha-creds-*.json
