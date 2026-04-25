@@ -7,6 +7,7 @@ import { YTMusicAPI } from './yt-music-api.js';
 import { UIHelper } from '../utils/ui-helper.js';
 import { BridgeUI } from './bridge-ui.js';
 import { TrackProcessor } from './track-processor.js';
+import { PlayerHandler } from './player-handler.js';
 
 (function () {
   /**
@@ -180,6 +181,7 @@ import { TrackProcessor } from './track-processor.js';
       this.ytMusicAPI = new YTMusicAPI();
       this.ui = new BridgeUI(this);
       this.processor = new TrackProcessor(this);
+      this.playerHandler = new PlayerHandler();
       this.session = new SearchSession();
       
       this.currentSelectedPlaylist = null;
@@ -268,6 +270,7 @@ import { TrackProcessor } from './track-processor.js';
       this.addEventListeners();
       this.ui.injectActionButtons(this.extSettings);
       this.ui.showTriggerButtons(this.extSettings);
+      this.playerHandler.init();
     }
 
     /**
