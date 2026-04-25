@@ -192,12 +192,36 @@ import { TrackProcessor } from './track-processor.js';
         showNavButton: true
       };
       
+      // Cache for popup elements
+      this.popupElements = {
+        holder: null,
+        container: null,
+        minimizeBtn: null,
+        header: null
+      };
+      
       this.preventUnloadListener = (e) => {
         if (this.isReloadDisabled) {
           e.preventDefault();
           e.returnValue = '';
         }
       };
+    }
+
+    /**
+     * Caches popup-related DOM elements
+     */
+    cachePopupElements() {
+      if (this.popupElements.holder) return true;
+
+      this.popupElements.holder = document.getElementById('yt-music-plus-popup');
+      if (this.popupElements.holder) {
+        this.popupElements.container = this.popupElements.holder.querySelector('.yt-music-extended-popup-container');
+        this.popupElements.minimizeBtn = this.popupElements.holder.querySelector('#minimizePopupBtn');
+        this.popupElements.header = this.popupElements.holder.querySelector('.popup-header');
+        return true;
+      }
+      return false;
     }
 
     get cancelSearch() {
@@ -250,9 +274,8 @@ import { TrackProcessor } from './track-processor.js';
      * Shows popup and loads playlist data
      */
     async showPopup() {
-      const popupElement = document.getElementById('yt-music-plus-popup');
-      if (popupElement) {
-        popupElement.classList.remove('hidden');
+      if (this.cachePopupElements()) {
+        this.popupElements.holder.classList.remove('hidden');
       }
 
       await this.initPlaylistFetching();
@@ -270,12 +293,10 @@ import { TrackProcessor } from './track-processor.js';
      * Hides popup and re-enables page reload
      */
     hidePopup() {
-      const popupElement = document.getElementById('yt-music-plus-popup');
-      if (popupElement) {
-        popupElement.classList.add('hidden');
+      if (this.cachePopupElements()) {
+        this.popupElements.holder.classList.add('hidden');
         // Reset minimized state when closing
-        const popupContainer = popupElement.querySelector('.yt-music-extended-popup-container');
-        if (popupContainer?.classList.contains('minimized')) {
+        if (this.popupElements.container?.classList.contains('minimized')) {
           this.toggleMinimize();
         }
       }
@@ -286,13 +307,13 @@ import { TrackProcessor } from './track-processor.js';
      * Toggles popup minimization
      */
     toggleMinimize() {
-      const popupHolder = document.getElementById('yt-music-plus-popup');
-      const popupContainer = popupHolder?.querySelector('.yt-music-extended-popup-container');
-      const minimizeBtn = popupHolder?.querySelector('#minimizePopupBtn');
+      if (!this.cachePopupElements()) return;
 
-      if (popupHolder && popupContainer) {
-        const isMinimized = popupContainer.classList.toggle('minimized');
-        popupHolder.classList.toggle('minimized', isMinimized);
+      const { holder, container, minimizeBtn } = this.popupElements;
+      
+      if (holder && container) {
+        const isMinimized = container.classList.toggle('minimized');
+        holder.classList.toggle('minimized', isMinimized);
         
         if (minimizeBtn) {
           minimizeBtn.textContent = isMinimized ? '+' : '−';
@@ -326,38 +347,43 @@ import { TrackProcessor } from './track-processor.js';
         navBarBtn.addEventListener('click', () => this.showPopup());
       }
 
-      // Popup close listeners
-      const popupElement = document.getElementById('yt-music-plus-popup');
-      const closeBtn = popupElement?.querySelector('#closePopupBtn');
-      if (closeBtn) {
-        closeBtn.addEventListener('click', () => this.hidePopup());
+      // Popup close and state listeners
+      if (this.cachePopupElements()) {
+        const { holder, container, header } = this.popupElements;
 
-        const minimizeBtn = popupElement?.querySelector('#minimizePopupBtn');
-        if (minimizeBtn) {
-          minimizeBtn.addEventListener('click', (e) => {
+        // Use event delegation for header actions (close, minimize, restore)
+        header?.addEventListener('click', (e) => {
+          const target = e.target;
+          
+          // Handle close button
+          if (target.id === 'closePopupBtn' || target.closest('#closePopupBtn')) {
+            this.hidePopup();
+            return;
+          }
+
+          // Handle minimize button
+          if (target.id === 'minimizePopupBtn' || target.closest('#minimizePopupBtn')) {
             e.stopPropagation();
             this.toggleMinimize();
-          });
-        }
+            return;
+          }
 
-        const header = popupElement?.querySelector('.popup-header');
-        if (header) {
-          header.addEventListener('click', () => {
-            const popupContainer = popupElement.querySelector('.yt-music-extended-popup-container');
-            if (popupContainer?.classList.contains('minimized')) {
-              this.toggleMinimize();
-            }
-          });
-        }
+          // Restore on header click if minimized
+          // Ensure we didn't click other interactive elements like links
+          if (container.classList.contains('minimized') && !target.closest('a')) {
+            this.toggleMinimize();
+          }
+        });
 
-        popupElement?.addEventListener('click', (event) => {
-          if (event.target === popupElement) {
+        // Backdrop click handler
+        holder.addEventListener('click', (e) => {
+          if (e.target === holder) {
             this.toggleMinimize();
           }
         });
 
         document.addEventListener('keydown', (e) => {
-          if (e.key === 'Escape' && !popupElement?.classList.contains('hidden')) {
+          if (e.key === 'Escape' && !holder.classList.contains('hidden')) {
             this.hidePopup();
           }
         });
