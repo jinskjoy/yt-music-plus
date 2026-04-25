@@ -29,7 +29,7 @@ export class MessageManager {
    * @param {Object} message - Message object
    * @returns {Promise<Object>} Response from content script
    */
-  async sendToContent(message, tabId = null) {
+  static async sendToContent(message, tabId = null) {
     return new Promise((resolve, reject) => {
       try {
         const sendMsg = (id) => {
