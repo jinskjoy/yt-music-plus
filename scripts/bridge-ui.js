@@ -49,7 +49,7 @@ export class BridgeUI {
   addItem(item, baseUrl, index) {
     const { originalMedia, replacementMedia } = this.bridge._createMediaObjects(item, baseUrl);
 
-    const gridRow = MediaGridRow.render(originalMedia, replacementMedia, index);
+    const gridRow = MediaGridRow.render(originalMedia, replacementMedia, index, this.bridge.playerHandler);
     document.getElementById('yt-music-plus-itemsGridContainer')?.appendChild(gridRow);
     this.rowMap.set(index, gridRow);
   }
@@ -65,7 +65,7 @@ export class BridgeUI {
       const wasChecked = oldCheckbox ? oldCheckbox.checked : false;
 
       const { originalMedia, replacementMedia } = this.bridge._createMediaObjects(item, baseUrl);
-      const newRow = MediaGridRow.render(originalMedia, replacementMedia, index);
+      const newRow = MediaGridRow.render(originalMedia, replacementMedia, index, this.bridge.playerHandler);
       
       const newCheckbox = newRow.querySelector('.item-checkbox');
       if (newCheckbox && oldCheckbox && userInteracted) {

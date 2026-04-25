@@ -45,6 +45,7 @@
         "scripts/bridge.js",
         "scripts/bridge-ui.js",
         "scripts/track-processor.js",
+        "scripts/player-handler.js",
         "scripts/yt-music-api.js",
         "scripts/yt-music-parser.js",
         "scripts/models/playlist.js",
