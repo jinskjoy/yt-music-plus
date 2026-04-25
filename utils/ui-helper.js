@@ -490,39 +490,18 @@ export class UIHelper {
    * @returns {HTMLElement}
    */
   static createActionButtons() {
-    const actionButtons = UIHelper._createElement('div', {
-      classes: [
-        'action-buttons',
-        'style-scope',
-        'ytmusic-responsive-header-renderer',
-        'hidden',
-      ],
-      attrs: { id: 'yt-music-plus-action-buttons' },
-    });
+    const container = UIHelper._createElement('div');
+    container.innerHTML = `
+      <div id="yt-music-plus-action-buttons" class="action-buttons style-scope ytmusic-responsive-header-renderer hidden">
+        <div class="style-scope" role="button" tabindex="0">
+          <div class="content-wrapper style-scope ytmusic-play-button-renderer">
+            <span class="icon style-scope">YouTube Music +</span>
+          </div>
+        </div>
+      </div>
+    `.trim();
 
-    const innerDiv = UIHelper._createElement('div', {
-      classes: ['style-scope'],
-      attrs: { role: 'button', tabindex: '0' },
-    });
-
-    const contentWrapper = UIHelper._createElement('div', {
-      classes: [
-        'content-wrapper',
-        'style-scope',
-        'ytmusic-play-button-renderer',
-      ],
-    });
-
-    contentWrapper.appendChild(
-      UIHelper._createElement('span', {
-        classes: ['icon', 'style-scope'],
-        text: 'YouTube Music +',
-      })
-    );
-
-    innerDiv.appendChild(contentWrapper);
-    actionButtons.appendChild(innerDiv);
-    return actionButtons;
+    return container.firstElementChild;
   }
 
   /**

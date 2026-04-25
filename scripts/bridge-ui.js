@@ -21,7 +21,6 @@ export class BridgeUI {
       const footer = document.getElementById('ytMusicPlusSelectionFooter');
       if (footer && text) {
         footer.classList.remove('hidden');
-        footer.style.display = '';
       }
     }
   }
@@ -246,30 +245,16 @@ export class BridgeUI {
    * Initializes the refresh button
    */
   initRefreshButton() {
-    let btn = document.getElementById('refreshPlaylistsBtn');
-    if (!btn) {
-      btn = document.createElement('button');
-      btn.id = 'refreshPlaylistsBtn';
-      btn.className = 'btn btn-secondary';
-      btn.textContent = 'Refresh Playlists';
-      
-      const playlistsGrid = document.getElementById('playlistsGrid');
-      if (playlistsGrid && playlistsGrid.parentNode) {
-        const controlsDiv = document.createElement('div');
-        controlsDiv.className = 'playlist-controls-wrapper';
-        controlsDiv.appendChild(btn);
-        playlistsGrid.parentNode.insertBefore(controlsDiv, playlistsGrid);
-      }
-    }
-
+    const btn = document.getElementById('refreshPlaylistsBtn');
     if (btn && !btn.dataset.initialized) {
       btn.dataset.initialized = 'true';
       btn.addEventListener('click', async () => {
         btn.disabled = true;
+        const originalText = btn.textContent;
         btn.textContent = 'Refreshing...';
         await this.bridge.initPlaylistFetching(true);
         btn.disabled = false;
-        btn.textContent = 'Refresh Playlists';
+        btn.textContent = originalText;
       });
     }
   }

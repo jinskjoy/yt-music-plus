@@ -59,9 +59,6 @@ export class PopupManager {
     if (closeBtn && closeBtn.parentNode) {
       const actionsWrapper = document.createElement('div');
       actionsWrapper.className = 'header-actions-wrapper';
-      actionsWrapper.style.display = 'flex';
-      actionsWrapper.style.alignItems = 'center';
-      actionsWrapper.style.gap = '16px';
 
       closeBtn.parentNode.insertBefore(actionsWrapper, closeBtn);
 

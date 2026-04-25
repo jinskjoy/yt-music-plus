@@ -296,20 +296,7 @@ export class TrackProcessor {
       const mediaExtensions = ['.mp3', '.flac', '.m4a', '.ogg', '.wav', '.aac', '.wma', '.opus'];
       const files = [];
 
-      async function getFilesRecursively(directoryHandle) {
-        for await (const entry of directoryHandle.values()) {
-          if (entry.kind === 'file') {
-            const file = await entry.getFile();
-            if (mediaExtensions.some(ext => file.name.toLowerCase().endsWith(ext))) {
-              files.push(file);
-            }
-          } else if (entry.kind === 'directory') {
-            await getFilesRecursively(entry);
-          }
-        }
-      }
-
-      await getFilesRecursively(dirHandle);
+      await TrackProcessor.#getFilesRecursively(dirHandle, mediaExtensions, files);
 
       this.bridge.ui.setProgressText(`Found ${files.length} media files. Displaying list...`);
       this.bridge.ui.clearPlaylistItemsContainer();
@@ -407,6 +394,23 @@ export class TrackProcessor {
     } finally {
       this.bridge.ui.toggleSearchProgress(false);
       event.target.value = ''; // Reset input
+    }
+  }
+
+  /**
+   * Helper to recursively find media files in a directory
+   * @private
+   */
+  static async #getFilesRecursively(directoryHandle, extensions, files) {
+    for await (const entry of directoryHandle.values()) {
+      if (entry.kind === 'file') {
+        const file = await entry.getFile();
+        if (extensions.some(ext => file.name.toLowerCase().endsWith(ext))) {
+          files.push(file);
+        }
+      } else if (entry.kind === 'directory') {
+        await TrackProcessor.#getFilesRecursively(entry, extensions, files);
+      }
     }
   }
 }

@@ -64,6 +64,18 @@
     font-weight: 600;
 }
 
+.header-actions-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.playlist-controls-wrapper {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 12px;
+}
+
 .close-btn {
     background: none;
     border: none;
