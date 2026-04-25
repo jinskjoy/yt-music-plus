@@ -4,9 +4,18 @@
  */
 export class PlayerHandler {
   constructor() {
-    this.app = document.querySelector('ytmusic-app');
-    this.playerApi = this.app?.playerApi;
     this.initialized = false;
+    this.retryCount = 0;
+    this.maxRetries = 10;
+  }
+
+  /**
+   * Centralized getter for the player API
+   * @returns {Object|null}
+   */
+  get api() {
+    const app = document.querySelector('ytmusic-app');
+    return app?.playerApi || null;
   }
 
   /**
@@ -15,43 +24,41 @@ export class PlayerHandler {
   init() {
     if (this.initialized) return;
     
-    this.app = document.querySelector('ytmusic-app');
-    this.playerApi = this.app?.playerApi;
-    
-    if (!this.playerApi) {
-      // Retry after a short delay if playerApi is not yet available
-      setTimeout(() => this.init(), 1000);
+    if (!this.api) {
+      if (this.retryCount < this.maxRetries) {
+        this.retryCount++;
+        setTimeout(() => this.init(), 1000);
+      } else {
+        console.error('PlayerHandler: Failed to initialize after max retries.');
+      }
       return;
     }
 
     this.initialized = true;
+    this.retryCount = 0;
   }
 
   /**
    * Playback actions
    */
   playTrack(videoId) {
-    if (!this.playerApi) {
-      this.app = document.querySelector('ytmusic-app');
-      this.playerApi = this.app?.playerApi;
-    }
-    
-    if (!this.playerApi) return;
+    const playerApi = this.api;
+    if (!playerApi) return;
     
     // Check if it's already the current video
-    const currentVideoId = this.playerApi.getVideoData()?.video_id;
+    const currentVideoId = playerApi.getVideoData()?.video_id;
     if (currentVideoId === videoId) {
-      this.playerApi.playVideo();
+      playerApi.playVideo();
     } else {
-      this.playerApi.loadVideoById(videoId);
+      playerApi.loadVideoById(videoId);
     }
   }
 
   pauseTrack() {
-    this.playerApi?.pauseVideo();
+    this.api?.pauseVideo();
   }
 
   seekBy(seconds) {
-    this.playerApi?.seekBy(seconds);
+    this.api?.seekBy(seconds);
   }
 }
