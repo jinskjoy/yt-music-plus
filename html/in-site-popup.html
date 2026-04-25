@@ -110,4 +110,49 @@
             </form>
         </div>
     </div>
+
+    <!-- Templates for Dynamic Elements -->
+    <template id="yt-music-plus-playlist-card-template">
+        <div class="playlist-card">
+            <img class="playlist-card-thumbnail" src="" alt="Playlist Thumbnail" />
+            <div class="playlist-card-title"></div>
+            <div class="playlist-card-meta"></div>
+        </div>
+    </template>
+
+    <template id="yt-music-plus-media-item-template">
+        <div class="media-item">
+            <img class="media-thumbnail" src="" alt="thumbnail" />
+            <div class="media-info">
+                <div class="media-title"></div>
+                <div class="media-artist"></div>
+                <a class="media-link" target="yt-music-plus-preview">
+                    <span class="link-icon">🔗 Link</span>
+                </a>
+            </div>
+        </div>
+    </template>
+
+    <template id="yt-music-plus-grid-row-template">
+        <div class="grid-row">
+            <div class="grid-col grid-col-serial"></div>
+            <div class="grid-col grid-col-original"></div>
+            <div class="grid-col grid-col-replacement">
+                <span class="warning-icon hidden">⚠️</span>
+            </div>
+            <div class="grid-col grid-col-checkbox">
+                <input type="checkbox" class="item-checkbox" />
+            </div>
+        </div>
+    </template>
+
+    <template id="yt-music-plus-action-buttons-template">
+        <div id="yt-music-plus-action-buttons" class="action-buttons style-scope ytmusic-responsive-header-renderer hidden">
+            <div class="style-scope" role="button" tabindex="0">
+                <div class="content-wrapper style-scope ytmusic-play-button-renderer">
+                    <span class="icon style-scope">YouTube Music +</span>
+                </div>
+            </div>
+        </div>
+    </template>
 </div>

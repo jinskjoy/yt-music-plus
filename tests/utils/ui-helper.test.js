@@ -1,7 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { UIHelper } from '../../utils/ui-helper.js';
+import fs from 'fs';
+import path from 'path';
 
 describe('UIHelper', () => {
+  beforeEach(() => {
+    const htmlPath = path.resolve(__dirname, '../../html/in-site-popup.html');
+    const htmlContent = fs.readFileSync(htmlPath, 'utf8');
+    document.body.innerHTML = htmlContent;
+    vi.clearAllMocks();
+  });
+
   describe('isGoodMatch', () => {
     it('should return true for identical strings', () => {
       expect(UIHelper.isGoodMatch('Hello', 'Hello')).toBe(true);

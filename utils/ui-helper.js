@@ -104,73 +104,69 @@ export class UIHelper {
   }
 
   /**
-   * Creates a media item element
-   * @param {Object} media - Media object (must have name, artist, thumbnail, url)
-   * @returns {HTMLElement} The media item element
+   * Build a DOM fragment representing a track/item from a media object.
+   *
+   * @param {{name?:string,artist?:string,thumbnail?:string,url?:string}} media
+   * @returns {HTMLElement}
    */
   static createMediaItem(media = {}) {
-    const item = UIHelper._createElement('div', { classes: 'media-item' });
+    const template = document.getElementById('yt-music-plus-media-item-template');
+    if (!template) {
+      throw new Error('Template "yt-music-plus-media-item-template" not found');
+    }
 
-    const info = UIHelper._createElement('div', { classes: 'media-info' });
+    const clone = template.content.cloneNode(true);
+    const item = clone.querySelector('.media-item');
+    const thumb = item.querySelector('.media-thumbnail');
+    const title = item.querySelector('.media-title');
+    const artist = item.querySelector('.media-artist');
+    const link = item.querySelector('.media-link');
 
-    // title is required, artist+link optional
-    info.appendChild(
-      UIHelper._createElement('div', {
-        classes: 'media-title',
-        text: media.name || 'Unknown Title',
-      })
-    );
+    if (media.thumbnail) {
+      thumb.src = media.thumbnail;
+    } else {
+      thumb.remove();
+    }
+
+    title.textContent = media.name || 'Unknown Title';
 
     if (media.artist) {
-      info.appendChild(
-        UIHelper._createElement('div', {
-          classes: 'media-artist',
-          text: media.artist,
-        })
-      );
+      artist.textContent = media.artist;
+    } else {
+      artist.remove();
     }
 
     if (media.url) {
-      const link = UIHelper._createElement('a', {
-        classes: 'media-link',
-        attrs: { href: media.url, target: 'yt-music-plus-preview' },
-      });
-      link.appendChild(
-        UIHelper._createElement('span', {
-          classes: 'link-icon',
-          text: '🔗 Link',
-        })
-      );
-      info.appendChild(link);
+      link.href = media.url;
+    } else {
+      link.remove();
     }
 
-    if (media.thumbnail) {
-      item.appendChild(
-        UIHelper._createElement('img', {
-          classes: 'media-thumbnail',
-          attrs: { src: media.thumbnail, alt: 'thumbnail' },
-        })
-      );
-    }
-
-    item.appendChild(info);
     return item;
   }
 
   /**
-   * Creates a single grid row for media items
-   * @param {Object} originalMedia - The original media object (must have name, artist, thumbnail, url)
-   * @param {Object} replacementMedia - The replacement media object (must have name, artist, thumbnail, url)
-   * @param {number} serialNumber - The serial number for this row
-   * @returns {HTMLElement} The grid row element
+   * Construct a grid row representing a single mapping from an original
+   * media item to its replacement.
+   *
+   * @param {Object} originalMedia
+   * @param {Object} replacementMedia
+   * @param {number} [serialNumber=1]
+   * @returns {HTMLElement}
    */
   static createMediaGridRow(originalMedia, replacementMedia, serialNumber = 1) {
-    const row = UIHelper._createElement('div', { classes: 'grid-row' });
+    const template = document.getElementById('yt-music-plus-grid-row-template');
+    if (!template) {
+      throw new Error('Template "yt-music-plus-grid-row-template" not found');
+    }
+
+    const clone = template.content.cloneNode(true);
+    const row = clone.querySelector('.grid-row');
+    
     row.dataset.serialNumber = serialNumber;
     row.dataset.originalMedia = JSON.stringify(originalMedia);
     row.dataset.replacementMedia = JSON.stringify(replacementMedia || {});
 
-    // Pre-compute a lowercase search string combining both original and replacement details
     const searchTerms = [
       originalMedia?.name,
       originalMedia?.artist,
@@ -181,19 +177,9 @@ export class UIHelper {
     ].filter(Boolean).join(' ').toLowerCase();
     row.dataset.searchString = searchTerms;
 
-    // helper for column creation
-    const makeCol = (className) =>
-      UIHelper._createElement('div', { classes: ['grid-col', className] });
+    row.querySelector('.grid-col-serial').textContent = serialNumber;
 
-    // serial
-    const serialCol = makeCol('grid-col-serial');
-    serialCol.textContent = serialNumber;
-
-    // checkbox
-    const checkboxCol = makeCol('grid-col-checkbox');
-    const checkbox = UIHelper._createElement('input', { attrs: { type: 'checkbox' } });
-    checkbox.classList.add('item-checkbox');
-
+    const checkbox = row.querySelector('.item-checkbox');
     const isListOnlyMode = document.querySelector('.items-grid-wrapper')?.classList.contains('list-only-mode');
     const hasReplacement = replacementMedia && replacementMedia.videoId;
     const isPending = replacementMedia && replacementMedia.isPending;
@@ -207,10 +193,7 @@ export class UIHelper {
       checkbox.disabled = true;
     }
 
-    checkboxCol.appendChild(checkbox);
-
-    // original
-    const originalCol = makeCol('grid-col-original');
+    const originalCol = row.querySelector('.grid-col-original');
     originalCol.style.cursor = 'pointer';
     originalCol.addEventListener('click', (e) => {
       if (e.target.closest('a')) return;
@@ -222,12 +205,9 @@ export class UIHelper {
     });
     originalCol.appendChild(UIHelper.createMediaItem(originalMedia));
 
-    // replacement
-    const replacementCol = makeCol('grid-col-replacement');
+    const replacementCol = row.querySelector('.grid-col-replacement');
     if (replacementMedia && replacementMedia.isGoodMatch === false) {
-      replacementCol.appendChild(
-        UIHelper._createElement('span', { classes: 'warning-icon', text: '⚠️' })
-      );
+      replacementCol.querySelector('.warning-icon').classList.remove('hidden');
       replacementCol.classList.add('potential-mismatch');
     }
     replacementCol.appendChild(
@@ -236,8 +216,6 @@ export class UIHelper {
       )
     );
 
-    // assemble
-    row.append(serialCol, originalCol, replacementCol, checkboxCol);
     return row;
   }
 
@@ -462,24 +440,22 @@ export class UIHelper {
    * @returns {HTMLElement}
    */
   static createPlaylistCard(playlist = {}) {
-    const card = UIHelper._createElement('div', { classes: 'playlist-card' });
-    card.append(
-      UIHelper._createElement('img', {
-        classes: 'playlist-card-thumbnail',
-        attrs: {
-          src: playlist.thumbnail || '',
-          alt: playlist.title || 'Playlist Thumbnail',
-        },
-      }),
-      UIHelper._createElement('div', {
-        classes: 'playlist-card-title',
-        text: playlist.title || 'Untitled Playlist',
-      }),
-      UIHelper._createElement('div', {
-        classes: 'playlist-card-meta',
-        text: playlist.subtitle || '',
-      })
-    );
+    const template = document.getElementById('yt-music-plus-playlist-card-template');
+    if (!template) {
+      throw new Error('Template "yt-music-plus-playlist-card-template" not found');
+    }
+
+    const clone = template.content.cloneNode(true);
+    const card = clone.querySelector('.playlist-card');
+    const thumb = card.querySelector('.playlist-card-thumbnail');
+    const title = card.querySelector('.playlist-card-title');
+    const meta = card.querySelector('.playlist-card-meta');
+
+    thumb.src = playlist.thumbnail || '';
+    thumb.alt = playlist.title || 'Playlist Thumbnail';
+    title.textContent = playlist.title || 'Untitled Playlist';
+    meta.textContent = playlist.subtitle || '';
+
     return card;
   }
 
@@ -490,18 +466,13 @@ export class UIHelper {
    * @returns {HTMLElement}
    */
   static createActionButtons() {
-    const container = UIHelper._createElement('div');
-    container.innerHTML = `
-      <div id="yt-music-plus-action-buttons" class="action-buttons style-scope ytmusic-responsive-header-renderer hidden">
-        <div class="style-scope" role="button" tabindex="0">
-          <div class="content-wrapper style-scope ytmusic-play-button-renderer">
-            <span class="icon style-scope">YouTube Music +</span>
-          </div>
-        </div>
-      </div>
-    `.trim();
+    const template = document.getElementById('yt-music-plus-action-buttons-template');
+    if (!template) {
+      throw new Error('Template "yt-music-plus-action-buttons-template" not found');
+    }
 
-    return container.firstElementChild;
+    const clone = template.content.cloneNode(true);
+    return clone.querySelector('#yt-music-plus-action-buttons');
   }
 
   /**
