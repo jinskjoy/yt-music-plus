@@ -1,282 +1,79 @@
+import { TextSimilarity, Formatters, BrowserUtils } from './utils.js';
+
 /**
- * UIHelper - Handles UI utilities and helper functions
+ * MediaItem - Represents a track/item UI component
  */
-export class UIHelper {
-  static ISSUE_URL = 'https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc/support';
-
-  /* --------------------------------------------------------------------------
-   * Core DOM helpers (private)
-   * --------------------------------------------------------------------------
-   */
-
-  /**
-   * Shorthand for document.createElement with optional classes, attributes and text.
-   * Improves readability when building complex DOM structures.
-   *
-   * @param {string} tag
-   * @param {Object} [opts]
-   * @param {string|string[]} [opts.classes] - single class or array of classes
-   * @param {Object} [opts.attrs] - key/value map of attributes to set
-   * @param {string} [opts.text] - textContent to assign
-   * @returns {HTMLElement}
-   */
-  static _createElement(tag, opts = {}) {
-    const el = document.createElement(tag);
-    if (opts.classes) {
-      // support either an array or a space‑separated string of class names
-      const classes = Array.isArray(opts.classes)
-        ? opts.classes
-        : String(opts.classes).trim().split(/\s+/);
-      if (classes.length) el.classList.add(...classes);
-    }
-    if (opts.attrs) {
-      Object.entries(opts.attrs).forEach(([key, value]) => el.setAttribute(key, value));
-    }
-    if (opts.text) el.textContent = opts.text;
-    return el;
-  }
-
-  // ---------------------------------------------------------------------------
-  // public helpers
-  // ---------------------------------------------------------------------------
-
-  /**
-   * Display a transient status message on a given element.
-   * @param {Element} element - Element to display status in
-   * @param {string} message - Message to display
-   * @param {'success'|'error'|'info'} [type='info'] - Message type
-   * @param {number} [duration=3000] - Duration in ms (0 = permanent)
-   */
-  static showStatus(element, message, type = 'info', duration = 3000) {
-    if (!element) return;
-
-    element.textContent = message;
-    element.className = `status-message show ${type}`;
-
-    if (duration > 0) {
-      setTimeout(() => element.classList.remove('show'), duration);
-    }
-  }
-
-
-  /**
-   * Format timestamp to readable date
-   * @param {number} timestamp - Timestamp in milliseconds
-   * @param {Object} options - Formatting options
-   * @returns {string} Formatted date string
-   */
-  /**
-   * Convert a millisecond timestamp into a human‑readable string.
-   * Supports a few common formats; falls back to toLocaleString if unknown.
-   *
-   * @param {number} timestamp - milliseconds since epoch
-   * @param {Object} [options]
-   * @param {'short'|'long'|'time'} [options.format='short']
-   * @param {string} [options.locale='en-US']
-   * @returns {string}
-   */
-  static formatDate(timestamp, options = {}) {
-    const date = new Date(timestamp);
-    const { format = 'short', locale = 'en-US' } = options;
-
-    switch (format) {
-      case 'long':
-        return date.toLocaleDateString(locale, {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        });
-      case 'time':
-        return date.toLocaleTimeString(locale);
-      case 'short':
-      default:
-        return date.toLocaleDateString(locale);
-    }
-  }
-
-  /**
-   * Format file size
-   * @param {number} bytes - Size in bytes
-   * @returns {string} Formatted size string
-   */
-  /**
-   * Human‑friendly file size formatter (metric base 1024).
-   * @param {number} bytes
-   * @returns {string}
-   */
-  static formatFileSize(bytes) {
-    if (bytes === 0) return '0 Bytes';
-    const units = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(1024));
-    return `${Math.round((bytes / Math.pow(1024, i)) * 100) / 100} ${units[i]}`;
-  }
-
-  /**
-   * Debounce function calls
-   * @param {Function} func - Function to debounce
-   * @param {number} delay - Delay in milliseconds
-   * @returns {Function} Debounced function
-   */
-  /**
-   * Return a debounced version of `func` that fires after `delay` ms have passed
-   * since the last call. Useful for limiting expensive event handlers.
-   * @param {Function} func
-   * @param {number} [delay=300]
-   * @returns {Function}
-   */
-  static debounce(func, delay = 300) {
-    let timeoutId;
-    return (...args) => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => func(...args), delay);
-    };
-  }
-
-  /**
-   * Throttle function calls
-   * @param {Function} func - Function to throttle
-   * @param {number} limit - Time limit in milliseconds
-   * @returns {Function} Throttled function
-   */
-  /**
-   * Throttles `func` so that it can only be invoked once every `limit` ms.
-   * Handy for scroll/resize callbacks.
-   * @param {Function} func
-   * @param {number} [limit=300]
-   * @returns {Function}
-   */
-  static throttle(func, limit = 300) {
-    let inThrottle = false;
-    return (...args) => {
-      if (!inThrottle) {
-        func(...args);
-        inThrottle = true;
-        setTimeout(() => (inThrottle = false), limit);
-      }
-    };
-  }
-
-  /**
-   * Copy text to clipboard
-   * @param {string} text - Text to copy
-   * @returns {Promise<boolean>} Success status
-   */
-  /**
-   * Attempt to write `text` to the clipboard. Returns a boolean indicating
-   * whether the operation succeeded.
-   *
-   * @param {string} text
-   * @returns {Promise<boolean>}
-   */
-  static async copyToClipboard(text) {
-    try {
-      await navigator.clipboard.writeText(text);
-      return true;
-    } catch (error) {
-      console.error('Failed to copy:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Get random color
-   * @returns {string} Random color in hex format
-   */
-  /**
-   * Generate a random 6‑digit hex color string.
-   * @returns {string}
-   */
-  static getRandomColor() {
-    return `#${Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0')}`;
-  }
-
-  /**
-   * Creates a media item element
-   * @param {Object} media - Media object (must have name, artist, thumbnail, url)
-   * @returns {HTMLElement} The media item element
-   */
+export class MediaItem {
   /**
    * Build a DOM fragment representing a track/item from a media object.
-   * Accepts partial data and falls back to sane defaults so callers don't
-   * need to guard for missing values.
-   *
-   * @param {{name?:string,artist?:string,thumbnail?:string,url?:string}} media
+   * @param {Object} media
    * @returns {HTMLElement}
    */
-  static createMediaItem(media = {}) {
-    const item = UIHelper._createElement('div', { classes: 'media-item' });
+  static render(media = {}) {
+    const template = document.getElementById('yt-music-plus-media-item-template');
+    if (!template) {
+      throw new Error('Template "yt-music-plus-media-item-template" not found');
+    }
 
-    const info = UIHelper._createElement('div', { classes: 'media-info' });
+    const clone = template.content.cloneNode(true);
+    const item = clone.querySelector('.media-item');
+    const thumb = item.querySelector('.media-thumbnail');
+    const title = item.querySelector('.media-title');
+    const artist = item.querySelector('.media-artist');
+    const link = item.querySelector('.media-link');
 
-    // title is required, artist+link optional
-    info.appendChild(
-      UIHelper._createElement('div', {
-        classes: 'media-title',
-        text: media.name || 'Unknown Title',
-      })
-    );
+    if (media.thumbnail) {
+      thumb.src = media.thumbnail;
+    } else {
+      thumb.remove();
+    }
+
+    title.textContent = media.name || 'Unknown Title';
 
     if (media.artist) {
-      info.appendChild(
-        UIHelper._createElement('div', {
-          classes: 'media-artist',
-          text: media.artist,
-        })
-      );
+      artist.textContent = media.artist;
+    } else {
+      artist.remove();
     }
 
     if (media.url) {
-      const link = UIHelper._createElement('a', {
-        classes: 'media-link',
-        attrs: { href: media.url, target: 'yt-music-plus-preview' },
-      });
-      link.appendChild(
-        UIHelper._createElement('span', {
-          classes: 'link-icon',
-          text: '🔗 Link',
-        })
-      );
-      info.appendChild(link);
+      link.href = media.url;
+    } else {
+      link.remove();
     }
 
-    if (media.thumbnail) {
-      item.appendChild(
-        UIHelper._createElement('img', {
-          classes: 'media-thumbnail',
-          attrs: { src: media.thumbnail, alt: 'thumbnail' },
-        })
-      );
-    }
-
-    item.appendChild(info);
     return item;
   }
+}
 
-  /**
-   * Creates a single grid row for media items
-   * @param {Object} originalMedia - The original media object (must have name, artist, thumbnail, url)
-   * @param {Object} replacementMedia - The replacement media object (must have name, artist, thumbnail, url)
-   * @param {number} serialNumber - The serial number for this row
-   * @returns {HTMLElement} The grid row element
-   */
+/**
+ * MediaGridRow - Represents a row in the results grid
+ */
+export class MediaGridRow {
   /**
    * Construct a grid row representing a single mapping from an original
-   * media item to its replacement. Serial number and metadata are stored as
-   * data attributes for easy access later.
+   * media item to its replacement.
    *
    * @param {Object} originalMedia
    * @param {Object} replacementMedia
    * @param {number} [serialNumber=1]
    * @returns {HTMLElement}
    */
-  static createMediaGridRow(originalMedia, replacementMedia, serialNumber = 1) {
-    const row = UIHelper._createElement('div', { classes: 'grid-row' });
+  static render(originalMedia, replacementMedia, serialNumber = 1) {
+    const template = document.getElementById('yt-music-plus-grid-row-template');
+    if (!template) {
+      throw new Error('Template "yt-music-plus-grid-row-template" not found');
+    }
+
+    const clone = template.content.cloneNode(true);
+    const row = clone.querySelector('.grid-row');
+    
     row.dataset.serialNumber = serialNumber;
+    row.dataset.videoId = originalMedia.videoId || '';
+    row.dataset.name = originalMedia.name || '';
     row.dataset.originalMedia = JSON.stringify(originalMedia);
     row.dataset.replacementMedia = JSON.stringify(replacementMedia || {});
 
-    // Pre-compute a lowercase search string combining both original and replacement details
     const searchTerms = [
       originalMedia?.name,
       originalMedia?.artist,
@@ -287,19 +84,9 @@ export class UIHelper {
     ].filter(Boolean).join(' ').toLowerCase();
     row.dataset.searchString = searchTerms;
 
-    // helper for column creation
-    const makeCol = (className) =>
-      UIHelper._createElement('div', { classes: ['grid-col', className] });
+    row.querySelector('.grid-col-serial').textContent = serialNumber;
 
-    // serial
-    const serialCol = makeCol('grid-col-serial');
-    serialCol.textContent = serialNumber;
-
-    // checkbox
-    const checkboxCol = makeCol('grid-col-checkbox');
-    const checkbox = UIHelper._createElement('input', { attrs: { type: 'checkbox' } });
-    checkbox.classList.add('item-checkbox');
-
+    const checkbox = row.querySelector('.item-checkbox');
     const isListOnlyMode = document.querySelector('.items-grid-wrapper')?.classList.contains('list-only-mode');
     const hasReplacement = replacementMedia && replacementMedia.videoId;
     const isPending = replacementMedia && replacementMedia.isPending;
@@ -312,12 +99,7 @@ export class UIHelper {
     if (!isListOnlyMode && !hasReplacement && !isPending) {
       checkbox.disabled = true;
     }
-
-    checkboxCol.appendChild(checkbox);
-
-    // original
-    const originalCol = makeCol('grid-col-original');
-    originalCol.style.cursor = 'pointer';
+    const originalCol = row.querySelector('.grid-col-original');
     originalCol.addEventListener('click', (e) => {
       if (e.target.closest('a')) return;
       if (!checkbox.disabled) {
@@ -326,53 +108,121 @@ export class UIHelper {
         checkbox.dispatchEvent(new Event('change', { bubbles: true }));
       }
     });
-    originalCol.appendChild(UIHelper.createMediaItem(originalMedia));
+    originalCol.appendChild(MediaItem.render(originalMedia));
 
-    // replacement
-    const replacementCol = makeCol('grid-col-replacement');
+    const replacementCol = row.querySelector('.grid-col-replacement');
     if (replacementMedia && replacementMedia.isGoodMatch === false) {
-      replacementCol.appendChild(
-        UIHelper._createElement('span', { classes: 'warning-icon', text: '⚠️' })
-      );
+      replacementCol.querySelector('.warning-icon').classList.remove('hidden');
       replacementCol.classList.add('potential-mismatch');
     }
     replacementCol.appendChild(
-      UIHelper.createMediaItem(
+      MediaItem.render(
         replacementMedia || { name: 'No replacement found' }
       )
     );
 
-    // assemble
-    row.append(serialCol, originalCol, replacementCol, checkboxCol);
     return row;
+  }
+}
+
+/**
+ * PlaylistCard - Represents a playlist card component
+ */
+export class PlaylistCard {
+  /**
+   * Quick factory for a playlist card element used in the playlist picker UI.
+   * @param {Object} playlist
+   * @returns {HTMLElement}
+   */
+  static render(playlist = {}) {
+    const template = document.getElementById('yt-music-plus-playlist-card-template');
+    if (!template) {
+      throw new Error('Template "yt-music-plus-playlist-card-template" not found');
+    }
+
+    const clone = template.content.cloneNode(true);
+    const card = clone.querySelector('.playlist-card');
+    const thumb = card.querySelector('.playlist-card-thumbnail');
+    const title = card.querySelector('.playlist-card-title');
+    const meta = card.querySelector('.playlist-card-meta');
+
+    thumb.src = playlist.thumbnail || '';
+    thumb.alt = playlist.title || 'Playlist Thumbnail';
+    title.textContent = playlist.title || 'Untitled Playlist';
+    meta.textContent = playlist.subtitle || '';
+
+    return card;
+  }
+}
+
+/**
+ * UIHelper - Handles high-level UI operations and state management
+ */
+export class UIHelper {
+  static ISSUE_URL = 'https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc/support';
+
+  /**
+   * Shorthand for document.createElement with optional configuration.
+   * @param {string} tag
+   * @param {Object} [opts]
+   * @returns {HTMLElement}
+   */
+  static _createElement(tag, opts = {}) {
+    const el = document.createElement(tag);
+    if (opts.classes) {
+      const classes = Array.isArray(opts.classes)
+        ? opts.classes
+        : String(opts.classes).trim().split(/\s+/);
+      if (classes.length) el.classList.add(...classes);
+    }
+    if (opts.attrs) {
+      Object.entries(opts.attrs).forEach(([key, value]) => el.setAttribute(key, value));
+    }
+    if (opts.text) el.textContent = opts.text;
+    return el;
   }
 
   /**
-   * Creates grid rows for media items that need replacement
-   * @param {Array} records - Array of records, each containing originalMedia and replacementMedia objects
-   * @param {string} containerId - The ID of the container where rows should be inserted (default: 'yt-music-plus-itemsGridContainer')
-   * @returns {HTMLElement} The container with inserted rows, or null if container not found
+   * Display a transient status message on a given element.
+   * @param {Element} element
+   * @param {string} message
+   * @param {'success'|'error'|'info'} [type='info']
+   * @param {number} [duration=3000]
    */
+  static showStatus(element, message, type = 'info', duration = 3000) {
+    if (!element) return;
+
+    element.textContent = message;
+    element.className = `status-message show ${type}`;
+
+    if (duration > 0) {
+      setTimeout(() => element.classList.remove('show'), duration);
+    }
+  }
+
+  // --- Wrapper methods for delegated utility classes ---
+
+  static formatDate(ts, opts) { return Formatters.formatDate(ts, opts); }
+  static formatFileSize(bytes) { return Formatters.formatFileSize(bytes); }
+  static debounce(fn, delay) { return BrowserUtils.debounce(fn, delay); }
+  static throttle(fn, limit) { return BrowserUtils.throttle(fn, limit); }
+  static async copyToClipboard(text) { return BrowserUtils.copyToClipboard(text); }
+  static getRandomColor() { return BrowserUtils.getRandomColor(); }
+  static calculateJaroWinklerDistance(s1, s2) { return TextSimilarity.calculateJaroWinklerDistance(s1, s2); }
+  static isGoodMatch(t1, t2, threshold) { return TextSimilarity.isGoodMatch(t1, t2, threshold); }
+
   /**
-   * Populate a grid container with rows generated from an array of records.
-   * Existing rows are removed but the header row is preserved.
-   *
-   * @param {Array<{originalMedia:Object,replacementMedia:Object}>} records
-   * @param {string} [containerId='yt-music-plus-itemsGridContainer']
-   * @returns {HTMLElement|null}
+   * Populate a grid container with rows.
    */
   static createMediaGridRows(records, containerId = 'yt-music-plus-itemsGridContainer') {
     const container = document.getElementById(containerId);
-    if (!container) {
-      console.error(`Container with ID ${containerId} not found`);
-      return null;
-    }
+    if (!container) return null;
 
     container.querySelectorAll('.grid-row').forEach((r) => r.remove());
 
     records.forEach((record, index) => {
       container.appendChild(
-        UIHelper.createMediaGridRow(
+        MediaGridRow.render(
           record.originalMedia,
           record.replacementMedia,
           index + 1
@@ -384,36 +234,28 @@ export class UIHelper {
   }
 
   /**
-   * Remove the grid row corresponding to a given original record (compares
-   * videoId). Silently fails if container is missing.
-   *
-   * @param {Object} originalRecord
-   * @param {string} [containerId='yt-music-plus-itemsGridContainer']
+   * Remove a row from the grid.
    */
   static removeMediaGridRow(originalRecord, containerId = 'yt-music-plus-itemsGridContainer') {
     const container = document.getElementById(containerId);
-    if (!container) {
-      console.error(`Container with ID ${containerId} not found`);
-      return;
+    if (!container) return;
+
+    let row;
+    if (originalRecord.videoId) {
+      row = container.querySelector(`.grid-row[data-video-id="${originalRecord.videoId}"]`);
+    } else {
+      // Fallback to name if no videoId (e.g. local files)
+      row = Array.from(container.querySelectorAll('.grid-row')).find(r => r.dataset.name === originalRecord.name);
     }
 
-    container.querySelectorAll('.grid-row').forEach((row) => {
-      const data = JSON.parse(row.dataset.originalMedia || '{}');
-      let isMatch = false;
-      if (data.videoId && originalRecord.videoId) {
-        isMatch = data.videoId === originalRecord.videoId;
-      } else {
-        isMatch = data.name === originalRecord.name;
-      }
-      if (isMatch) row.remove();
-    });
+    if (row) {
+      row.remove();
+      UIHelper.updateCheckAllCheckbox();
+    }
   }
 
   /**
-   * Populate playlist information UI elements if they exist, only updating
-   * fields when the corresponding data is available.
-   *
-   * @param {Object} playlist
+   * Populate playlist info UI.
    */
   static setPlaylistDetails(playlist = {}) {
     const map = [
@@ -430,134 +272,34 @@ export class UIHelper {
   }
 
   /**
-   * Shows error message in the replacement column for a specific item
-   * @param {Object} originalRecord 
-   * @param {string} errorMessage 
-   * @param {string} containerId 
+   * Shows error in row.
    */
   static showErrorInGridRow(originalRecord, errorMessage, containerId = 'yt-music-plus-itemsGridContainer') {
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    container.querySelectorAll('.grid-row').forEach((row) => {
-      const data = JSON.parse(row.dataset.originalMedia || '{}');
-      let isMatch = false;
-      if (data.videoId && originalRecord.videoId) {
-        isMatch = data.videoId === originalRecord.videoId;
-      } else {
-        isMatch = data.name === originalRecord.name;
-      }
-      if (isMatch) {
-        const replacementCol = row.querySelector('.grid-col-replacement');
-        if (replacementCol) {
-          if (replacementCol.querySelector('.error-message')) return;
-
-          const errorDiv = UIHelper._createElement('div', {
-            classes: 'error-message',
-            text: `Error: ${errorMessage}`
-          });
-          errorDiv.style.color = 'red';
-          errorDiv.style.fontSize = '12px';
-          errorDiv.style.fontWeight = '500';
-          errorDiv.style.marginTop = '4px';
-          replacementCol.appendChild(errorDiv);
-        }
-      }
-    });
-  }
-  /**
-   * Jaro-Winkler distance implementation for string similarity comparison
-   * @param {*} s1 
-   * @param {*} s2 
-   * @returns A similarity score between 0 and 1, where 1 means identical strings and 0 means completely different strings
-   */
-  /**
-   * Compute the Jaro‑Winkler similarity between two strings.
-   * Returns a value in [0,1] where 1 indicates identical strings.
-   *
-   * @param {string} s1
-   * @param {string} s2
-   * @returns {number}
-   */
-  static calculateJaroWinklerDistance(s1, s2) {
-    // early exits for empty strings
-    if (!s1.length) return s2.length ? 0 : 1;
-    if (!s2.length) return 0;
-
-    const s1Len = s1.length;
-    const s2Len = s2.length;
-    const matchDist = Math.floor(Math.max(s1Len, s2Len) / 2) - 1;
-
-    const s1Matches = Array(s1Len).fill(false);
-    const s2Matches = Array(s2Len).fill(false);
-    let matches = 0;
-
-    // count matches
-    for (let i = 0; i < s1Len; i++) {
-      const start = Math.max(0, i - matchDist);
-      const end = Math.min(i + matchDist + 1, s2Len);
-      for (let j = start; j < end; j++) {
-        if (s2Matches[j] || s1[i] !== s2[j]) continue;
-        s1Matches[i] = s2Matches[j] = true;
-        matches++;
-        break;
-      }
-    }
-    if (matches === 0) return 0;
-
-    // count transpositions
-    let k = 0;
-    let transpositions = 0;
-    for (let i = 0; i < s1Len; i++) {
-      if (!s1Matches[i]) continue;
-      while (!s2Matches[k]) k++;
-      if (s1[i] !== s2[k]) transpositions++;
-      k++;
-    }
-    transpositions /= 2;
-
-    const jaro =
-      (matches / s1Len + matches / s2Len + (matches - transpositions) / matches) / 3;
-    const prefixLen = Math.min(4, [...s1].findIndex((c, i) => c !== s2[i]));
-    const scaling = 0.1;
-
-    return jaro + prefixLen * scaling * (1 - jaro);
-  }
-
-  // Check if the best search result is a good match for the original item based on title similarity
-  //Combine the title similarity score and the Levenshtein distance or Jaro-Winkler distance to get a more accurate similarity measure. You can experiment with different weights for each metric to see what works best for your use case.
-  /**
-   * Determine whether two titles are "close enough" to consider the match
-   * valid. Currently uses only Jaro‑Winkler similarity but the implementation
-   * is written with future expansion in mind (Levenshtein, etc.).
-   *
-   * @param {string} originalTitle
-   * @param {string} replacementTitle
-   * @param {number} [similarityThreshold=0.5]
-   * @returns {boolean}
-   */
-  static isGoodMatch(originalTitle, replacementTitle, similarityThreshold = 0.5) {
-    if (!replacementTitle) {
-      console.debug('Empty replacement title => not a good match');
-      return false;
+    let row;
+    if (originalRecord.videoId) {
+      row = container.querySelector(`.grid-row[data-video-id="${originalRecord.videoId}"]`);
+    } else {
+      row = Array.from(container.querySelectorAll('.grid-row')).find(r => r.dataset.name === originalRecord.name);
     }
 
-    try {
-      const score = UIHelper.calculateJaroWinklerDistance(
-        originalTitle,
-        replacementTitle
-      );
-      console.debug(`similarity score=${score}, threshold=${similarityThreshold}`);
-      return score >= similarityThreshold;
-    } catch (e) {
-      console.error('Error computing similarity score', e);
-      return false;
+    if (row) {
+      const replacementCol = row.querySelector('.grid-col-replacement');
+      if (replacementCol && !replacementCol.querySelector('.error-message')) {
+        const template = document.getElementById('yt-music-plus-error-message-template');
+        if (!template) throw new Error('Template "yt-music-plus-error-message-template" not found');
+        
+        const errorDiv = template.content.cloneNode(true).querySelector('.error-message');
+        errorDiv.textContent = `Error: ${errorMessage}`;
+        replacementCol.appendChild(errorDiv);
+      }
     }
   }
 
   /**
-   * Updates the select-all checkbox state based on individual checkbox states
-   * Also enables/disables action buttons based on selection
+   * Updates check-all checkbox and button states.
    */
   static updateCheckAllCheckbox() {
     const popupElement = document.querySelector('.yt-music-extended-popup-container');
@@ -570,18 +312,15 @@ export class UIHelper {
     });
     const allCheckboxes = popupElement.querySelectorAll('.item-checkbox');
     
-    // Update select-all checkbox state
     if (selectAllCheckbox) {
       selectAllCheckbox.checked = checkboxes.length > 0 && Array.from(checkboxes).every(cb => cb.checked);
     }
 
-    // Enable/disable action buttons based on selection
     const anyChecked = Array.from(allCheckboxes).some(cb => cb.checked);
     const anyCheckedWithReplacement = Array.from(allCheckboxes).some(cb => {
       if (!cb.checked) return false;
       const row = cb.closest('.grid-row');
-      if (!row) return false;
-      const replacement = JSON.parse(row.dataset.replacementMedia || '{}');
+      const replacement = JSON.parse(row?.dataset.replacementMedia || '{}');
       return !!replacement.videoId;
     });
 
@@ -598,12 +337,10 @@ export class UIHelper {
     const replaceBtn = popupElement.querySelector('#replaceSelectedBtn');
     if (replaceBtn) replaceBtn.disabled = isSearching || isListOnlyMode ? true : !anyCheckedWithReplacement;
 
-    const checkedCount = Array.from(allCheckboxes).filter(cb => cb.checked).length;
-    const totalCount = allCheckboxes.length;
-    
     const footer = popupElement.querySelector('#ytMusicPlusSelectionFooter');
-    
     if (footer) {
+      const checkedCount = Array.from(allCheckboxes).filter(cb => cb.checked).length;
+      const totalCount = allCheckboxes.length;
       const textContainer = footer.querySelector('.footer-right') || footer;
       
       if (totalCount > 0) {
@@ -615,21 +352,12 @@ export class UIHelper {
 
       const progressText = document.getElementById('progressText');
       const hasProgressText = progressText && !progressText.classList.contains('hidden');
-
-      if (totalCount > 0 || isSearching || hasProgressText) {
-        footer.classList.remove('hidden');
-      } else {
-        footer.classList.add('hidden');
-      }
+      footer.classList.toggle('hidden', !(totalCount > 0 || isSearching || hasProgressText));
     }
   }
 
   /**
-   * Read the current set of checked rows from the grid and return their
-   * original+replacement metadata. The return value is suitable for
-   * processing when the user clicks a "apply changes" button, etc.
-   *
-   * @returns {Array<{originalMedia:Object,replacementMedia:Object}>}
+   * Get selected items from grid.
    */
   static getSelectedMediaItems() {
     return Array.from(document.querySelectorAll('.item-checkbox'))
@@ -643,119 +371,26 @@ export class UIHelper {
       });
   }
 
-
   /**
-   * Quick factory for a playlist card element used in the playlist picker UI.
-   * @param {Object} playlist
-   * @returns {HTMLElement}
-   */
-  static createPlaylistCard(playlist = {}) {
-    const card = UIHelper._createElement('div', { classes: 'playlist-card' });
-    card.append(
-      UIHelper._createElement('img', {
-        classes: 'playlist-card-thumbnail',
-        attrs: {
-          src: playlist.thumbnail || '',
-          alt: playlist.title || 'Playlist Thumbnail',
-        },
-      }),
-      UIHelper._createElement('div', {
-        classes: 'playlist-card-title',
-        text: playlist.title || 'Untitled Playlist',
-      }),
-      UIHelper._createElement('div', {
-        classes: 'playlist-card-meta',
-        text: playlist.subtitle || '',
-      })
-    );
-    return card;
-  }
-
-  /**
-   * Creates action buttons for the header
-   * @returns {HTMLElement} The action buttons element
-   */
-  /**
-   * Build and return the set of action buttons that are injected into the
-   * YouTube Music header. The element is initially hidden; callers are
-   * responsible for inserting it and toggling visibility.
-   *
-   * @returns {HTMLElement}
+   * Create action buttons for header.
    */
   static createActionButtons() {
-    const actionButtons = UIHelper._createElement('div', {
-      classes: [
-        'action-buttons',
-        'style-scope',
-        'ytmusic-responsive-header-renderer',
-        'hidden',
-      ],
-      attrs: { id: 'yt-music-plus-action-buttons' },
-    });
-
-    const innerDiv = UIHelper._createElement('div', {
-      classes: ['style-scope'],
-      attrs: { role: 'button', tabindex: '0' },
-    });
-
-    const contentWrapper = UIHelper._createElement('div', {
-      classes: [
-        'content-wrapper',
-        'style-scope',
-        'ytmusic-play-button-renderer',
-      ],
-    });
-
-    contentWrapper.appendChild(
-      UIHelper._createElement('span', {
-        classes: ['icon', 'style-scope'],
-        text: 'YouTube Music +',
-      })
-    );
-
-    innerDiv.appendChild(contentWrapper);
-    actionButtons.appendChild(innerDiv);
-    return actionButtons;
+    const template = document.getElementById('yt-music-plus-action-buttons-template');
+    if (!template) throw new Error('Template "yt-music-plus-action-buttons-template" not found');
+    return template.content.cloneNode(true).querySelector('#yt-music-plus-action-buttons');
   }
 
   /**
-   * Creates a message element for when no playlists are found
-   * @returns {HTMLElement} The no playlists message element
-   */
-  /**
-   * Helper for displaying a fallback message when no playlists are
-   * available in a grid layout.
-   *
-   * @returns {HTMLElement}
+   * Create fallback message for playlists grid.
    */
   static createNoPlaylistsMessage() {
-    const msg = UIHelper._createElement('div');
-    msg.appendChild(
-      UIHelper._createElement('span', {
-        text: 'No editable playlists found. Try refreshing the page. Google changes their API frequently, if you think it\'s broken, please report an issue on ',
-      })
-    );
-    msg.appendChild(
-      UIHelper._createElement('a', {
-        text: 'the Chrome Web Store',
-        attrs: {
-          href: UIHelper.ISSUE_URL,
-          target: '_blank',
-          rel: 'noopener noreferrer',
-        },
-      })
-    );
-    Object.assign(msg.style, {
-      gridColumn: '1/-1',
-      padding: '20px',
-      textAlign: 'center',
-    });
-    return msg;
+    const template = document.getElementById('yt-music-plus-no-playlists-template');
+    if (!template) throw new Error('Template "yt-music-plus-no-playlists-template" not found');
+    return template.content.cloneNode(true).querySelector('.no-playlists-message');
   }
 
   /**
-   * Toggles the expanded state of the items grid by hiding/showing playlist info.
-   * @param {boolean} [forceExpand] - If true, forces expanded state. If false, forces collapsed. If undefined, toggles.
+   * Toggle grid expansion.
    */
   static toggleGrid(forceExpand) {
     const infoSection = document.querySelector('.playlist-info-section');
@@ -767,22 +402,11 @@ export class UIHelper {
     const isHidden = infoSection.classList.contains('collapsed');
     const shouldExpand = forceExpand !== undefined ? forceExpand : !isHidden;
 
-    if (shouldExpand) {
-      infoSection.classList.add('collapsed');
-      if (toggleGridBtn) {
-        toggleGridBtn.textContent = '⤡';
-        toggleGridBtn.title = 'Collapse grid';
-        toggleGridBtn.setAttribute('aria-label', 'Collapse grid');
-      }
-      if (gridWrapper) gridWrapper.classList.add('expanded');
-    } else {
-      infoSection.classList.remove('collapsed');
-      if (toggleGridBtn) {
-        toggleGridBtn.textContent = '⤢';
-        toggleGridBtn.title = 'Expand grid';
-        toggleGridBtn.setAttribute('aria-label', 'Expand grid');
-      }
-      if (gridWrapper) gridWrapper.classList.remove('expanded');
+    infoSection.classList.toggle('collapsed', shouldExpand);
+    if (toggleGridBtn) {
+      toggleGridBtn.textContent = shouldExpand ? '⤡' : '⤢';
+      toggleGridBtn.title = shouldExpand ? 'Collapse grid' : 'Expand grid';
     }
+    if (gridWrapper) gridWrapper.classList.toggle('expanded', shouldExpand);
   }
 }

@@ -1,30 +1,16 @@
 import { DOMModifier } from '../utils/dom-modifier.js';
 import { MessageManager } from '../utils/messages.js';
 import { StorageManager } from '../utils/storage.js';
-import { UIHelper } from '../utils/ui-helper.js';
+import { PopupManager } from '../utils/popup-manager.js';
 import bridgeUrl from './bridge.js?script&module';
 import popupHtmlUrl from '../html/in-site-popup.html?url';
 import popupCssUrl from '../styles/in-site-popup.css?url';
-import sidebarUrl from '../sidebar/sidebar.html?url';
 
 /**
  * ContentScriptController - Manages content script operations
- * Handles page interactions, DOM injection, popup management, and sidebar functionality
+ * Handles page interactions, DOM injection, and popup management
  */
 class ContentScriptController {
-  // Sidebar styling constants
-  static SIDEBAR_STYLES = `
-    position: fixed;
-    right: 0;
-    top: 0;
-    width: 400px;
-    height: 100vh;
-    border: none;
-    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
-    z-index: 2147483647;
-    border-radius: 0;
-  `;
-
   constructor() {
     this.domModifier = DOMModifier;
     this.messageManager = new MessageManager();
@@ -34,7 +20,7 @@ class ContentScriptController {
       showPlaylistButton: true,
       hideWarningMessage: false
     };
-    this.sidebarElement = null;
+    this.popupManager = null;
 
     this.setupListeners();
     this.init();
@@ -43,20 +29,25 @@ class ContentScriptController {
   /**
    * Initializes content script by loading settings and injecting UI elements
    * @async
-   * @returns {Promise<void>}
    */
   async init() {
     await this.loadSettings();
-    await this.injectPopup();
+    
+    this.popupManager = new PopupManager({
+      storageManager: this.storageManager,
+      popupHtmlUrl: chrome.runtime.getURL(popupHtmlUrl),
+      popupCssUrl: chrome.runtime.getURL(popupCssUrl),
+      extSettings: this.extSettings
+    });
+
+    await this.popupManager.injectPopup();
     this.injectBridgeScript();
     this.injectNavBarButton();
   }
 
   /**
    * Loads extension settings from storage
-   * Falls back to default settings on error
    * @async
-   * @returns {Promise<void>}
    */
   async loadSettings() {
     try {
@@ -86,7 +77,6 @@ class ContentScriptController {
 
   /**
    * Injects bridge script into page context for direct API access
-   * Bridge script runs in page context and can access window APIs
    */
   injectBridgeScript() {
     try {
@@ -97,186 +87,6 @@ class ContentScriptController {
     } catch (error) {
       // Script injection may fail in certain page contexts
     }
-  }
-
-  /**
-   * Injects popup HTML and CSS into the page
-   * Sets up popup event listeners and toggle handlers
-   * @async
-   * @returns {Promise<void>}
-   */
-  async injectPopup() {
-    try {
-      // Inject popup styles
-      const cssUrl = chrome.runtime.getURL(popupCssUrl);
-      const cssLink = document.createElement('link');
-      cssLink.rel = 'stylesheet';
-      cssLink.href = cssUrl;
-      document.head.appendChild(cssLink);
-
-      // Fetch and inject popup HTML
-      const htmlUrl = chrome.runtime.getURL(popupHtmlUrl);
-      const response = await fetch(htmlUrl);
-      const htmlText = await response.text();
-
-      const popupContainer = document.createElement('div');
-      popupContainer.className = 'yt-music-extended-popup-container-holder hidden';
-      popupContainer.id = 'yt-music-plus-popup';
-      popupContainer.innerHTML = htmlText;
-
-      // Inject 'Report a problem' link before the close button
-      const closeBtn = popupContainer.querySelector('#closePopupBtn') || popupContainer.querySelector('.close-btn');
-      if (closeBtn && closeBtn.parentNode) {
-        const actionsWrapper = document.createElement('div');
-        actionsWrapper.className = 'header-actions-wrapper';
-        actionsWrapper.style.display = 'flex';
-        actionsWrapper.style.alignItems = 'center';
-        actionsWrapper.style.gap = '16px';
-
-        closeBtn.parentNode.insertBefore(actionsWrapper, closeBtn);
-
-        const reportLink = document.createElement('a');
-        reportLink.href = 'https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc/support';
-        reportLink.target = '_blank';
-        reportLink.rel = 'noopener noreferrer';
-        reportLink.textContent = 'Report a problem';
-        reportLink.className = 'report-issue-link';
-        actionsWrapper.appendChild(reportLink);
-        actionsWrapper.appendChild(closeBtn);
-      }
-
-      // Convert main popup title to a link to the Chrome Web Store
-      const popupMainTitle = popupContainer.querySelector('.popup-header h2') || 
-                             Array.from(popupContainer.querySelectorAll('h2')).find(el => el.id !== 'popupTitle');
-      
-      if (popupMainTitle) {
-        const originalHTML = popupMainTitle.innerHTML;
-        popupMainTitle.innerHTML = '';
-        const titleLink = document.createElement('a');
-        titleLink.href = 'https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc';
-        titleLink.target = '_blank';
-        titleLink.rel = 'noopener noreferrer';
-        titleLink.innerHTML = originalHTML;
-        titleLink.style.textDecoration = 'none';
-        titleLink.style.color = 'inherit';
-        popupMainTitle.appendChild(titleLink);
-      }
-
-      document.body.appendChild(popupContainer);
-
-      const warningMessage = popupContainer.querySelector('#yt-music-plus-warningMessage');
-      if (warningMessage && this.extSettings.hideWarningMessage) {
-        warningMessage.classList.add('hidden');
-      }
-
-      this.setupPopupListeners();
-    } catch (error) {
-      // Popup injection failed - extension will continue without in-page popup
-    }
-  }
-
-  /**
-   * Sets up all popup event listeners
-   */
-  setupPopupListeners() {
-    const popupElement = this.getPopupElement();
-    if (!popupElement) return;
-
-    // Select all checkbox handler
-    const selectAllCheckbox = popupElement.querySelector('#yt-music-plus-selectAllCheckbox');
-    if (selectAllCheckbox) {
-      selectAllCheckbox.addEventListener('change', (e) => {
-        const checkboxes = Array.from(popupElement.querySelectorAll('.item-checkbox:not([disabled])')).filter(cb => {
-          const row = cb.closest('.grid-row');
-          return row && !row.classList.contains('hidden');
-        });
-        checkboxes.forEach(cb => {
-          cb.checked = e.target.checked;
-          cb.dataset.userInteracted = 'true';
-        });
-        UIHelper.updateCheckAllCheckbox();
-      });
-    }
-
-    // Individual checkbox change handler with delegation
-    popupElement.addEventListener('change', (e) => {
-      const isRelevantCheckbox = e.target.classList.contains('item-checkbox') ||
-                                  e.target.classList.contains('select-all-checkbox') ||
-                                  e.target.id === 'yt-music-plus-selectAllCheckbox';
-      if (isRelevantCheckbox) {
-        UIHelper.updateCheckAllCheckbox();
-      }
-    });
-
-    // Back button handler
-    const backButton = popupElement.querySelector('#backButton');
-    if (backButton) {
-      backButton.addEventListener('click', () => this.showPlaylistSelection());
-    }
-
-    // Close warning message handler
-    const closeWarningBtn = popupElement.querySelector('#closeWarningBtn');
-    if (closeWarningBtn) {
-      closeWarningBtn.addEventListener('click', async () => {
-        const warningMessage = popupElement.querySelector('#yt-music-plus-warningMessage');
-        if (warningMessage) {
-          warningMessage.classList.add('hidden');
-          this.extSettings.hideWarningMessage = true;
-          await this.storageManager.set({ hideWarningMessage: true });
-        }
-      });
-    }
-
-    // Toggle grid button handler
-    const toggleGridBtn = popupElement.querySelector('#toggleGridBtn');
-    if (toggleGridBtn) {
-      toggleGridBtn.addEventListener('click', () => UIHelper.toggleGrid());
-    }
-  }
-
-  /**
-   * Shows playlist selection screen in popup
-   */
-  showPlaylistSelection() {
-    const popupElement = this.getPopupElement();
-    if (!popupElement) return;
-
-    const selectionScreen = popupElement.querySelector('#playlistSelectionScreen');
-    const detailsScreen = popupElement.querySelector('#playlistDetailsScreen');
-    
-    if (selectionScreen && detailsScreen) {
-      selectionScreen.classList.remove('hidden');
-      detailsScreen.classList.add('hidden');
-    }
-
-    const titleElement = popupElement.querySelector('#popupTitle');
-    if (titleElement) {
-      titleElement.textContent = '';
-    }
-  }
-
-  /**
-   * Shows playlist details screen in popup
-   */
-  showPlaylistDetails() {
-    const popupElement = this.getPopupElement();
-    if (!popupElement) return;
-
-    const selectionScreen = popupElement.querySelector('#playlistSelectionScreen');
-    const detailsScreen = popupElement.querySelector('#playlistDetailsScreen');
-    
-    if (selectionScreen && detailsScreen) {
-      selectionScreen.classList.add('hidden');
-      detailsScreen.classList.remove('hidden');
-    }
-  }
-
-  /**
-   * Gets the popup container element
-   * @returns {Element|null} Popup element
-   */
-  getPopupElement() {
-    return document.querySelector('.yt-music-extended-popup-container');
   }
 
   /**
@@ -334,28 +144,17 @@ class ContentScriptController {
 
       switch (action) {
         case 'showPopup':
-          this.showPopup();
+          this.popupManager?.showPopup();
           sendResponse({ success: true });
           break;
 
         case 'hidePopup':
-          this.hidePopup();
-          sendResponse({ success: true });
-          break;
-
-        case 'showSidebar':
-          await this.showSidebar();
-          sendResponse({ success: true });
-          break;
-
-        case 'hideSidebar':
-          await this.hideSidebar();
+          this.popupManager?.hidePopup();
           sendResponse({ success: true });
           break;
 
         case 'refreshAllPlaylists':
-          const refreshResult = await this.refreshAllPlaylists();
-          sendResponse(refreshResult);
+          sendResponse({ success: true });
           break;
 
         default:
@@ -363,70 +162,6 @@ class ContentScriptController {
       }
     } catch (error) {
       sendResponse({ success: false, message: error.message });
-    }
-  }
-
-  /**
-   * Shows the popup element on the page
-   */
-  showPopup() {
-    const popupContainer = document.getElementById('yt-music-plus-popup');
-    if (popupContainer) {
-      popupContainer.classList.remove('hidden');
-    }
-  }
-
-  /**
-   * Hides the popup element on the page
-   */
-  hidePopup() {
-    const popupContainer = document.getElementById('yt-music-plus-popup');
-    if (popupContainer) {
-      popupContainer.classList.add('hidden');
-    }
-  }
-
-  /**
-   * Shows sidebar by creating iframe or displaying existing one
-   * @async
-   */
-  async showSidebar() {
-    if (this.sidebarElement) {
-      this.sidebarElement.style.display = 'block';
-      return;
-    }
-
-    // Create sidebar iframe
-    const iframe = document.createElement('iframe');
-    iframe.src = chrome.runtime.getURL(sidebarUrl);
-    iframe.id = 'extension-sidebar';
-    iframe.style.cssText = ContentScriptController.SIDEBAR_STYLES;
-
-    document.body.appendChild(iframe);
-    this.sidebarElement = iframe;
-  }
-
-  /**
-   * Hides the sidebar iframe
-   * @async
-   */
-  async hideSidebar() {
-    if (this.sidebarElement) {
-      this.sidebarElement.style.display = 'none';
-    }
-  }
-
-  /**
-   * Refreshes all playlists
-   * @async
-   * @returns {Promise<Object>} Refresh result
-   */
-  async refreshAllPlaylists() {
-    try {
-      // Implementation would go here
-      return { success: true };
-    } catch (error) {
-      return { success: false, message: error.message };
     }
   }
 }

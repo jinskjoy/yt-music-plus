@@ -1,9 +1,14 @@
 <div class="yt-music-extended-popup-container" role="dialog" aria-modal="true" aria-labelledby="popupTitle">
     <div class="yt-music-extended-popup-content">
         <div class="popup-header">
-            <h2 class="extension-title">YouTube Music +</h2>
+            <p class="extension-branding-title">
+                <a href="https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc" target="_blank" rel="noopener noreferrer" class="chrome-store-link">YouTube Music +</a>
+            </p>
             <h2 id="popupTitle"></h2>
-            <button id="closePopupBtn" class="close-btn" aria-label="Close popup">×</button>
+            <div class="header-actions-wrapper">
+                <a href="https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc/support" target="_blank" rel="noopener noreferrer" class="report-issue-link">Report a problem</a>
+                <button id="closePopupBtn" class="close-btn" aria-label="Close popup">×</button>
+            </div>
         </div>
 
         <!-- Playlist Selection Screen -->
@@ -16,7 +21,7 @@
                 <div id="playlistsGrid" class="playlists-grid">
                 </div>
             </div>
-            <div class="details-header" style="justify-content: flex-end;">
+            <div class="playlist-controls-wrapper">
                 <button id="refreshPlaylistsBtn" class="btn btn-primary" aria-label="Refresh playlists" type="button">Refresh Playlists</button>
             </div>
         </div>
@@ -110,4 +115,59 @@
             </form>
         </div>
     </div>
+
+    <!-- Templates for Dynamic Elements -->
+    <template id="yt-music-plus-playlist-card-template">
+        <div class="playlist-card">
+            <img class="playlist-card-thumbnail" src="" alt="Playlist Thumbnail" />
+            <div class="playlist-card-title"></div>
+            <div class="playlist-card-meta"></div>
+        </div>
+    </template>
+
+    <template id="yt-music-plus-media-item-template">
+        <div class="media-item">
+            <img class="media-thumbnail" src="" alt="thumbnail" />
+            <div class="media-info">
+                <div class="media-title"></div>
+                <div class="media-artist"></div>
+                <a class="media-link" target="_blank" rel="noopener noreferrer">
+                    <span class="link-icon">🔗 Link</span>
+                </a>
+            </div>
+        </div>
+    </template>
+
+    <template id="yt-music-plus-grid-row-template">
+        <div class="grid-row">
+            <div class="grid-col grid-col-serial"></div>
+            <div class="grid-col grid-col-original clickable-column"></div>
+            <div class="grid-col grid-col-replacement">
+                <span class="warning-icon hidden">⚠️</span>
+            </div>
+            <div class="grid-col grid-col-checkbox">
+                <input type="checkbox" class="item-checkbox" />
+            </div>
+        </div>
+    </template>
+
+    <template id="yt-music-plus-error-message-template">
+        <div class="error-message"></div>
+    </template>
+
+    <template id="yt-music-plus-action-buttons-template">
+        <div id="yt-music-plus-action-buttons" class="action-buttons style-scope ytmusic-responsive-header-renderer hidden">
+            <div class="style-scope" role="button" tabindex="0">
+                <div class="content-wrapper style-scope ytmusic-play-button-renderer">
+                    <span class="icon style-scope">YouTube Music +</span>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="yt-music-plus-no-playlists-template">
+        <div class="no-playlists-message">
+            <span>No editable playlists found. Try refreshing the page. Google changes their API frequently, if you think it's broken, please <a class="report-issue-link" href="https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc/support" target="_blank" rel="noopener noreferrer">report an issue on the Chrome Web Store</a>.</span>
+        </div>
+    </template>
 </div>

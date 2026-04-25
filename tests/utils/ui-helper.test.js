@@ -1,7 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { UIHelper } from '../../utils/ui-helper.js';
+import { UIHelper, MediaItem } from '../../utils/ui-helper.js';
+import fs from 'fs';
+import path from 'path';
 
 describe('UIHelper', () => {
+  beforeEach(() => {
+    const htmlPath = path.resolve(__dirname, '../../html/in-site-popup.html');
+    const htmlContent = fs.readFileSync(htmlPath, 'utf8');
+    document.body.innerHTML = htmlContent;
+    vi.clearAllMocks();
+  });
+
   describe('isGoodMatch', () => {
     it('should return true for identical strings', () => {
       expect(UIHelper.isGoodMatch('Hello', 'Hello')).toBe(true);
@@ -52,7 +61,7 @@ describe('UIHelper', () => {
     });
   });
 
-  describe('createMediaItem', () => {
+  describe('MediaItem.render', () => {
     it('should create a media item element', () => {
       const media = {
         name: 'Test Song',
@@ -61,7 +70,7 @@ describe('UIHelper', () => {
         thumbnail: 'https://img.com/123.jpg'
       };
 
-      const el = UIHelper.createMediaItem(media);
+      const el = MediaItem.render(media);
       expect(el.querySelector('.media-title').textContent).toBe('Test Song');
       expect(el.querySelector('.media-artist').textContent).toBe('Test Artist');
       expect(el.querySelector('.media-link').href).toBe('https://youtube.com/watch?v=123');

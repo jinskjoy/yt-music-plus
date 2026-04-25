@@ -21,9 +21,6 @@
     "type": "module",
     "service_worker": "background.js"
   },
-  "side_panel": {
-    "default_path": "sidebar/sidebar.html"
-  },
   "options_page": "options.html",
   "permissions": [
     "activeTab",
@@ -43,18 +40,20 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "sidebar/sidebar.html",
-        "sidebar/sidebar.css",
-        "sidebar/sidebar.js",
         "html/in-site-popup.html",
         "styles/in-site-popup.css",
-        "scripts/content.js",
         "scripts/bridge.js",
+        "scripts/bridge-ui.js",
+        "scripts/track-processor.js",
+        "scripts/yt-music-api.js",
+        "scripts/yt-music-parser.js",
+        "scripts/models/playlist.js",
+        "scripts/models/track.js",
         "utils/dom-modifier.js",
         "utils/messages.js",
         "utils/storage.js",
         "utils/ui-helper.js",
-        "scripts/yt-music-api.js"
+        "utils/utils.js"
       ],
       "matches": ["https://music.youtube.com/*"]
     }

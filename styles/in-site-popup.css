@@ -64,6 +64,24 @@
     font-weight: 600;
 }
 
+.header-actions-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.extension-branding-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.playlist-controls-wrapper {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 12px;
+}
+
 .close-btn {
     background: none;
     border: none;
@@ -90,7 +108,6 @@ border-radius: 0;
 .report-issue-link {
     color: grey;
     text-decoration: none;
-    font-size: 13px;
 }
 
 .report-issue-link:hover {
@@ -740,13 +757,61 @@ border-radius: 0;
 .potential-mismatch {
     background-color: #fff3cd;
 }
-.warning-icon {
-    margin-right: 4px;
+
+.chrome-store-link,
+.chrome-store-link:visited,
+.chrome-store-link:active,
+.chrome-store-link:hover {
+    text-decoration: none;
+    color: black;
 }
-.extenstion-title{
-    background-color: black;
-    color: white;
+
+.chrome-store-link {
+    display: block;
     padding: 10px;
+}
+
+.clickable-column {
+    cursor: pointer;
+}
+
+.extension-title {
+    background-color: transparent;
+    color: black;
+    margin: 0;
+    padding: 0;
+}
+
+.error-message {
+    color: red;
+    font-size: 12px;
+    font-weight: 500;
+    margin-top: 4px;
+}
+
+.no-playlists-message {
+    grid-column: 1/-1;
+    padding: 20px;
+    text-align: center;
+}
+
+.warning-icon {
+    margin-right: 8px;
+    font-size: 16px;
+    cursor: help;
+    display: inline-block;
+}
+.warning-icon:hover::after {
+    content: "Potential mismatch";
+    position: absolute;
+    background: #333;
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    white-space: nowrap;
+    z-index: 100;
+    margin-left: 8px;
 }
 
 .warning-message {
