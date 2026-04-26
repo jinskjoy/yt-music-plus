@@ -134,7 +134,7 @@ export class TrackProcessor {
     this.bridge.session.isCancelled = false;
     this.bridge.ui.clearPlaylistItemsContainer();
     this.bridge.ui.resetActionButtonsForPlaylist(this.bridge.currentSelectedPlaylist);
-    document.getElementById(CONSTANTS.UI.ELEMENT_IDS.TARGET_PLAYLIST_CONTAINER)?.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
+    this.bridge.ui.setTargetContainerVisibility(false);
     this.bridge.ui.toggleSearchProgress(true, true);
     this.bridge.ui.setProgressText('Finding unavailable tracks...');
 
@@ -167,7 +167,7 @@ export class TrackProcessor {
     this.bridge.session.isCancelled = false;
     this.bridge.ui.clearPlaylistItemsContainer();
     this.bridge.ui.resetActionButtonsForPlaylist(this.bridge.currentSelectedPlaylist);
-    document.getElementById(CONSTANTS.UI.ELEMENT_IDS.TARGET_PLAYLIST_CONTAINER)?.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
+    this.bridge.ui.setTargetContainerVisibility(false);
     this.bridge.ui.toggleSearchProgress(true, true);
     this.bridge.ui.setProgressText('Finding video tracks...');
 
@@ -262,8 +262,8 @@ export class TrackProcessor {
   async listAllTracks() {
     this.bridge.session.isCancelled = false;
     this.bridge.ui.clearPlaylistItemsContainer();
-    document.getElementById(CONSTANTS.UI.ELEMENT_IDS.TARGET_PLAYLIST_CONTAINER)?.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
-    document.querySelector('.items-grid-wrapper')?.classList.add('list-only-mode');
+    this.bridge.ui.setTargetContainerVisibility(false);
+    this.bridge.ui.setListOnlyMode(true);
     this.bridge.ui.toggleSearchProgress(true, true);
     this.bridge.ui.setProgressText('Fetching all tracks...');
 
@@ -292,9 +292,11 @@ export class TrackProcessor {
         this.bridge.ui.addItem(track, CONSTANTS.API.BASE_URL, i++);
       }
 
-      document.getElementById('replaceSelectedBtn')?.classList.add('hidden');
-      document.getElementById('addSelectedBtn')?.classList.add('hidden');
-      document.getElementById('removeSelectedBtn')?.classList.remove('hidden');
+      this.bridge.ui.updateActionButtonsVisibility({
+        replace: false,
+        add: false,
+        remove: true
+      });
 
       UIHelper.updateCheckAllCheckbox();
     } catch (error) {

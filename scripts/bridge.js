@@ -547,17 +547,7 @@ import { CONSTANTS } from '../utils/constants.js';
      */
     async showPlaylistSelectionForTarget() {
       this.isSelectingTarget = true;
-      
-      const cancelBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.CANCEL_TARGET_SELECTION);
-      if (cancelBtn) cancelBtn.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
-
-      const detailsScreen = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_DETAILS_SCREEN);
-      if (detailsScreen) detailsScreen.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
-
-      const selectionScreen = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_SELECTION_SCREEN);
-      if (selectionScreen) selectionScreen.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
-
-      this.ui.updatePopupTitle('Select Target Playlist');
+      this.ui.setTargetSelectionVisibility(true);
       
       // If we only have editable playlists in cache, but user might want to see all
       // We rely on the existing refresh/load all buttons in the selection screen.
@@ -585,16 +575,7 @@ import { CONSTANTS } from '../utils/constants.js';
      */
     finishTargetSelection() {
       this.isSelectingTarget = false;
-      
-      const cancelBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.CANCEL_TARGET_SELECTION);
-      if (cancelBtn) cancelBtn.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
-
-      const selectionScreen = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_SELECTION_SCREEN);
-      if (selectionScreen) selectionScreen.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
-
-      const detailsScreen = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_DETAILS_SCREEN);
-      if (detailsScreen) detailsScreen.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
-
+      this.ui.setTargetSelectionVisibility(false);
       this.ui.updateTargetPlaylistDisplay(this.targetPlaylist);
       this.ui.updatePopupTitle(`Playlist: ${this.currentSelectedPlaylist.title}`);
     }
@@ -711,9 +692,10 @@ import { CONSTANTS } from '../utils/constants.js';
 
         const selectedItems = UIHelper.getSelectedMediaItems();
         let i = 1;
+        const targetTitle = this.targetPlaylist?.title || this.currentSelectedPlaylist?.title || CONSTANTS.UI.STRINGS.PLAYLIST_FALLBACK;
 
         for (const item of selectedItems) {
-          this.ui.setProgressText(`Adding track ${i} of ${selectedItems.length} to ${this.targetPlaylist?.title || 'playlist'}...`);
+          this.ui.setProgressText(`${CONSTANTS.UI.STRINGS.IMPORT_ADD_PROGRESS_PREFIX} ${i} of ${selectedItems.length} to ${targetTitle}...`);
 
           if (item.replacementMedia?.videoId) {
             try {
@@ -727,7 +709,7 @@ import { CONSTANTS } from '../utils/constants.js';
         }
 
         const countAdded = selectedItems.filter(item => item.replacementMedia?.videoId).length;
-        this.ui.setProgressText(countAdded > 0 ? `All additions completed. Added ${countAdded} items to ${this.targetPlaylist?.title || 'playlist'}.` : 'No valid items were added.');
+        this.ui.setProgressText(countAdded > 0 ? `${CONSTANTS.UI.STRINGS.IMPORT_ADD_COMPLETED} Added ${countAdded} items to ${targetTitle}.` : 'No valid items were added.');
       } catch (error) {
         this.ui.setProgressText('Error occurred while adding items.');
       } finally {

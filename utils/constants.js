@@ -88,6 +88,12 @@ export const CONSTANTS = {
       YT_MUSIC_HEADER: 'ytmusic-responsive-header-renderer',
       ITEMS_GRID_CHECKBOXES: '#yt-music-plus-itemsGridContainer .item-checkbox',
       ACTIVE_ACTION_BUTTON: '.playlist-action-buttons .btn.active',
+    },
+    STRINGS: {
+      SELECT_TARGET_TITLE: 'Select Target Playlist',
+      PLAYLIST_FALLBACK: 'playlist',
+      IMPORT_ADD_PROGRESS_PREFIX: 'Adding track',
+      IMPORT_ADD_COMPLETED: 'All additions completed.',
     }
   },
   SETTINGS: {
