@@ -7,6 +7,10 @@ export const CONSTANTS = {
     MAX_RETRIES: 10,
     RETRY_INTERVAL_MS: 1000,
     SEEK_DURATION_SECONDS: 10,
+    SOURCE: {
+      YOUTUBE: 'youtube',
+      LOCAL: 'local'
+    },
     STATE: {
       UNSTARTED: -1,
       ENDED: 0,

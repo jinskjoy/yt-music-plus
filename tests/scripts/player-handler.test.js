@@ -211,6 +211,21 @@ describe('PlayerHandler', () => {
       expect(handler.isLocalFilePlaying(mockFile)).toBe(true);
     });
 
+    it('should handle local playback failure', async () => {
+      const mockFile = new File([''], 'test.mp3', { type: 'audio/mpeg' });
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      
+      vi.spyOn(Audio.prototype, 'play').mockRejectedValue(new Error('Playback failed'));
+      
+      handler.playLocalFile(mockFile);
+      
+      // Wait for promise rejection to be handled
+      await vi.runAllTimersAsync();
+      
+      expect(consoleSpy).toHaveBeenCalledWith('PlayerHandler: Local playback failed', expect.any(Error));
+      expect(handler.activeSource).toBe(CONSTANTS.PLAYER.SOURCE.YOUTUBE);
+    });
+
     it('should pause local playback', () => {
       const mockFile = new File([''], 'test.mp3', { type: 'audio/mpeg' });
       const pauseSpy = vi.spyOn(Audio.prototype, 'pause').mockImplementation(() => {});
@@ -218,6 +233,7 @@ describe('PlayerHandler', () => {
       // Simulate playing
       handler.localPlayer = new Audio();
       handler.currentLocalFile = mockFile;
+      handler.activeSource = CONSTANTS.PLAYER.SOURCE.LOCAL;
       vi.spyOn(handler.localPlayer, 'paused', 'get').mockReturnValue(false);
 
       handler.pauseLocalTrack();
@@ -228,6 +244,7 @@ describe('PlayerHandler', () => {
       const mockFile = new File([''], 'test.mp3', { type: 'audio/mpeg' });
       handler.localPlayer = new Audio();
       handler.currentLocalFile = mockFile;
+      handler.activeSource = CONSTANTS.PLAYER.SOURCE.LOCAL;
       vi.spyOn(handler.localPlayer, 'paused', 'get').mockReturnValue(false);
       handler.localPlayer.currentTime = 10;
 
