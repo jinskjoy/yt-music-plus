@@ -1,6 +1,7 @@
 # <img src="images/yt-music-plus-logo-circle.png" width="40"> YouTube Music +
 
-[![Version](https://img.shields.io/badge/version-1.4.0-blue.svg)](manifest.json)
+[![Latest Release](https://img.shields.io/github/v/release/jinskjoy/yt-music-plus?color=blue&label=latest%20release)](https://github.com/jinskjoy/yt-music-plus/releases/latest)
+[![Development Version](https://img.shields.io/github/manifest-json/v/jinskjoy/yt-music-plus?color=orange&label=development)](manifest.json)
 
 A browser extension to keep your YouTube Music playlists fresh, clean, and more.
 
