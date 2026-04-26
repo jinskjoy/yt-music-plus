@@ -68,7 +68,7 @@ export class MediaItem {
         if (pauseBtn) pauseBtn.classList.remove('hidden');
         
         // Verification update after a short delay to account for player state transition
-        setTimeout(updateButtonVisibility, 500);
+        setTimeout(updateButtonVisibility, CONSTANTS.UI.UI_UPDATE_DELAY_MS);
       });
       bindControl('.btn-pause', () => {
         playerHandler.pauseTrack();
@@ -78,7 +78,7 @@ export class MediaItem {
         if (playBtn) playBtn.classList.remove('hidden');
         if (pauseBtn) pauseBtn.classList.add('hidden');
 
-        setTimeout(updateButtonVisibility, 500);
+        setTimeout(updateButtonVisibility, CONSTANTS.UI.UI_UPDATE_DELAY_MS);
       });
       bindControl('.btn-seek-back', () => playerHandler.seekBy(-CONSTANTS.PLAYER.SEEK_DURATION_SECONDS));
       bindControl('.btn-seek-forward', () => playerHandler.seekBy(CONSTANTS.PLAYER.SEEK_DURATION_SECONDS));

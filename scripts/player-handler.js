@@ -112,6 +112,6 @@ export class PlayerHandler {
    * @returns {number} Value from CONSTANTS.PLAYER.STATE
    */
   getPlayerState() {
-    return this.api?.getPlayerState() || 0;
+    return this.api?.getPlayerState() ?? CONSTANTS.PLAYER.STATE.UNSTARTED;
   }
 }

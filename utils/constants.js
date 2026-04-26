@@ -20,6 +20,7 @@ export const CONSTANTS = {
     STATUS_DURATION_MS: 3000,
     DEBOUNCE_DELAY_MS: 300,
     THROTTLE_LIMIT_MS: 300,
+    UI_UPDATE_DELAY_MS: 500,
     ISSUE_URL: 'https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc/support',
   },
   SETTINGS: {
