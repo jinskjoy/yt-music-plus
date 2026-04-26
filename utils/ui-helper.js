@@ -55,7 +55,10 @@ export class MediaItem {
           const currentVideoData = playerHandler.getVideoData();
           const playerState = playerHandler.getPlayerState();
           const isCurrentTrack = currentVideoData && currentVideoData.video_id === media.videoId;
-          isPlaying = isCurrentTrack && playerState === CONSTANTS.PLAYER.STATE.PLAYING;
+          isPlaying = isCurrentTrack && (
+            playerState === CONSTANTS.PLAYER.STATE.PLAYING || 
+            playerState === CONSTANTS.PLAYER.STATE.BUFFERING
+          );
         }
 
         const playBtn = controls.querySelector('.btn-play');
@@ -99,6 +102,9 @@ export class MediaItem {
       if (mediaInfo) {
         mediaInfo.addEventListener('mouseenter', updateButtonVisibility);
       }
+
+      // Initial visibility update
+      updateButtonVisibility();
     } else {
       controls?.remove();
     }
