@@ -137,6 +137,23 @@ describe('UIHelper', () => {
       expect(selectAll.checked).toBe(false);
       expect(replaceBtn.disabled).toBe(true);
     });
+
+    it('should disable Add and Replace buttons in list-only-mode', () => {
+      const container = document.getElementById('yt-music-plus-itemsGridContainer');
+      const gridWrapper = document.querySelector('.items-grid-wrapper');
+      gridWrapper.classList.add('list-only-mode');
+
+      // Add a row with a replacement
+      const row = MediaGridRow.render({ name: 'O' }, { name: 'R', videoId: 'v1' });
+      container.appendChild(row);
+      row.querySelector('.item-checkbox').checked = true;
+
+      UIHelper.updateCheckAllCheckbox();
+
+      expect(document.getElementById('replaceSelectedBtn').disabled).toBe(true);
+      expect(document.getElementById('addSelectedBtn').disabled).toBe(true);
+      expect(document.getElementById('removeSelectedBtn').disabled).toBe(false);
+    });
   });
 
   describe('toggleGrid', () => {
