@@ -32,7 +32,7 @@ This document provides a comprehensive list of features for the YouTube Music + 
 - **Screens**:
     - **Playlist Selection Screen**: Grid of playlists with thumbnails and track counts.
     - **Playlist Details Screen**: Active workspace for a selected playlist.
-- **Minimize Option**: A "−" button in the header to collapse the popup to the bottom-right corner, allowing continued interaction with the page.
+- **Minimize Option**: A "−" button in the header to collapse the popup to the bottom-right corner. When minimized, clicking the extension title or the "⤢" (expansion) icon restores it. The playlist title is hidden in the minimized view for a cleaner look.
 - **Testable Case**: Verify navigation between selection and details screens using the "Back" button; verify the popup minimizes and restores correctly.
 
 ### 1.5 Settings/Options Page
@@ -119,9 +119,10 @@ This document provides a comprehensive list of features for the YouTube Music + 
 - **Testable Case**: Start a large scan; click "Cancel"; verify processing stops immediately.
 
 ### 3.6 Integrated Track Playback
-- **Feature**: Playback controls (Play, Pause, Seek forward/backward 10s) integrated into the media grid.
+- **Feature**: Playback controls (Play, Pause, Skip forward/backward 10s) integrated into the media grid.
 - **Behavior**: Controls appear as an overlay when hovering over the track details section (Original or Replacement media).
 - **Control**: Allows users to preview tracks directly within the popup without navigating away from the current workspace.
+- **Enhanced Player API**: Exposed methods for advanced player control including `getVideoData`, `getPlayerState`, `nextTrack`, `previousTrack`, `getVolume`, `setVolume`, `isMuted`, `mute`, `unMute`, `getCurrentTime`, and `getDuration`.
 - **Testable Case**: Hover over a track title in the grid; verify playback controls appear and function as expected (controlling the page's background player).
 
 ---

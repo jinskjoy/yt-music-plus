@@ -46,10 +46,48 @@ export class MediaItem {
         }
       };
 
-      bindControl('.btn-play', () => playerHandler.playTrack(media.videoId));
-      bindControl('.btn-pause', () => playerHandler.pauseTrack());
+      const updateButtonVisibility = () => {
+        const currentVideoData = playerHandler.getVideoData();
+        const playerState = playerHandler.getPlayerState();
+        const isCurrentTrack = currentVideoData && currentVideoData.video_id === media.videoId;
+        const isPlaying = isCurrentTrack && playerState === CONSTANTS.PLAYER.STATE.PLAYING;
+
+        const playBtn = controls.querySelector('.btn-play');
+        const pauseBtn = controls.querySelector('.btn-pause');
+
+        if (playBtn) playBtn.classList.toggle('hidden', isPlaying);
+        if (pauseBtn) pauseBtn.classList.toggle('hidden', !isPlaying);
+      };
+
+      bindControl('.btn-play', () => {
+        playerHandler.playTrack(media.videoId);
+        // Immediate optimistic update
+        const playBtn = controls.querySelector('.btn-play');
+        const pauseBtn = controls.querySelector('.btn-pause');
+        if (playBtn) playBtn.classList.add('hidden');
+        if (pauseBtn) pauseBtn.classList.remove('hidden');
+        
+        // Verification update after a short delay to account for player state transition
+        setTimeout(updateButtonVisibility, CONSTANTS.UI.UI_UPDATE_DELAY_MS);
+      });
+      bindControl('.btn-pause', () => {
+        playerHandler.pauseTrack();
+        // Immediate optimistic update
+        const playBtn = controls.querySelector('.btn-play');
+        const pauseBtn = controls.querySelector('.btn-pause');
+        if (playBtn) playBtn.classList.remove('hidden');
+        if (pauseBtn) pauseBtn.classList.add('hidden');
+
+        setTimeout(updateButtonVisibility, CONSTANTS.UI.UI_UPDATE_DELAY_MS);
+      });
       bindControl('.btn-seek-back', () => playerHandler.seekBy(-CONSTANTS.PLAYER.SEEK_DURATION_SECONDS));
       bindControl('.btn-seek-forward', () => playerHandler.seekBy(CONSTANTS.PLAYER.SEEK_DURATION_SECONDS));
+
+      // Handle play/pause button visibility on hover
+      const mediaInfo = item.querySelector('.media-info');
+      if (mediaInfo) {
+        mediaInfo.addEventListener('mouseenter', updateButtonVisibility);
+      }
     } else {
       controls?.remove();
     }
