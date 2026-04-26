@@ -117,6 +117,26 @@ describe('UI Components', () => {
       
       expect(checkbox.disabled).toBe(true);
     });
+
+    it('should NOT disable checkbox if no replacement but in list-only mode', () => {
+      const gridWrapper = document.querySelector('.items-grid-wrapper');
+      gridWrapper.classList.add('list-only-mode');
+
+      const original = { name: 'Orig' };
+      const row = MediaGridRow.render(original, null);
+      const checkbox = row.querySelector('.item-checkbox');
+      
+      expect(checkbox.disabled).toBe(false);
+    });
+
+    it('should NOT disable checkbox if there is a replacement even if not in list-only mode', () => {
+      const original = { name: 'Orig' };
+      const replacement = { name: 'Repl', videoId: 'r1' };
+      const row = MediaGridRow.render(original, replacement);
+      const checkbox = row.querySelector('.item-checkbox');
+      
+      expect(checkbox.disabled).toBe(false);
+    });
   });
 
   describe('PlaylistCard', () => {

@@ -203,6 +203,29 @@ describe('BridgeUI', () => {
       expect(newCheckbox.checked).toBe(true);
       expect(newCheckbox.dataset.userInteracted).toBe('true');
     });
+
+    it('should respect current search filter when updating a row', () => {
+      const container = document.getElementById('yt-music-plus-itemsGridContainer');
+      const searchInput = document.getElementById('ytMusicPlusSearchInput');
+      searchInput.value = 'filter-me';
+
+      const oldRow = document.createElement('div');
+      container.appendChild(oldRow);
+      bridgeUI.rowMap.set(0, oldRow);
+
+      // Mock MediaGridRow.render to return a row that doesn't match the filter
+      MediaGridRow.render.mockReturnValueOnce((() => {
+        const el = document.createElement('div');
+        el.className = 'grid-row';
+        el.dataset.searchString = 'something-else';
+        return el;
+      })());
+
+      bridgeUI.updateItemRow({ id: 'new' }, 'url', 0);
+      
+      const newRow = bridgeUI.rowMap.get(0);
+      expect(newRow.classList.contains('hidden')).toBe(true);
+    });
   });
 
   describe('initSearchBox', () => {
