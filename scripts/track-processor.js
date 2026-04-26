@@ -133,6 +133,7 @@ export class TrackProcessor {
   async findUnavailableTracks() {
     this.bridge.session.isCancelled = false;
     this.bridge.ui.clearPlaylistItemsContainer();
+    document.getElementById(CONSTANTS.UI.ELEMENT_IDS.TARGET_PLAYLIST_CONTAINER)?.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
     this.bridge.ui.toggleSearchProgress(true, true);
     this.bridge.ui.setProgressText('Finding unavailable tracks...');
 
@@ -164,6 +165,7 @@ export class TrackProcessor {
   async findVideoTracks() {
     this.bridge.session.isCancelled = false;
     this.bridge.ui.clearPlaylistItemsContainer();
+    document.getElementById(CONSTANTS.UI.ELEMENT_IDS.TARGET_PLAYLIST_CONTAINER)?.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
     this.bridge.ui.toggleSearchProgress(true, true);
     this.bridge.ui.setProgressText('Finding video tracks...');
 
@@ -258,6 +260,7 @@ export class TrackProcessor {
   async listAllTracks() {
     this.bridge.session.isCancelled = false;
     this.bridge.ui.clearPlaylistItemsContainer();
+    document.getElementById(CONSTANTS.UI.ELEMENT_IDS.TARGET_PLAYLIST_CONTAINER)?.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
     document.querySelector('.items-grid-wrapper')?.classList.add('list-only-mode');
     this.bridge.ui.toggleSearchProgress(true, true);
     this.bridge.ui.setProgressText('Fetching all tracks...');

@@ -307,15 +307,39 @@ describe('BridgeUI', () => {
       expect(replaceBtn.classList.contains('hidden')).toBe(true);
     });
 
-    it('should hide Replace and Remove buttons in import mode', () => {
+    it('should hide Replace and Remove buttons in import mode and show target playlist container', () => {
       const playlist = { isEditable: true };
       const replaceBtn = document.getElementById('replaceSelectedBtn');
       const removeBtn = document.getElementById('removeSelectedBtn');
+      const targetContainer = document.getElementById('targetPlaylistContainer');
       
       bridgeUI.updateImportButtonVisibility(playlist);
       
       expect(replaceBtn.classList.contains('hidden')).toBe(true);
       expect(removeBtn.classList.contains('hidden')).toBe(true);
+      expect(targetContainer.classList.contains('hidden')).toBe(false);
+    });
+  });
+
+  describe('updateTargetPlaylistDisplay', () => {
+    it('should show container and set name when playlist is provided', () => {
+      const playlist = { title: 'My Target Playlist' };
+      const container = document.getElementById('targetPlaylistContainer');
+      const nameEl = document.getElementById('targetPlaylistName');
+      
+      bridgeUI.updateTargetPlaylistDisplay(playlist);
+      
+      expect(container.classList.contains('hidden')).toBe(false);
+      expect(nameEl.textContent).toBe('My Target Playlist');
+    });
+
+    it('should hide container when playlist is null', () => {
+      const container = document.getElementById('targetPlaylistContainer');
+      container.classList.remove('hidden');
+      
+      bridgeUI.updateTargetPlaylistDisplay(null);
+      
+      expect(container.classList.contains('hidden')).toBe(true);
     });
   });
 });

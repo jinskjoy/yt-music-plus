@@ -23,6 +23,7 @@
                 </div>
             </div>
             <div class="playlist-controls-wrapper">
+                <button id="cancelTargetSelectionBtn" class="btn btn-secondary hidden" aria-label="Cancel target selection" type="button">Cancel</button>
                 <button id="refreshPlaylistsBtn" class="btn btn-primary" aria-label="Load editable playlists" type="button" title="Load only your editable playlists">Load Editable Playlists</button>
                 <button id="loadAllPlaylistsBtn" class="btn btn-primary" aria-label="Load all playlists" type="button" title="Load all playlists from your library, including those you cannot edit">Load All Playlists</button>
             </div>
@@ -78,6 +79,12 @@
                         title="This action will remove the selected items from the playlist. It will not add replacements.">Remove
                         Selected</button>
                     <button id="findLocalReplacementsBtn" class="btn btn-primary hidden" type="button">Start Search</button>
+
+                    <div id="targetPlaylistContainer" class="target-playlist-container hidden">
+                        <span class="target-label">Target:</span>
+                        <span id="targetPlaylistName" class="target-name">Playlist Name</span>
+                        <button id="selectTargetPlaylistBtn" class="btn btn-primary btn-small" type="button" title="Select a different playlist to add tracks to.">Change</button>
+                    </div>
 
                     <!-- Search Container -->
                     <div class="search-container">

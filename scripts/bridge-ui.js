@@ -160,6 +160,7 @@ export class BridgeUI {
   resetActionButtonsForPlaylist(playlist) {
     const isEditable = playlist?.isEditable !== false;
 
+    document.getElementById(CONSTANTS.UI.ELEMENT_IDS.TARGET_PLAYLIST_CONTAINER)?.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
     document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_LOCAL_REPLACEMENTS)?.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
     document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_UNAVAILABLE)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
     document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_VIDEO_TRACKS)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
@@ -183,6 +184,7 @@ export class BridgeUI {
   updateImportButtonVisibility(playlist) {
     const isEditable = playlist?.isEditable !== false;
 
+    document.getElementById(CONSTANTS.UI.ELEMENT_IDS.TARGET_PLAYLIST_CONTAINER)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
     document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_LOCAL_REPLACEMENTS)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
     document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_UNAVAILABLE)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
     document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_VIDEO_TRACKS)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
@@ -274,9 +276,33 @@ export class BridgeUI {
 
     playlistsCache.forEach((playlist) => {
       const card = PlaylistCard.render(playlist);
-      card.addEventListener('click', () => this.bridge.onPlaylistSelected(playlist));
+      card.addEventListener('click', () => {
+        if (this.bridge.isSelectingTarget) {
+          this.bridge.onTargetPlaylistSelected(playlist);
+        } else {
+          this.bridge.onPlaylistSelected(playlist);
+        }
+      });
       playlistsGrid.appendChild(card);
     });
+  }
+
+  /**
+   * Updates the target playlist display
+   * @param {Object} playlist - The target playlist
+   */
+  updateTargetPlaylistDisplay(playlist) {
+    const container = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.TARGET_PLAYLIST_CONTAINER);
+    const nameElement = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.TARGET_PLAYLIST_NAME);
+    
+    if (container && nameElement) {
+      if (playlist) {
+        nameElement.textContent = playlist.title;
+        container.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+      } else {
+        container.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
+      }
+    }
   }
 
   /**

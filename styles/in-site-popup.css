@@ -895,8 +895,8 @@
     position: relative;
     margin-left: auto;
     flex: 1;
-    max-width: 300px;
-    min-width: 200px;
+    max-width: 200px;
+    min-width: 150px;
 }
 
 .search-input {
@@ -1034,4 +1034,38 @@
 .yt-music-plus-control-btn.btn-seek-forward {
     font-size: 18px;
     color: #030303; /* Consistent color theme */
+}
+/* Target Playlist Section */
+.target-playlist-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #444;
+    padding: 6px 16px;
+    background-color: transparent;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-top: 0;
+    width: fit-content;
+}
+
+.target-label {
+    font-weight: 600;
+    color: #666;
+}
+
+.target-name {
+    font-weight: 500;
+    color: #1976d2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 150px;
+}
+
+.btn-small {
+    padding: 4px 10px;
+    font-size: 11px;
+    border-radius: 4px;
 }

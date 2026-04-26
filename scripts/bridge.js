@@ -183,6 +183,8 @@ import { CONSTANTS } from '../utils/constants.js';
       this.session = new SearchSession();
       
       this.currentSelectedPlaylist = null;
+      this.targetPlaylist = null;
+      this.isSelectingTarget = false;
       this.playlistsCache = [];
       this.isReloadDisabled = false;
       this.isFetchingPlaylists = false;
@@ -419,6 +421,9 @@ import { CONSTANTS } from '../utils/constants.js';
         document.getElementById(CONSTANTS.UI.BUTTON_IDS.IMPORT_FILE_INPUT)?.click();
       });
 
+      this.attachButtonListener(CONSTANTS.UI.BUTTON_IDS.SELECT_TARGET_PLAYLIST, () => this.showPlaylistSelectionForTarget());
+      this.attachButtonListener(CONSTANTS.UI.BUTTON_IDS.CANCEL_TARGET_SELECTION, () => this.cancelTargetSelection());
+
       const fileInput = document.getElementById(CONSTANTS.UI.BUTTON_IDS.IMPORT_FILE_INPUT);
       if (fileInput) {
         fileInput.addEventListener('change', (e) => {
@@ -505,6 +510,7 @@ import { CONSTANTS } from '../utils/constants.js';
         this.ui.clearPlaylistItemsContainer();
         this.ui.clearActiveButtons();
         this.currentSelectedPlaylist = playlist;
+        this.targetPlaylist = playlist; // Default target is the selected playlist
         this.ui.setProgressText('');
       }
 
@@ -515,6 +521,7 @@ import { CONSTANTS } from '../utils/constants.js';
       if (selectionScreen) selectionScreen.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
 
       this.ui.resetActionButtonsForPlaylist(playlist);
+      this.ui.updateTargetPlaylistDisplay(this.targetPlaylist);
 
       UIHelper.toggleGrid(false);
       this.localTracks = [];
@@ -533,6 +540,63 @@ import { CONSTANTS } from '../utils/constants.js';
         this.processor.listAllTracks();
         this.ui.setActiveButton(CONSTANTS.UI.BUTTON_IDS.LIST_ALL_TRACKS);
       }
+    }
+
+    /**
+     * Shows playlist selection screen specifically for choosing a target playlist
+     */
+    async showPlaylistSelectionForTarget() {
+      this.isSelectingTarget = true;
+      
+      const cancelBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.CANCEL_TARGET_SELECTION);
+      if (cancelBtn) cancelBtn.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+
+      const detailsScreen = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_DETAILS_SCREEN);
+      if (detailsScreen) detailsScreen.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
+
+      const selectionScreen = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_SELECTION_SCREEN);
+      if (selectionScreen) selectionScreen.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+
+      this.ui.updatePopupTitle('Select Target Playlist');
+      
+      // If we only have editable playlists in cache, but user might want to see all
+      // We rely on the existing refresh/load all buttons in the selection screen.
+      // But we should ensure the current cache is displayed.
+      this.ui.displayPlaylistsForSelection(this.playlistsCache);
+    }
+
+    /**
+     * Handles target playlist selection
+     */
+    onTargetPlaylistSelected(playlist) {
+      this.targetPlaylist = playlist;
+      this.finishTargetSelection();
+    }
+
+    /**
+     * Cancels target playlist selection
+     */
+    cancelTargetSelection() {
+      this.finishTargetSelection();
+    }
+
+    /**
+     * Finishes target selection mode and returns to details screen
+     */
+    finishTargetSelection() {
+      this.isSelectingTarget = false;
+      
+      const cancelBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.CANCEL_TARGET_SELECTION);
+      if (cancelBtn) cancelBtn.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
+
+      const selectionScreen = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_SELECTION_SCREEN);
+      if (selectionScreen) selectionScreen.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
+
+      const detailsScreen = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_DETAILS_SCREEN);
+      if (detailsScreen) detailsScreen.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+
+      this.ui.updateTargetPlaylistDisplay(this.targetPlaylist);
+      this.ui.updatePopupTitle(`Playlist: ${this.currentSelectedPlaylist.title}`);
     }
 
     /**
@@ -639,7 +703,8 @@ import { CONSTANTS } from '../utils/constants.js';
       this.ui.setProgressText('Adding selected items...');
 
       try {
-        const playlistId = this.currentSelectedPlaylist?.id || 
+        const playlistId = this.targetPlaylist?.id || 
+                          this.currentSelectedPlaylist?.id ||
                           this.ytMusicAPI.getCurrentPlaylistIdFromURL();
 
         if (!playlistId) return;
@@ -648,7 +713,7 @@ import { CONSTANTS } from '../utils/constants.js';
         let i = 1;
 
         for (const item of selectedItems) {
-          this.ui.setProgressText(`Adding track ${i} of ${selectedItems.length}...`);
+          this.ui.setProgressText(`Adding track ${i} of ${selectedItems.length} to ${this.targetPlaylist?.title || 'playlist'}...`);
 
           if (item.replacementMedia?.videoId) {
             try {
@@ -662,7 +727,7 @@ import { CONSTANTS } from '../utils/constants.js';
         }
 
         const countAdded = selectedItems.filter(item => item.replacementMedia?.videoId).length;
-        this.ui.setProgressText(countAdded > 0 ? `All additions completed. Added ${countAdded} items.` : 'No valid items were added.');
+        this.ui.setProgressText(countAdded > 0 ? `All additions completed. Added ${countAdded} items to ${this.targetPlaylist?.title || 'playlist'}.` : 'No valid items were added.');
       } catch (error) {
         this.ui.setProgressText('Error occurred while adding items.');
       } finally {

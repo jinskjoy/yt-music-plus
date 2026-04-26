@@ -45,7 +45,9 @@ export const CONSTANTS = {
       REFRESH_PLAYLISTS: 'refreshPlaylistsBtn',
       LOAD_ALL_PLAYLISTS: 'loadAllPlaylistsBtn',
       CLOSE_POPUP: 'closePopupBtn',
-      MINIMIZE_POPUP: 'minimizePopupBtn'
+      MINIMIZE_POPUP: 'minimizePopupBtn',
+      SELECT_TARGET_PLAYLIST: 'selectTargetPlaylistBtn',
+      CANCEL_TARGET_SELECTION: 'cancelTargetSelectionBtn'
     },
     ELEMENT_IDS: {
       PROGRESS_TEXT: 'progressText',
@@ -63,6 +65,8 @@ export const CONSTANTS = {
       PLAYLIST_DETAILS_SCREEN: 'playlistDetailsScreen',
       PLAYLIST_SELECTION_SCREEN: 'playlistSelectionScreen',
       MAIN_POPUP: 'yt-music-plus-mainPopup',
+      TARGET_PLAYLIST_NAME: 'targetPlaylistName',
+      TARGET_PLAYLIST_CONTAINER: 'targetPlaylistContainer',
     },
     CLASSES: {
       ACTIVE: 'active',
