@@ -18,6 +18,7 @@ class ContentScriptController {
     this.extSettings = { 
       showNavButton: true, 
       showPlaylistButton: true,
+      loadAllPlaylists: false,
       hideWarningMessage: false
     };
     this.popupManager = null;
@@ -150,6 +151,19 @@ class ContentScriptController {
 
         case 'hidePopup':
           this.popupManager?.hidePopup();
+          sendResponse({ success: true });
+          break;
+
+        case 'settingsUpdated':
+          this.extSettings = { ...this.extSettings, ...message.settings };
+          if (this.popupManager) {
+            this.popupManager.extSettings = this.extSettings;
+          }
+          // Update bridge context
+          window.postMessage({ 
+            type: 'EXT_SETTINGS', 
+            settings: this.extSettings 
+          }, '*');
           sendResponse({ success: true });
           break;
 

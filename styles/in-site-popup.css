@@ -79,7 +79,8 @@
 .playlist-controls-wrapper {
     display: flex;
     justify-content: flex-end;
-    margin-bottom: 12px;
+    margin-top: 12px;
+    gap: 12px;
 }
 
 .close-btn, .minimize-btn {

@@ -40,6 +40,7 @@ This document provides a comprehensive list of features for the YouTube Music + 
 - **Options**:
     - Toggle Navigation Button.
     - Toggle Playlist Page Button.
+    - **Always load all playlists**: When enabled, the extension fetches all playlists from the user's library by default instead of only editable ones.
     - Reset "Hide Warning Message" state.
     - Save/Reset to Defaults buttons.
 - **Testable Case**: Change a setting, save, and verify the UI updates accordingly on music.youtube.com.
@@ -49,9 +50,12 @@ This document provides a comprehensive list of features for the YouTube Music + 
 ## 2. Core Functionalities
 
 ### 2.1 Playlist Discovery & Sync
-- **Feature**: Automatically fetches all editable playlists from the user's account.
-- **Behavior**: Includes a "Refresh Playlists" button to force a re-fetch.
-- **Testable Case**: Click "Refresh Playlists" and verify the list updates.
+- **Feature**: Automatically fetches playlists from the user's account.
+- **Refresh Options**:
+    - **Load Editable Playlists**: Re-fetches only the playlists that the user has permission to edit.
+    - **Load All Playlists**: Fetches all playlists found in the user's library, including liked playlists and albums added as playlists.
+- **Default Behavior**: Defaults to editable playlists unless "Always load all playlists" is enabled in settings.
+- **Testable Case**: Click "Load Editable Playlists" and verify only owned/editable playlists appear; click "Load All Playlists" and verify a broader set of playlists is loaded.
 
 ### 2.2 Find Unavailable Tracks
 - **Feature**: Scans the selected playlist for "greyed-out" (unavailable) tracks.

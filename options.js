@@ -12,6 +12,7 @@ class OptionsPage {
     this.defaultSettings = {
       showNavButton: true,
       showPlaylistButton: true,
+      loadAllPlaylists: false,
     };
     this.storageManager = new StorageManager();
     this.form = document.getElementById('settingsForm');

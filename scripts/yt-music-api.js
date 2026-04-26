@@ -8,7 +8,8 @@ export class YTMusicAPI {
   // Constants
   static INNERTUBE_ENDPOINT = 'https://music.youtube.com';
   static PLAYLIST_BROWSE_IDS = [
-    'FEmusic_liked_playlists'
+    'FEmusic_liked_playlists',
+    'FEmusic_library_landing'
   ];
   static SIMILARITY_THRESHOLD = 0.5;
 
@@ -105,27 +106,48 @@ export class YTMusicAPI {
   }
 
   /**
-   * Fetches all editable playlists for the current user
+   * Fetches playlists for the current user
    * @async
+   * @param {boolean} onlyEditable - Whether to only return editable playlists
    * @returns {Promise<Array<Playlist>>}
    */
-  async getEditablePlaylists() {
+  async getPlaylists(onlyEditable = false) {
     let lastError = null;
+    const allPlaylists = new Map();
 
     for (const browseId of YTMusicAPI.PLAYLIST_BROWSE_IDS) {
       try {
         const response = await this.fetchBrowsePlaylists(browseId);
-        const playlists = YTMusicParser.parseEditablePlaylistsFromResponse(response);
-        if (playlists.length > 0) {
-          return playlists;
-        }
+        const playlists = YTMusicParser.parsePlaylistsFromResponse(response, onlyEditable);
+        playlists.forEach(p => {
+          if (!allPlaylists.has(p.id)) {
+            allPlaylists.set(p.id, p);
+          } else if (p.isEditable) {
+            // Prefer editable version if duplicate ID found
+            allPlaylists.set(p.id, p);
+          }
+        });
       } catch (error) {
         lastError = error;
       }
     }
 
+    if (allPlaylists.size > 0) {
+      return Array.from(allPlaylists.values());
+    }
+
     if (lastError) throw lastError;
     return [];
+  }
+
+  /**
+   * Fetches all editable playlists for the current user
+   * @deprecated Use getPlaylists(true)
+   * @async
+   * @returns {Promise<Array<Playlist>>}
+   */
+  async getEditablePlaylists() {
+    return this.getPlaylists(true);
   }
 
   /**
