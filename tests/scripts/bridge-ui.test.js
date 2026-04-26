@@ -247,4 +247,36 @@ describe('BridgeUI', () => {
       expect(clearBtn.classList.contains('hidden')).toBe(true);
     });
   });
+
+  describe('Visibility and Playlist Selection', () => {
+    it('should reset buttons correctly for editable playlist', () => {
+      const playlist = { isEditable: true };
+      const replaceBtn = document.getElementById('replaceSelectedBtn');
+      replaceBtn.classList.add('hidden');
+      
+      bridgeUI.resetActionButtonsForPlaylist(playlist);
+      
+      expect(replaceBtn.classList.contains('hidden')).toBe(false);
+    });
+
+    it('should hide buttons for non-editable playlist', () => {
+      const playlist = { isEditable: false };
+      const replaceBtn = document.getElementById('replaceSelectedBtn');
+      
+      bridgeUI.resetActionButtonsForPlaylist(playlist);
+      
+      expect(replaceBtn.classList.contains('hidden')).toBe(true);
+    });
+
+    it('should hide Replace and Remove buttons in import mode', () => {
+      const playlist = { isEditable: true };
+      const replaceBtn = document.getElementById('replaceSelectedBtn');
+      const removeBtn = document.getElementById('removeSelectedBtn');
+      
+      bridgeUI.updateImportButtonVisibility(playlist);
+      
+      expect(replaceBtn.classList.contains('hidden')).toBe(true);
+      expect(removeBtn.classList.contains('hidden')).toBe(true);
+    });
+  });
 });

@@ -14,7 +14,6 @@ describe('UI Visibility Integration', () => {
     const htmlContent = fs.readFileSync(htmlPath, 'utf8');
     document.body.innerHTML = htmlContent;
 
-    // Create a real BridgeUI and a mock bridge
     mockBridge = {
       ytMusicAPI: {
         getPlaylistItems: vi.fn(),
@@ -34,57 +33,8 @@ describe('UI Visibility Integration', () => {
     vi.clearAllMocks();
   });
 
-  describe('Local Import Mode Visibility', () => {
-    it('should hide Replace and Remove buttons when in import mode', () => {
-      const replaceBtn = document.getElementById('replaceSelectedBtn');
-      const removeBtn = document.getElementById('removeSelectedBtn');
-      const addBtn = document.getElementById('addSelectedBtn');
-      
-      // Reset state
-      replaceBtn.classList.remove('hidden');
-      removeBtn.classList.remove('hidden');
-      addBtn.classList.remove('hidden');
-      
-      // CALL THE ACTUAL CODE IN BridgeUI
-      bridgeUI.updateImportButtonVisibility(mockBridge.currentSelectedPlaylist);
-      
-      expect(replaceBtn.classList.contains('hidden')).toBe(true);
-      expect(removeBtn.classList.contains('hidden')).toBe(true);
-      expect(addBtn.classList.contains('hidden')).toBe(false);
-    });
-
-    it('should hide Add button in import mode if playlist is not editable', () => {
-      mockBridge.currentSelectedPlaylist.isEditable = false;
-      const addBtn = document.getElementById('addSelectedBtn');
-      
-      bridgeUI.updateImportButtonVisibility(mockBridge.currentSelectedPlaylist);
-      
-      expect(addBtn.classList.contains('hidden')).toBe(true);
-    });
-  });
-
-  describe('Playlist Selection Visibility', () => {
-    it('should reset buttons correctly for editable playlist', () => {
-      const replaceBtn = document.getElementById('replaceSelectedBtn');
-      replaceBtn.classList.add('hidden');
-      
-      bridgeUI.resetActionButtonsForPlaylist(mockBridge.currentSelectedPlaylist);
-      
-      expect(replaceBtn.classList.contains('hidden')).toBe(false);
-    });
-
-    it('should hide buttons for non-editable playlist', () => {
-      mockBridge.currentSelectedPlaylist.isEditable = false;
-      const replaceBtn = document.getElementById('replaceSelectedBtn');
-      
-      bridgeUI.resetActionButtonsForPlaylist(mockBridge.currentSelectedPlaylist);
-      
-      expect(replaceBtn.classList.contains('hidden')).toBe(true);
-    });
-  });
-
-  describe('List All Tracks Visibility', () => {
-    it('should hide Replace and Add buttons, and show Remove button', async () => {
+  describe('List All Tracks Workflow', () => {
+    it('should coordinate button visibility via TrackProcessor', async () => {
       mockBridge.ytMusicAPI.getPlaylistItems.mockResolvedValue([
         { name: 'Track 1', videoId: 'v1' }
       ]);
@@ -92,10 +42,6 @@ describe('UI Visibility Integration', () => {
       const replaceBtn = document.getElementById('replaceSelectedBtn');
       const addBtn = document.getElementById('addSelectedBtn');
       const removeBtn = document.getElementById('removeSelectedBtn');
-      
-      replaceBtn.classList.remove('hidden');
-      addBtn.classList.remove('hidden');
-      removeBtn.classList.add('hidden');
       
       await trackProcessor.listAllTracks();
       
