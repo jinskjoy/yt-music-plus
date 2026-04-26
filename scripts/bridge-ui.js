@@ -122,6 +122,52 @@ export class BridgeUI {
   }
 
   /**
+   * Resets action buttons visibility for a newly selected playlist
+   * @param {Object} playlist - The selected playlist object
+   */
+  resetActionButtonsForPlaylist(playlist) {
+    const isEditable = playlist?.isEditable !== false;
+
+    document.getElementById('findLocalReplacementsBtn')?.classList.add('hidden');
+    document.getElementById('findUnavailableBtn')?.classList.remove('hidden');
+    document.getElementById('findVideoTracksBtn')?.classList.remove('hidden');
+    document.getElementById('importFromFolderBtn')?.classList.remove('hidden');
+    document.getElementById('importFromFileBtn')?.classList.remove('hidden');
+    document.getElementById('listAllTracksBtn')?.classList.remove('hidden');
+    
+    const replaceBtn = document.getElementById('replaceSelectedBtn');
+    const removeBtn = document.getElementById('removeSelectedBtn');
+    const addBtn = document.getElementById('addSelectedBtn');
+
+    if (replaceBtn) replaceBtn.classList.toggle('hidden', !isEditable);
+    if (removeBtn) removeBtn.classList.toggle('hidden', !isEditable);
+    if (addBtn) addBtn.classList.toggle('hidden', !isEditable);
+  }
+
+  /**
+   * Updates visibility of buttons for local import feature
+   * @param {Object} playlist - The selected playlist object
+   */
+  updateImportButtonVisibility(playlist) {
+    const isEditable = playlist?.isEditable !== false;
+
+    document.getElementById('findLocalReplacementsBtn')?.classList.remove('hidden');
+    document.getElementById('findUnavailableBtn')?.classList.remove('hidden');
+    document.getElementById('findVideoTracksBtn')?.classList.remove('hidden');
+    document.getElementById('importFromFolderBtn')?.classList.remove('hidden');
+    document.getElementById('importFromFileBtn')?.classList.remove('hidden');
+    document.getElementById('listAllTracksBtn')?.classList.remove('hidden');
+    
+    const replaceBtn = document.getElementById('replaceSelectedBtn');
+    const removeBtn = document.getElementById('removeSelectedBtn');
+    const addBtn = document.getElementById('addSelectedBtn');
+
+    if (replaceBtn) replaceBtn.classList.add('hidden');
+    if (removeBtn) removeBtn.classList.add('hidden');
+    if (addBtn) addBtn.classList.toggle('hidden', !isEditable);
+  }
+
+  /**
    * Initializes search box event listeners
    */
   initSearchBox() {

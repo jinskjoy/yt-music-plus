@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { UIHelper, MediaItem } from '../../utils/ui-helper.js';
+import { UIHelper, MediaItem, MediaGridRow } from '../../utils/ui-helper.js';
 import { CONSTANTS } from '../../utils/constants.js';
 import fs from 'fs';
 import path from 'path';
@@ -113,6 +113,61 @@ describe('UIHelper', () => {
       mediaInfo.dispatchEvent(new MouseEvent('mouseenter'));
       expect(playBtn.classList.contains('hidden')).toBe(false);
       expect(pauseBtn.classList.contains('hidden')).toBe(true);
+    });
+  });
+
+  describe('updateCheckAllCheckbox', () => {
+    it('should update select-all checkbox and button states', () => {
+      const selectAll = document.getElementById('yt-music-plus-selectAllCheckbox');
+      const replaceBtn = document.getElementById('replaceSelectedBtn');
+      const container = document.getElementById('yt-music-plus-itemsGridContainer');
+
+      // Add a row with a replacement
+      const row = MediaGridRow.render({ name: 'O' }, { name: 'R', videoId: 'v1' });
+      container.appendChild(row);
+      const checkbox = row.querySelector('.item-checkbox');
+
+      UIHelper.updateCheckAllCheckbox();
+      expect(selectAll.checked).toBe(true);
+      expect(replaceBtn.disabled).toBe(false);
+
+      // Uncheck it
+      checkbox.checked = false;
+      UIHelper.updateCheckAllCheckbox();
+      expect(selectAll.checked).toBe(false);
+      expect(replaceBtn.disabled).toBe(true);
+    });
+
+    it('should disable Add and Replace buttons in list-only-mode', () => {
+      const container = document.getElementById('yt-music-plus-itemsGridContainer');
+      const gridWrapper = document.querySelector('.items-grid-wrapper');
+      gridWrapper.classList.add('list-only-mode');
+
+      // Add a row with a replacement
+      const row = MediaGridRow.render({ name: 'O' }, { name: 'R', videoId: 'v1' });
+      container.appendChild(row);
+      row.querySelector('.item-checkbox').checked = true;
+
+      UIHelper.updateCheckAllCheckbox();
+
+      expect(document.getElementById('replaceSelectedBtn').disabled).toBe(true);
+      expect(document.getElementById('addSelectedBtn').disabled).toBe(true);
+      expect(document.getElementById('removeSelectedBtn').disabled).toBe(false);
+    });
+  });
+
+  describe('toggleGrid', () => {
+    it('should toggle collapsed class and button text', () => {
+      const infoSection = document.querySelector('.playlist-info-section');
+      const toggleBtn = document.getElementById('toggleGridBtn');
+      
+      UIHelper.toggleGrid(true);
+      expect(infoSection.classList.contains('collapsed')).toBe(true);
+      expect(toggleBtn.textContent).toBe('⤡');
+
+      UIHelper.toggleGrid(false);
+      expect(infoSection.classList.contains('collapsed')).toBe(false);
+      expect(toggleBtn.textContent).toBe('⤢');
     });
   });
 });
