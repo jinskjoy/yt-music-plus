@@ -32,6 +32,7 @@ This document provides a comprehensive list of features for the YouTube Music + 
 - **Screens**:
     - **Playlist Selection Screen**: Grid of playlists with thumbnails and track counts.
     - **Playlist Details Screen**: Active workspace for a selected playlist.
+- **Visual Feedback**: Buttons in the playlist action section (e.g., "List All Tracks", "Find Unavailable Tracks") highlight with an "active" state to indicate which view or operation is currently active.
 - **Minimize Option**: A "−" button in the header to collapse the popup to the bottom-right corner. When minimized, clicking the extension title or the "⤢" (expansion) icon restores it. The playlist title is hidden in the minimized view for a cleaner look.
 - **Testable Case**: Verify navigation between selection and details screens using the "Back" button; verify the popup minimizes and restores correctly.
 

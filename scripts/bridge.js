@@ -214,11 +214,11 @@ import { CONSTANTS } from '../utils/constants.js';
     cachePopupElements() {
       if (this.popupElements.holder) return true;
 
-      this.popupElements.holder = document.getElementById('yt-music-plus-popup');
+      this.popupElements.holder = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.POPUP_HOLDER);
       if (this.popupElements.holder) {
-        this.popupElements.container = this.popupElements.holder.querySelector('.yt-music-extended-popup-container');
-        this.popupElements.minimizeBtn = this.popupElements.holder.querySelector('#minimizePopupBtn');
-        this.popupElements.header = this.popupElements.holder.querySelector('.popup-header');
+        this.popupElements.container = this.popupElements.holder.querySelector(`.${CONSTANTS.UI.CLASSES.POPUP_CONTAINER}`);
+        this.popupElements.minimizeBtn = this.popupElements.holder.querySelector(`#${CONSTANTS.UI.BUTTON_IDS.MINIMIZE_POPUP}`);
+        this.popupElements.header = this.popupElements.holder.querySelector(`.${CONSTANTS.UI.CLASSES.POPUP_HEADER}`);
         return true;
       }
       return false;
@@ -276,7 +276,7 @@ import { CONSTANTS } from '../utils/constants.js';
      */
     async showPopup() {
       if (this.cachePopupElements()) {
-        this.popupElements.holder.classList.remove('hidden');
+        this.popupElements.holder.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
       }
 
       await this.initPlaylistFetching();
@@ -295,9 +295,9 @@ import { CONSTANTS } from '../utils/constants.js';
      */
     hidePopup() {
       if (this.cachePopupElements()) {
-        this.popupElements.holder.classList.add('hidden');
+        this.popupElements.holder.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
         // Reset minimized state when closing
-        if (this.popupElements.container?.classList.contains('minimized')) {
+        if (this.popupElements.container?.classList.contains(CONSTANTS.UI.CLASSES.MINIMIZED)) {
           this.toggleMinimize();
         }
       }
@@ -314,8 +314,8 @@ import { CONSTANTS } from '../utils/constants.js';
       const { holder, container, minimizeBtn } = this.popupElements;
       
       if (holder && container) {
-        const isMinimized = container.classList.toggle('minimized');
-        holder.classList.toggle('minimized', isMinimized);
+        const isMinimized = container.classList.toggle(CONSTANTS.UI.CLASSES.MINIMIZED);
+        holder.classList.toggle(CONSTANTS.UI.CLASSES.MINIMIZED, isMinimized);
         
         if (minimizeBtn) {
           minimizeBtn.textContent = isMinimized ? '⤢' : '−';
@@ -344,7 +344,7 @@ import { CONSTANTS } from '../utils/constants.js';
       });
 
       // Nav bar button listener
-      const navBarBtn = document.getElementById('yt-music-plus-nav-btn');
+      const navBarBtn = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.NAV_BTN);
       if (navBarBtn) {
         navBarBtn.addEventListener('click', () => this.showPopup());
       }
@@ -358,20 +358,20 @@ import { CONSTANTS } from '../utils/constants.js';
           const target = e.target;
           
           // Handle close button
-          if (target.id === 'closePopupBtn' || target.closest('#closePopupBtn')) {
+          if (target.id === CONSTANTS.UI.BUTTON_IDS.CLOSE_POPUP || target.closest(`#${CONSTANTS.UI.BUTTON_IDS.CLOSE_POPUP}`)) {
             this.hidePopup();
             return;
           }
 
           // Handle minimize button
-          if (target.id === 'minimizePopupBtn' || target.closest('#minimizePopupBtn')) {
+          if (target.id === CONSTANTS.UI.BUTTON_IDS.MINIMIZE_POPUP || target.closest(`#${CONSTANTS.UI.BUTTON_IDS.MINIMIZE_POPUP}`)) {
             e.stopPropagation();
             this.toggleMinimize();
             return;
           }
 
           // Restore on header click if minimized
-          if (container.classList.contains('minimized')) {
+          if (container.classList.contains(CONSTANTS.UI.CLASSES.MINIMIZED)) {
             // If it's a link, prevent default action
             if (target.closest('a')) {
               e.preventDefault();
@@ -388,54 +388,54 @@ import { CONSTANTS } from '../utils/constants.js';
         });
 
         document.addEventListener('keydown', (e) => {
-          if (e.key === 'Escape' && !holder.classList.contains('hidden')) {
+          if (e.key === 'Escape' && !holder.classList.contains(CONSTANTS.UI.CLASSES.HIDDEN)) {
             this.hidePopup();
           }
         });
       }
 
       // Action button listeners
-      this.attachButtonListener('findUnavailableBtn', () => {
+      this.attachButtonListener(CONSTANTS.UI.BUTTON_IDS.FIND_UNAVAILABLE, () => {
         this.processor.findUnavailableTracks();
-        this.ui.setActiveButton('findUnavailableBtn');
+        this.ui.setActiveButton(CONSTANTS.UI.BUTTON_IDS.FIND_UNAVAILABLE);
       });
-      this.attachButtonListener('findVideoTracksBtn', () => {
+      this.attachButtonListener(CONSTANTS.UI.BUTTON_IDS.FIND_VIDEO_TRACKS, () => {
         this.processor.findVideoTracks();
-        this.ui.setActiveButton('findVideoTracksBtn');
+        this.ui.setActiveButton(CONSTANTS.UI.BUTTON_IDS.FIND_VIDEO_TRACKS);
       });
-      this.attachButtonListener('replaceSelectedBtn', () => this.replaceSelectedItems());
-      this.attachButtonListener('addSelectedBtn', () => this.addSelectedItems());
-      this.attachButtonListener('removeSelectedBtn', () => this.removeSelectedItems());
-      this.attachButtonListener('importFromFolderBtn', () => {
+      this.attachButtonListener(CONSTANTS.UI.BUTTON_IDS.REPLACE_SELECTED, () => this.replaceSelectedItems());
+      this.attachButtonListener(CONSTANTS.UI.BUTTON_IDS.ADD_SELECTED, () => this.addSelectedItems());
+      this.attachButtonListener(CONSTANTS.UI.BUTTON_IDS.REMOVE_SELECTED, () => this.removeSelectedItems());
+      this.attachButtonListener(CONSTANTS.UI.BUTTON_IDS.IMPORT_FROM_FOLDER, () => {
         this.processor.importFromFolder();
-        this.ui.setActiveButton('importFromFolderBtn');
+        this.ui.setActiveButton(CONSTANTS.UI.BUTTON_IDS.IMPORT_FROM_FOLDER);
       });
-      this.attachButtonListener('findLocalReplacementsBtn', () => this.findReplacementsForLocalTracks());
-      this.attachButtonListener('listAllTracksBtn', () => {
+      this.attachButtonListener(CONSTANTS.UI.BUTTON_IDS.FIND_LOCAL_REPLACEMENTS, () => this.findReplacementsForLocalTracks());
+      this.attachButtonListener(CONSTANTS.UI.BUTTON_IDS.LIST_ALL_TRACKS, () => {
         this.processor.listAllTracks();
-        this.ui.setActiveButton('listAllTracksBtn');
+        this.ui.setActiveButton(CONSTANTS.UI.BUTTON_IDS.LIST_ALL_TRACKS);
       });
-      this.attachButtonListener('importFromFileBtn', () => {
-        document.getElementById('importFileInput')?.click();
+      this.attachButtonListener(CONSTANTS.UI.BUTTON_IDS.IMPORT_FROM_FILE, () => {
+        document.getElementById(CONSTANTS.UI.BUTTON_IDS.IMPORT_FILE_INPUT)?.click();
       });
 
-      const fileInput = document.getElementById('importFileInput');
+      const fileInput = document.getElementById(CONSTANTS.UI.BUTTON_IDS.IMPORT_FILE_INPUT);
       if (fileInput) {
         fileInput.addEventListener('change', (e) => {
           this.processor.importFromFile(e);
-          this.ui.setActiveButton('importFromFileBtn');
+          this.ui.setActiveButton(CONSTANTS.UI.BUTTON_IDS.IMPORT_FROM_FILE);
         });
       }
 
-      this.attachButtonListener('cancelSearchBtn', () => {
+      this.attachButtonListener(CONSTANTS.UI.BUTTON_IDS.CANCEL_SEARCH, () => {
         this.cancelSearch = true;
         this.ui.setProgressText('Cancelling search... Please wait.');
       });
 
-      const cancelBtn = document.getElementById('cancelSearchBtn');
+      const cancelBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.CANCEL_SEARCH);
       if (cancelBtn) {
-        cancelBtn.classList.remove('btn-secondary', 'btn-danger');
-        cancelBtn.classList.add('btn-primary');
+        cancelBtn.classList.remove(CONSTANTS.UI.CLASSES.BTN_SECONDARY, CONSTANTS.UI.CLASSES.BTN_DANGER);
+        cancelBtn.classList.add(CONSTANTS.UI.CLASSES.BTN_PRIMARY);
       }
     }
 
@@ -469,10 +469,10 @@ import { CONSTANTS } from '../utils/constants.js';
 
       this.isFetchingPlaylists = true;
 
-      const loadingIndicator = document.getElementById('playlistsLoadingIndicator');
-      if (loadingIndicator) loadingIndicator.classList.remove('hidden');
+      const loadingIndicator = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLISTS_LOADING_INDICATOR);
+      if (loadingIndicator) loadingIndicator.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
       
-      const playlistsGrid = document.getElementById('playlistsGrid');
+      const playlistsGrid = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLISTS_GRID);
       if (playlistsGrid) playlistsGrid.replaceChildren();
 
       try {
@@ -508,11 +508,11 @@ import { CONSTANTS } from '../utils/constants.js';
         this.ui.setProgressText('');
       }
 
-      const detailsScreen = document.getElementById('playlistDetailsScreen');
-      if (detailsScreen) detailsScreen.classList.remove('hidden');
+      const detailsScreen = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_DETAILS_SCREEN);
+      if (detailsScreen) detailsScreen.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
 
-      const selectionScreen = document.getElementById('playlistSelectionScreen');
-      if (selectionScreen) selectionScreen.classList.add('hidden');
+      const selectionScreen = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_SELECTION_SCREEN);
+      if (selectionScreen) selectionScreen.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
 
       this.ui.resetActionButtonsForPlaylist(playlist);
 
@@ -521,10 +521,10 @@ import { CONSTANTS } from '../utils/constants.js';
       this.ui.updatePopupTitle(`Playlist: ${playlist.title}`);
       
       this.ui.initSearchBox();
-      const searchInput = document.getElementById('ytMusicPlusSearchInput');
+      const searchInput = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.SEARCH_INPUT);
       if (searchInput) {
         searchInput.value = '';
-        document.getElementById('ytMusicPlusClearSearchBtn')?.classList.add('hidden');
+        document.getElementById(CONSTANTS.UI.ELEMENT_IDS.CLEAR_SEARCH_BTN)?.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
         this.ui.filterGridItems('');
       }
     }
@@ -716,7 +716,7 @@ import { CONSTANTS } from '../utils/constants.js';
       if (!this.localTracks || this.localTracks.length === 0) return;
       this.session.isCancelled = false;
       
-      const allCheckboxes = document.querySelectorAll('#yt-music-plus-itemsGridContainer .item-checkbox');
+      const allCheckboxes = document.querySelectorAll(CONSTANTS.UI.SELECTORS.ITEMS_GRID_CHECKBOXES);
       allCheckboxes.forEach((cb, index) => {
         if (this.localTracks[index]) {
           if (!cb.checked) {

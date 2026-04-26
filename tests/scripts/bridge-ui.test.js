@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BridgeUI } from '../../scripts/bridge-ui.js';
+import { CONSTANTS } from '../../utils/constants.js';
 import { UIHelper, MediaGridRow, PlaylistCard } from '../../utils/ui-helper.js';
 import { BrowserUtils } from '../../utils/utils.js';
 import fs from 'fs';
@@ -112,24 +113,24 @@ describe('BridgeUI', () => {
 
   describe('setActiveButton', () => {
     it('should set the active class on the specified button and clear others', () => {
-      const listAllBtn = document.getElementById('listAllTracksBtn');
-      const findUnavailableBtn = document.getElementById('findUnavailableBtn');
+      const listAllBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.LIST_ALL_TRACKS);
+      const findUnavailableBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_UNAVAILABLE);
       
-      listAllBtn.classList.add('active');
+      listAllBtn.classList.add(CONSTANTS.UI.CLASSES.ACTIVE);
       
-      bridgeUI.setActiveButton('findUnavailableBtn');
+      bridgeUI.setActiveButton(CONSTANTS.UI.BUTTON_IDS.FIND_UNAVAILABLE);
       
-      expect(findUnavailableBtn.classList.contains('active')).toBe(true);
-      expect(listAllBtn.classList.contains('active')).toBe(false);
+      expect(findUnavailableBtn.classList.contains(CONSTANTS.UI.CLASSES.ACTIVE)).toBe(true);
+      expect(listAllBtn.classList.contains(CONSTANTS.UI.CLASSES.ACTIVE)).toBe(false);
     });
 
     it('should do nothing if buttonId does not exist', () => {
-      const listAllBtn = document.getElementById('listAllTracksBtn');
-      listAllBtn.classList.add('active');
+      const listAllBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.LIST_ALL_TRACKS);
+      listAllBtn.classList.add(CONSTANTS.UI.CLASSES.ACTIVE);
       
       bridgeUI.setActiveButton('nonExistentBtn');
       
-      expect(listAllBtn.classList.contains('active')).toBe(false);
+      expect(listAllBtn.classList.contains(CONSTANTS.UI.CLASSES.ACTIVE)).toBe(false);
     });
   });
 
