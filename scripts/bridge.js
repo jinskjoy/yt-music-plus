@@ -394,21 +394,36 @@ import { CONSTANTS } from '../utils/constants.js';
       }
 
       // Action button listeners
-      this.attachButtonListener('findUnavailableBtn', () => this.processor.findUnavailableTracks());
-      this.attachButtonListener('findVideoTracksBtn', () => this.processor.findVideoTracks());
+      this.attachButtonListener('findUnavailableBtn', () => {
+        this.ui.setActiveButton('findUnavailableBtn');
+        this.processor.findUnavailableTracks();
+      });
+      this.attachButtonListener('findVideoTracksBtn', () => {
+        this.ui.setActiveButton('findVideoTracksBtn');
+        this.processor.findVideoTracks();
+      });
       this.attachButtonListener('replaceSelectedBtn', () => this.replaceSelectedItems());
       this.attachButtonListener('addSelectedBtn', () => this.addSelectedItems());
       this.attachButtonListener('removeSelectedBtn', () => this.removeSelectedItems());
-      this.attachButtonListener('importFromFolderBtn', () => this.processor.importFromFolder());
+      this.attachButtonListener('importFromFolderBtn', () => {
+        this.ui.setActiveButton('importFromFolderBtn');
+        this.processor.importFromFolder();
+      });
       this.attachButtonListener('findLocalReplacementsBtn', () => this.findReplacementsForLocalTracks());
-      this.attachButtonListener('listAllTracksBtn', () => this.processor.listAllTracks());
+      this.attachButtonListener('listAllTracksBtn', () => {
+        this.ui.setActiveButton('listAllTracksBtn');
+        this.processor.listAllTracks();
+      });
       this.attachButtonListener('importFromFileBtn', () => {
         document.getElementById('importFileInput')?.click();
       });
 
       const fileInput = document.getElementById('importFileInput');
       if (fileInput) {
-        fileInput.addEventListener('change', (e) => this.processor.importFromFile(e));
+        fileInput.addEventListener('change', (e) => {
+          this.ui.setActiveButton('importFromFileBtn');
+          this.processor.importFromFile(e);
+        });
       }
 
       this.attachButtonListener('cancelSearchBtn', () => {

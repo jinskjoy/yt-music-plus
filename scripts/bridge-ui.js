@@ -42,6 +42,28 @@ export class BridgeUI {
     document.getElementById('replaceSelectedBtn')?.classList.remove('hidden');
     document.getElementById('addSelectedBtn')?.classList.remove('hidden');
     document.getElementById('removeSelectedBtn')?.classList.remove('hidden');
+
+    // Clear active button state
+    document.querySelectorAll('.playlist-action-buttons .btn.active').forEach(btn => {
+      btn.classList.remove('active');
+    });
+  }
+
+  /**
+   * Sets the active button in the playlist action buttons section
+   * @param {string} buttonId - ID of the button to set as active
+   */
+  setActiveButton(buttonId) {
+    // First clear any existing active buttons in this section
+    document.querySelectorAll('.playlist-action-buttons .btn.active').forEach(btn => {
+      btn.classList.remove('active');
+    });
+
+    // Set the new button as active
+    const btn = document.getElementById(buttonId);
+    if (btn) {
+      btn.classList.add('active');
+    }
   }
 
   /**

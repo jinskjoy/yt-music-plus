@@ -73,17 +73,19 @@ describe('BridgeUI', () => {
   });
 
   describe('clearPlaylistItemsContainer', () => {
-    it('should clear rows and ensure action buttons are visible', () => {
+    it('should clear rows, ensure action buttons are visible and clear active buttons', () => {
       const container = document.getElementById('yt-music-plus-itemsGridContainer');
       container.appendChild(document.createElement('div'));
       
       const replaceBtn = document.getElementById('replaceSelectedBtn');
       const addBtn = document.getElementById('addSelectedBtn');
       const removeBtn = document.getElementById('removeSelectedBtn');
+      const listAllBtn = document.getElementById('listAllTracksBtn');
       
       replaceBtn.classList.add('hidden');
       addBtn.classList.add('hidden');
       removeBtn.classList.add('hidden');
+      listAllBtn.classList.add('active');
 
       bridgeUI.clearPlaylistItemsContainer();
 
@@ -91,7 +93,31 @@ describe('BridgeUI', () => {
       expect(replaceBtn.classList.contains('hidden')).toBe(false);
       expect(addBtn.classList.contains('hidden')).toBe(false);
       expect(removeBtn.classList.contains('hidden')).toBe(false);
+      expect(listAllBtn.classList.contains('active')).toBe(false);
       expect(bridgeUI.rowMap.size).toBe(0);
+    });
+  });
+
+  describe('setActiveButton', () => {
+    it('should set the active class on the specified button and clear others', () => {
+      const listAllBtn = document.getElementById('listAllTracksBtn');
+      const findUnavailableBtn = document.getElementById('findUnavailableBtn');
+      
+      listAllBtn.classList.add('active');
+      
+      bridgeUI.setActiveButton('findUnavailableBtn');
+      
+      expect(findUnavailableBtn.classList.contains('active')).toBe(true);
+      expect(listAllBtn.classList.contains('active')).toBe(false);
+    });
+
+    it('should do nothing if buttonId does not exist', () => {
+      const listAllBtn = document.getElementById('listAllTracksBtn');
+      listAllBtn.classList.add('active');
+      
+      bridgeUI.setActiveButton('nonExistentBtn');
+      
+      expect(listAllBtn.classList.contains('active')).toBe(false);
     });
   });
 
