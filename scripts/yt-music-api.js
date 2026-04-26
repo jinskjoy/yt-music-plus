@@ -1,20 +1,13 @@
 import { YTMusicParser } from './yt-music-parser.js';
+import { CONSTANTS } from '../utils/constants.js';
 
 /**
  * YTMusicAPI - Handles all YouTube Music API interactions
  * Provides methods for playlist management, search, and item manipulation
  */
 export class YTMusicAPI {
-  // Constants
-  static INNERTUBE_ENDPOINT = 'https://music.youtube.com';
-  static PLAYLIST_BROWSE_IDS = [
-    'FEmusic_liked_playlists',
-    'FEmusic_library_landing'
-  ];
-  static SIMILARITY_THRESHOLD = 0.5;
-
   constructor() {
-    this.baseURL = YTMusicAPI.INNERTUBE_ENDPOINT;
+    this.baseURL = CONSTANTS.API.INNERTUBE_ENDPOINT;
     this.authToken = null;
   }
 
@@ -115,7 +108,7 @@ export class YTMusicAPI {
     let lastError = null;
     const allPlaylists = new Map();
 
-    for (const browseId of YTMusicAPI.PLAYLIST_BROWSE_IDS) {
+    for (const browseId of CONSTANTS.API.PLAYLIST_BROWSE_IDS) {
       try {
         const response = await this.fetchBrowsePlaylists(browseId);
         const playlists = YTMusicParser.parsePlaylistsFromResponse(response, onlyEditable);
@@ -237,7 +230,7 @@ export class YTMusicAPI {
    * @param {number} similarityThreshold - Similarity threshold
    * @returns {Track|null}
    */
-  getBestSearchResult(searchResponse, originalQuery, similarityThreshold = YTMusicAPI.SIMILARITY_THRESHOLD) {
+  getBestSearchResult(searchResponse, originalQuery, similarityThreshold = CONSTANTS.API.SIMILARITY_THRESHOLD) {
     return YTMusicParser.getBestSearchResult(searchResponse, originalQuery, similarityThreshold);
   }
 

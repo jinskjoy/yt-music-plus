@@ -1,4 +1,5 @@
 import { TextSimilarity, Formatters, BrowserUtils } from './utils.js';
+import { CONSTANTS } from './constants.js';
 
 /**
  * MediaItem - Represents a track/item UI component
@@ -47,8 +48,8 @@ export class MediaItem {
 
       bindControl('.btn-play', () => playerHandler.playTrack(media.videoId));
       bindControl('.btn-pause', () => playerHandler.pauseTrack());
-      bindControl('.btn-seek-back', () => playerHandler.seekBy(-10));
-      bindControl('.btn-seek-forward', () => playerHandler.seekBy(10));
+      bindControl('.btn-seek-back', () => playerHandler.seekBy(-CONSTANTS.PLAYER.SEEK_DURATION_SECONDS));
+      bindControl('.btn-seek-forward', () => playerHandler.seekBy(CONSTANTS.PLAYER.SEEK_DURATION_SECONDS));
     } else {
       controls?.remove();
     }
@@ -186,7 +187,7 @@ export class PlaylistCard {
  * UIHelper - Handles high-level UI operations and state management
  */
 export class UIHelper {
-  static ISSUE_URL = 'https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc/support';
+  static ISSUE_URL = CONSTANTS.UI.ISSUE_URL;
 
   /**
    * Shorthand for document.createElement with optional configuration.
@@ -214,9 +215,9 @@ export class UIHelper {
    * @param {Element} element
    * @param {string} message
    * @param {'success'|'error'|'info'} [type='info']
-   * @param {number} [duration=3000]
+   * @param {number} [duration=CONSTANTS.UI.STATUS_DURATION_MS]
    */
-  static showStatus(element, message, type = 'info', duration = 3000) {
+  static showStatus(element, message, type = 'info', duration = CONSTANTS.UI.STATUS_DURATION_MS) {
     if (!element) return;
 
     element.textContent = message;

@@ -1,12 +1,11 @@
 import { Playlist } from './models/playlist.js';
 import { Track } from './models/track.js';
+import { CONSTANTS } from '../utils/constants.js';
 
 /**
  * YTMusicParser - Handles parsing of YouTube Music API responses
  */
 export class YTMusicParser {
-  static FILTER_TEXTS = [', ', ' & ', ' - ', 'Song', 'Video', ' • '];
-
   /**
    * Parses playlists from API response
    * @param {Object} data - API response data
@@ -128,12 +127,12 @@ export class YTMusicParser {
   static isPlaylistEditable(menuItems) {
     if (!menuItems || !Array.isArray(menuItems)) return false;
     
-    const editKeywords = ['Edit details', 'Delete playlist', 'Rename playlist', 'Edit playlist'];
+    const editKeywords = CONSTANTS.PARSER.EDIT_KEYWORDS;
     
     for (const item of menuItems) {
       const renderer = item?.menuNavigationItemRenderer || item?.menuServiceItemRenderer;
       if (renderer?.text?.runs) {
-        const text = renderer.text.runs.map(run => run?.text || '').join('');
+        const text = renderer.text.runs.map(run => run?.text || '').join('').toLowerCase();
         if (editKeywords.some(keyword => text.includes(keyword))) return true;
       }
       
@@ -215,7 +214,7 @@ export class YTMusicParser {
             ?.text?.runs?.[0]?.text || '';
 
           const artists = musicItemRenderer?.flexColumns?.[1]?.musicResponsiveListItemFlexColumnRenderer
-            ?.text?.runs?.map(run => run.text).filter(text => !this.FILTER_TEXTS.includes(text)) || [];
+            ?.text?.runs?.map(run => run.text).filter(text => !CONSTANTS.PARSER.FILTER_TEXTS.includes(text)) || [];
 
           const album = musicItemRenderer?.flexColumns?.[2]?.musicResponsiveListItemFlexColumnRenderer
             ?.text?.runs?.[0]?.text || '';
@@ -363,7 +362,7 @@ export class YTMusicParser {
 
       const artists = subtitleRuns
         .map(run => run.text)
-        .filter(text => !this.FILTER_TEXTS.includes(text)) || [];
+        .filter(text => !CONSTANTS.PARSER.FILTER_TEXTS.includes(text)) || [];
 
       const album = musicItemRenderer?.flexColumns?.[2]?.musicResponsiveListItemFlexColumnRenderer
         ?.text?.runs?.[0]?.text || '';

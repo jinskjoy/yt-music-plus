@@ -1,3 +1,5 @@
+import { CONSTANTS } from './constants.js';
+
 /**
  * Generic Utility functions refactored into classes
  */
@@ -52,12 +54,12 @@ export class TextSimilarity {
       (matches / s1Len + matches / s2Len + (matches - transpositions) / matches) / 3;
     
     let prefixLen = 0;
-    for (let i = 0; i < Math.min(4, s1Len, s2Len); i++) {
+    for (let i = 0; i < Math.min(CONSTANTS.API.JARO_WINKLER_PREFIX_LEN, s1Len, s2Len); i++) {
       if (s1[i] === s2[i]) prefixLen++;
       else break;
     }
 
-    const scaling = 0.1;
+    const scaling = CONSTANTS.API.JARO_WINKLER_SCALING_FACTOR;
     return jaro + prefixLen * scaling * (1 - jaro);
   }
 
@@ -67,10 +69,10 @@ export class TextSimilarity {
    *
    * @param {string} originalTitle
    * @param {string} replacementTitle
-   * @param {number} [similarityThreshold=0.5]
+   * @param {number} [similarityThreshold=CONSTANTS.API.SIMILARITY_THRESHOLD]
    * @returns {boolean}
    */
-  static isGoodMatch(originalTitle, replacementTitle, similarityThreshold = 0.5) {
+  static isGoodMatch(originalTitle, replacementTitle, similarityThreshold = CONSTANTS.API.SIMILARITY_THRESHOLD) {
     if (!replacementTitle) {
       return false;
     }
@@ -138,10 +140,10 @@ export class BrowserUtils {
    * Return a debounced version of `func` that fires after `delay` ms have passed
    * since the last call. Useful for limiting expensive event handlers.
    * @param {Function} func
-   * @param {number} [delay=300]
+   * @param {number} [delay=CONSTANTS.UI.DEBOUNCE_DELAY_MS]
    * @returns {Function}
    */
-  static debounce(func, delay = 300) {
+  static debounce(func, delay = CONSTANTS.UI.DEBOUNCE_DELAY_MS) {
     let timeoutId;
     return (...args) => {
       clearTimeout(timeoutId);
@@ -153,10 +155,10 @@ export class BrowserUtils {
    * Throttles `func` so that it can only be invoked once every `limit` ms.
    * Handy for scroll/resize callbacks.
    * @param {Function} func
-   * @param {number} [limit=300]
+   * @param {number} [limit=CONSTANTS.UI.THROTTLE_LIMIT_MS]
    * @returns {Function}
    */
-  static throttle(func, limit = 300) {
+  static throttle(func, limit = CONSTANTS.UI.THROTTLE_LIMIT_MS) {
     let inThrottle = false;
     return (...args) => {
       if (!inThrottle) {

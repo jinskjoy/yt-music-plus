@@ -2,6 +2,7 @@ import { DOMModifier } from '../utils/dom-modifier.js';
 import { MessageManager } from '../utils/messages.js';
 import { StorageManager } from '../utils/storage.js';
 import { PopupManager } from '../utils/popup-manager.js';
+import { CONSTANTS } from '../utils/constants.js';
 import bridgeUrl from './bridge.js?script&module';
 import popupHtmlUrl from '../html/in-site-popup.html?url';
 import popupCssUrl from '../styles/in-site-popup.css?url';
@@ -15,12 +16,7 @@ class ContentScriptController {
     this.domModifier = DOMModifier;
     this.messageManager = new MessageManager();
     this.storageManager = new StorageManager();
-    this.extSettings = { 
-      showNavButton: true, 
-      showPlaylistButton: true,
-      loadAllPlaylists: false,
-      hideWarningMessage: false
-    };
+    this.extSettings = { ...CONSTANTS.SETTINGS.DEFAULT };
     this.popupManager = null;
 
     this.setupListeners();
@@ -56,7 +52,7 @@ class ContentScriptController {
       this.extSettings = { ...this.extSettings, ...stored };
     } catch (error) {
       // Use default settings if load fails
-      this.extSettings = { showNavButton: true, showPlaylistButton: true, hideWarningMessage: false };
+      this.extSettings = { ...CONSTANTS.SETTINGS.DEFAULT };
     }
   }
 

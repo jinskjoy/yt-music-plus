@@ -8,6 +8,7 @@ import { UIHelper } from '../utils/ui-helper.js';
 import { BridgeUI } from './bridge-ui.js';
 import { TrackProcessor } from './track-processor.js';
 import { PlayerHandler } from './player-handler.js';
+import { CONSTANTS } from '../utils/constants.js';
 
 (function () {
   /**
@@ -171,11 +172,7 @@ import { PlayerHandler } from './player-handler.js';
    * Orchestrates the API, UI, and Track Processor
    */
   class Bridge {
-    // Constants
-    static TIMEOUT_DURATION = 100;
-    static PAGE_LOAD_TIMEOUT = 3000;
-    static BASE_URL = 'https://music.youtube.com/watch?v=';
-    static PLAYLIST_PAGE_PATH = 'https://music.youtube.com/playlist';
+    // Constants are now in CONSTANTS.API
 
     constructor() {
       this.ytMusicAPI = new YTMusicAPI();
@@ -333,14 +330,14 @@ import { PlayerHandler } from './player-handler.js';
       navigation?.addEventListener('navigate', (event) => {
         if (event.navigationType !== 'push') return;
 
-        const isPlaylistPage = event.destination?.url?.startsWith(Bridge.PLAYLIST_PAGE_PATH);
+        const isPlaylistPage = event.destination?.url?.startsWith(CONSTANTS.API.PLAYLIST_PAGE_PATH);
         if (isPlaylistPage) {
           setTimeout(() => {
             if (!this.extSettings || this.extSettings.showPlaylistButton !== false) {
               this.ui.injectActionButtons(this.extSettings);
               this.ui.showTriggerButtons(this.extSettings);
             }
-          }, Bridge.PAGE_LOAD_TIMEOUT);
+          }, CONSTANTS.API.PAGE_LOAD_TIMEOUT_MS);
         }
       });
 
@@ -440,7 +437,7 @@ import { PlayerHandler } from './player-handler.js';
 
       // Determine default value for onlyEditable if not provided
       if (onlyEditable === null) {
-        onlyEditable = this.extSettings?.loadAllPlaylists === true ? false : true;
+        onlyEditable = !this.extSettings?.loadAllPlaylists;
       }
 
       if (!forceRefresh && this.playlistsCache && this.playlistsCache.length > 0) {
@@ -462,7 +459,7 @@ import { PlayerHandler } from './player-handler.js';
         let playlists = await this.ytMusicAPI.getPlaylists(onlyEditable);
         
         if (playlists.length === 0) {
-          await this.sleep(1000);
+          await this.sleep(CONSTANTS.PLAYER.RETRY_INTERVAL_MS);
           playlists = await this.ytMusicAPI.getPlaylists(onlyEditable);
         }
         

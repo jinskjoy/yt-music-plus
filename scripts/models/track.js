@@ -1,12 +1,10 @@
 import { TextSimilarity } from '../../utils/utils.js';
+import { CONSTANTS } from '../../utils/constants.js';
 
 /**
  * Track - Represents a music track in YouTube Music
  */
 export class Track {
-  static GENERIC_NAME_REGEX = /^\d*\s*(?:-|_)?\s*(?:(?:unknown|untitled|misc)(?:\s*artist)?\s*(?:-|_)?\s*)?(?:track|audio\s*track|unknown|untitled|misc)\s*\d*$/i;
-  static VIDEO_SUFFIX_REGEX = /(official\s*)?(music\s*)?video/gi;
-
   /**
    * @param {Object} params
    * @param {string} params.name - Track name
@@ -79,7 +77,7 @@ export class Track {
    * @returns {string}
    */
   toSearchQuery() {
-    const cleanName = this.name.replace(Track.VIDEO_SUFFIX_REGEX, '').trim();
+    const cleanName = this.name.replace(CONSTANTS.REGEX.VIDEO_SUFFIX, '').trim();
     let query = cleanName;
     if (this.album) query += ` - ${this.album}`;
     if (this.artists && this.artists.length > 0) {
@@ -111,7 +109,7 @@ export class Track {
    * @param {number} threshold - Similarity threshold
    * @returns {boolean}
    */
-  updateMatchStatus(otherTitle, threshold = 0.5) {
+  updateMatchStatus(otherTitle, threshold = CONSTANTS.API.SIMILARITY_THRESHOLD) {
     this.matchScore = TextSimilarity.calculateJaroWinklerDistance(otherTitle, this.name);
     this.isGoodMatch = this.matchScore >= threshold;
     return this.isGoodMatch;
