@@ -38,10 +38,6 @@ export class BridgeUI {
       container.replaceChildren();
     }
     document.querySelector(`.${CONSTANTS.UI.CLASSES.ITEMS_GRID_WRAPPER}`)?.classList.remove(CONSTANTS.UI.CLASSES.LIST_ONLY_MODE);
-
-    document.getElementById(CONSTANTS.UI.BUTTON_IDS.REPLACE_SELECTED)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
-    document.getElementById(CONSTANTS.UI.BUTTON_IDS.ADD_SELECTED)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
-    document.getElementById(CONSTANTS.UI.BUTTON_IDS.REMOVE_SELECTED)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
   }
 
   /**

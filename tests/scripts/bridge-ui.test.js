@@ -74,24 +74,15 @@ describe('BridgeUI', () => {
   });
 
   describe('clearPlaylistItemsContainer', () => {
-    it('should clear rows and ensure action buttons are visible', () => {
+    it('should clear rows and rowMap', () => {
       const container = document.getElementById('yt-music-plus-itemsGridContainer');
       container.appendChild(document.createElement('div'));
       
-      const replaceBtn = document.getElementById('replaceSelectedBtn');
-      const addBtn = document.getElementById('addSelectedBtn');
-      const removeBtn = document.getElementById('removeSelectedBtn');
-      
-      replaceBtn.classList.add('hidden');
-      addBtn.classList.add('hidden');
-      removeBtn.classList.add('hidden');
+      bridgeUI.rowMap.set(0, {});
 
       bridgeUI.clearPlaylistItemsContainer();
 
       expect(container.children.length).toBe(0);
-      expect(replaceBtn.classList.contains('hidden')).toBe(false);
-      expect(addBtn.classList.contains('hidden')).toBe(false);
-      expect(removeBtn.classList.contains('hidden')).toBe(false);
       expect(bridgeUI.rowMap.size).toBe(0);
     });
   });
