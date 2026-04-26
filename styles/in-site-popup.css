@@ -299,7 +299,8 @@
     border: 1px solid black;
 }
 
-.btn-primary:hover:not(:disabled) {
+.btn-primary:hover:not(:disabled),
+.btn-primary.active:not(:disabled) {
     background-color: white;
     color: black;
 }

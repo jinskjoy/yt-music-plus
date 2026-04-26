@@ -16,14 +16,14 @@ export class BridgeUI {
    * @param {string} text - Progress text
    */
   setProgressText(text) {
-    const el = document.getElementById('progressText');
+    const el = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PROGRESS_TEXT);
     if (el) {
       el.textContent = text;
-      el.classList.toggle('hidden', !text);
+      el.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !text);
       
-      const footer = document.getElementById('ytMusicPlusSelectionFooter');
+      const footer = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.SELECTION_FOOTER);
       if (footer && text) {
-        footer.classList.remove('hidden');
+        footer.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
       }
     }
   }
@@ -33,15 +33,39 @@ export class BridgeUI {
    */
   clearPlaylistItemsContainer() {
     this.rowMap.clear();
-    const container = document.getElementById('yt-music-plus-itemsGridContainer');
+    const container = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.ITEMS_GRID_CONTAINER);
     if (container) {
       container.replaceChildren();
     }
-    document.querySelector('.items-grid-wrapper')?.classList.remove('list-only-mode');
+    document.querySelector(`.${CONSTANTS.UI.CLASSES.ITEMS_GRID_WRAPPER}`)?.classList.remove(CONSTANTS.UI.CLASSES.LIST_ONLY_MODE);
 
-    document.getElementById('replaceSelectedBtn')?.classList.remove('hidden');
-    document.getElementById('addSelectedBtn')?.classList.remove('hidden');
-    document.getElementById('removeSelectedBtn')?.classList.remove('hidden');
+    document.getElementById(CONSTANTS.UI.BUTTON_IDS.REPLACE_SELECTED)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+    document.getElementById(CONSTANTS.UI.BUTTON_IDS.ADD_SELECTED)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+    document.getElementById(CONSTANTS.UI.BUTTON_IDS.REMOVE_SELECTED)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+  }
+
+  /**
+   * Clears the active state from all playlist action buttons
+   */
+  clearActiveButtons() {
+    document.querySelectorAll(`.${CONSTANTS.UI.CLASSES.PLAYLIST_ACTION_BUTTONS} .${CONSTANTS.UI.CLASSES.BTN}.${CONSTANTS.UI.CLASSES.ACTIVE}`).forEach(btn => {
+      btn.classList.remove(CONSTANTS.UI.CLASSES.ACTIVE);
+    });
+  }
+
+  /**
+   * Sets the active button in the playlist action buttons section
+   * @param {string} buttonId - ID of the button to set as active
+   */
+  setActiveButton(buttonId) {
+    // First clear any existing active buttons in this section
+    this.clearActiveButtons();
+
+    // Set the new button as active
+    const btn = document.getElementById(buttonId);
+    if (btn) {
+      btn.classList.add(CONSTANTS.UI.CLASSES.ACTIVE);
+    }
   }
 
   /**
@@ -51,7 +75,7 @@ export class BridgeUI {
     const { originalMedia, replacementMedia } = this.bridge._createMediaObjects(item, baseUrl);
 
     const gridRow = MediaGridRow.render(originalMedia, replacementMedia, index, this.bridge.playerHandler);
-    document.getElementById('yt-music-plus-itemsGridContainer')?.appendChild(gridRow);
+    document.getElementById(CONSTANTS.UI.ELEMENT_IDS.ITEMS_GRID_CONTAINER)?.appendChild(gridRow);
     this.rowMap.set(index, gridRow);
   }
 
@@ -61,24 +85,24 @@ export class BridgeUI {
   updateItemRow(item, baseUrl, index) {
     const oldRow = this.rowMap.get(index);
     if (oldRow) {
-      const oldCheckbox = oldRow.querySelector('.item-checkbox');
+      const oldCheckbox = oldRow.querySelector(`.${CONSTANTS.UI.CLASSES.ITEM_CHECKBOX}`);
       const userInteracted = oldCheckbox?.dataset.userInteracted === 'true';
       const wasChecked = oldCheckbox ? oldCheckbox.checked : false;
 
       const { originalMedia, replacementMedia } = this.bridge._createMediaObjects(item, baseUrl);
       const newRow = MediaGridRow.render(originalMedia, replacementMedia, index, this.bridge.playerHandler);
       
-      const newCheckbox = newRow.querySelector('.item-checkbox');
+      const newCheckbox = newRow.querySelector(`.${CONSTANTS.UI.CLASSES.ITEM_CHECKBOX}`);
       if (newCheckbox && oldCheckbox && userInteracted) {
         newCheckbox.checked = wasChecked;
         newCheckbox.dataset.userInteracted = 'true';
       }
 
-      const searchInput = document.getElementById('ytMusicPlusSearchInput');
+      const searchInput = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.SEARCH_INPUT);
       if (searchInput && searchInput.value) {
         const normalizedQuery = searchInput.value.toLowerCase().trim();
         const searchString = newRow.dataset.searchString || '';
-        newRow.classList.toggle('hidden', !searchString.includes(normalizedQuery));
+        newRow.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !searchString.includes(normalizedQuery));
       }
       oldRow.parentNode?.replaceChild(newRow, oldRow);
       this.rowMap.set(index, newRow);
@@ -89,28 +113,28 @@ export class BridgeUI {
    * Toggles search progress indicators
    */
   toggleSearchProgress(show, isSearch = false) {
-    const el = document.getElementById('searchProgress');
-    if (el) {
-      el.classList.toggle('hidden', !show);
+    const loadingOverlay = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.SEARCH_PROGRESS);
+    if (loadingOverlay) {
+      loadingOverlay.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !show);
     }
 
-    const cancelBtn = document.getElementById('cancelSearchBtn');
+    const cancelBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.CANCEL_SEARCH);
     if (cancelBtn) {
-      cancelBtn.classList.toggle('hidden', !(show && isSearch));
+      cancelBtn.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !(show && isSearch));
     }
 
     // Disable/enable buttons during search
     const buttonIds = [
-      'findUnavailableBtn',
-      'findVideoTracksBtn',
-      'replaceSelectedBtn',
-      'addSelectedBtn',
-      'removeSelectedBtn',
-      'backButton',
-      'importFromFolderBtn',
-      'importFromFileBtn',
-      'findLocalReplacementsBtn',
-      'listAllTracksBtn'
+      CONSTANTS.UI.BUTTON_IDS.FIND_UNAVAILABLE,
+      CONSTANTS.UI.BUTTON_IDS.FIND_VIDEO_TRACKS,
+      CONSTANTS.UI.BUTTON_IDS.REPLACE_SELECTED,
+      CONSTANTS.UI.BUTTON_IDS.ADD_SELECTED,
+      CONSTANTS.UI.BUTTON_IDS.REMOVE_SELECTED,
+      CONSTANTS.UI.BUTTON_IDS.BACK_BUTTON,
+      CONSTANTS.UI.BUTTON_IDS.IMPORT_FROM_FOLDER,
+      CONSTANTS.UI.BUTTON_IDS.IMPORT_FROM_FILE,
+      CONSTANTS.UI.BUTTON_IDS.FIND_LOCAL_REPLACEMENTS,
+      CONSTANTS.UI.BUTTON_IDS.LIST_ALL_TRACKS
     ];
 
     buttonIds.forEach(id => {
@@ -128,20 +152,20 @@ export class BridgeUI {
   resetActionButtonsForPlaylist(playlist) {
     const isEditable = playlist?.isEditable !== false;
 
-    document.getElementById('findLocalReplacementsBtn')?.classList.add('hidden');
-    document.getElementById('findUnavailableBtn')?.classList.remove('hidden');
-    document.getElementById('findVideoTracksBtn')?.classList.remove('hidden');
-    document.getElementById('importFromFolderBtn')?.classList.remove('hidden');
-    document.getElementById('importFromFileBtn')?.classList.remove('hidden');
-    document.getElementById('listAllTracksBtn')?.classList.remove('hidden');
+    document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_LOCAL_REPLACEMENTS)?.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
+    document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_UNAVAILABLE)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+    document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_VIDEO_TRACKS)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+    document.getElementById(CONSTANTS.UI.BUTTON_IDS.IMPORT_FROM_FOLDER)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+    document.getElementById(CONSTANTS.UI.BUTTON_IDS.IMPORT_FROM_FILE)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+    document.getElementById(CONSTANTS.UI.BUTTON_IDS.LIST_ALL_TRACKS)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
     
-    const replaceBtn = document.getElementById('replaceSelectedBtn');
-    const removeBtn = document.getElementById('removeSelectedBtn');
-    const addBtn = document.getElementById('addSelectedBtn');
+    const replaceBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.REPLACE_SELECTED);
+    const removeBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.REMOVE_SELECTED);
+    const addBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.ADD_SELECTED);
 
-    if (replaceBtn) replaceBtn.classList.toggle('hidden', !isEditable);
-    if (removeBtn) removeBtn.classList.toggle('hidden', !isEditable);
-    if (addBtn) addBtn.classList.toggle('hidden', !isEditable);
+    if (replaceBtn) replaceBtn.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !isEditable);
+    if (removeBtn) removeBtn.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !isEditable);
+    if (addBtn) addBtn.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !isEditable);
   }
 
   /**
@@ -151,28 +175,28 @@ export class BridgeUI {
   updateImportButtonVisibility(playlist) {
     const isEditable = playlist?.isEditable !== false;
 
-    document.getElementById('findLocalReplacementsBtn')?.classList.remove('hidden');
-    document.getElementById('findUnavailableBtn')?.classList.remove('hidden');
-    document.getElementById('findVideoTracksBtn')?.classList.remove('hidden');
-    document.getElementById('importFromFolderBtn')?.classList.remove('hidden');
-    document.getElementById('importFromFileBtn')?.classList.remove('hidden');
-    document.getElementById('listAllTracksBtn')?.classList.remove('hidden');
+    document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_LOCAL_REPLACEMENTS)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+    document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_UNAVAILABLE)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+    document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_VIDEO_TRACKS)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+    document.getElementById(CONSTANTS.UI.BUTTON_IDS.IMPORT_FROM_FOLDER)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+    document.getElementById(CONSTANTS.UI.BUTTON_IDS.IMPORT_FROM_FILE)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+    document.getElementById(CONSTANTS.UI.BUTTON_IDS.LIST_ALL_TRACKS)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
     
-    const replaceBtn = document.getElementById('replaceSelectedBtn');
-    const removeBtn = document.getElementById('removeSelectedBtn');
-    const addBtn = document.getElementById('addSelectedBtn');
+    const replaceBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.REPLACE_SELECTED);
+    const removeBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.REMOVE_SELECTED);
+    const addBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.ADD_SELECTED);
 
-    if (replaceBtn) replaceBtn.classList.add('hidden');
-    if (removeBtn) removeBtn.classList.add('hidden');
-    if (addBtn) addBtn.classList.toggle('hidden', !isEditable);
+    if (replaceBtn) replaceBtn.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
+    if (removeBtn) removeBtn.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
+    if (addBtn) addBtn.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !isEditable);
   }
 
   /**
    * Initializes search box event listeners
    */
   initSearchBox() {
-    const searchInput = document.getElementById('ytMusicPlusSearchInput');
-    const clearBtn = document.getElementById('ytMusicPlusClearSearchBtn');
+    const searchInput = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.SEARCH_INPUT);
+    const clearBtn = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.CLEAR_SEARCH_BTN);
 
     if (!searchInput || !clearBtn) return;
     if (searchInput.dataset.initialized) return;
@@ -182,12 +206,12 @@ export class BridgeUI {
     
     searchInput.addEventListener('input', (e) => {
       debouncedSearch(e);
-      clearBtn.classList.toggle('hidden', !e.target.value);
+      clearBtn.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !e.target.value);
     });
 
     clearBtn.addEventListener('click', () => {
       searchInput.value = '';
-      clearBtn.classList.add('hidden');
+      clearBtn.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
       this.filterGridItems('');
       searchInput.focus();
     });
@@ -198,17 +222,17 @@ export class BridgeUI {
    */
   filterGridItems(query) {
     const normalizedQuery = query.toLowerCase().trim();
-    const container = document.getElementById('yt-music-plus-itemsGridContainer');
+    const container = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.ITEMS_GRID_CONTAINER);
     if (!container) return;
 
-    const rows = container.querySelectorAll('.grid-row');
+    const rows = container.querySelectorAll(`.${CONSTANTS.UI.CLASSES.GRID_ROW}`);
     
     if (!normalizedQuery) {
-      rows.forEach(row => row.classList.remove('hidden'));
+      rows.forEach(row => row.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN));
     } else {
       rows.forEach(row => {
         const searchString = row.dataset.searchString || '';
-        row.classList.toggle('hidden', !searchString.includes(normalizedQuery));
+        row.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !searchString.includes(normalizedQuery));
       });
     }
 
@@ -219,9 +243,9 @@ export class BridgeUI {
    * Hides playlist loading indicator
    */
   hidePlaylistLoadingIndicator() {
-    const loadingIndicator = document.getElementById('playlistsLoadingIndicator');
+    const loadingIndicator = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLISTS_LOADING_INDICATOR);
     if (loadingIndicator) {
-      loadingIndicator.classList.add('hidden');
+      loadingIndicator.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
     }
   }
 
@@ -229,7 +253,7 @@ export class BridgeUI {
    * Displays playlists in the selection grid
    */
   displayPlaylistsForSelection(playlistsCache) {
-    const playlistsGrid = document.getElementById('playlistsGrid');
+    const playlistsGrid = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLISTS_GRID);
     if (!playlistsGrid) return;
 
     playlistsGrid.replaceChildren();
@@ -251,7 +275,7 @@ export class BridgeUI {
    * Updates the popup title
    */
   updatePopupTitle(title) {
-    const titleElement = document.getElementById('popupTitle');
+    const titleElement = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.POPUP_TITLE);
     if (titleElement) {
       titleElement.textContent = title;
     }
@@ -261,16 +285,16 @@ export class BridgeUI {
    * Shows or hides trigger buttons
    */
   showTriggerButtons(extSettings) {
-    const navBarBtn = document.getElementById('yt-music-plus-nav-btn');
+    const navBarBtn = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.NAV_BTN);
     if (navBarBtn) {
       const shouldShow = !extSettings || extSettings.showNavButton !== false;
-      navBarBtn.classList.toggle('hidden', !shouldShow);
+      navBarBtn.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !shouldShow);
     }
 
-    const actionBtn = document.getElementById('yt-music-plus-action-buttons');
+    const actionBtn = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.ACTION_BUTTONS);
     if (actionBtn) {
       const shouldShow = !extSettings || extSettings.showPlaylistButton !== false;
-      actionBtn.classList.toggle('hidden', !shouldShow);
+      actionBtn.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !shouldShow);
     }
   }
 
@@ -280,10 +304,10 @@ export class BridgeUI {
   injectActionButtons(extSettings) {
     if (extSettings?.showPlaylistButton === false) return;
 
-    const existingButtons = document.getElementById('yt-music-plus-action-buttons');
+    const existingButtons = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.ACTION_BUTTONS);
     if (existingButtons) return;
 
-    const header = document.querySelector('ytmusic-responsive-header-renderer');
+    const header = document.querySelector(CONSTANTS.UI.SELECTORS.YT_MUSIC_HEADER);
     if (!header) return;
 
     const actionButtons = UIHelper.createActionButtons();
@@ -296,7 +320,7 @@ export class BridgeUI {
    * Initializes the playlist refresh buttons
    */
   initRefreshButton() {
-    const refreshBtn = document.getElementById('refreshPlaylistsBtn');
+    const refreshBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.REFRESH_PLAYLISTS);
     if (refreshBtn && !refreshBtn.dataset.initialized) {
       refreshBtn.dataset.initialized = 'true';
       refreshBtn.addEventListener('click', async () => {
@@ -309,7 +333,7 @@ export class BridgeUI {
       });
     }
 
-    const loadAllBtn = document.getElementById('loadAllPlaylistsBtn');
+    const loadAllBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.LOAD_ALL_PLAYLISTS);
     if (loadAllBtn && !loadAllBtn.dataset.initialized) {
       loadAllBtn.dataset.initialized = 'true';
       loadAllBtn.addEventListener('click', async () => {

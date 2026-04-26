@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BridgeUI } from '../../scripts/bridge-ui.js';
+import { CONSTANTS } from '../../utils/constants.js';
 import { UIHelper, MediaGridRow, PlaylistCard } from '../../utils/ui-helper.js';
 import { BrowserUtils } from '../../utils/utils.js';
 import fs from 'fs';
@@ -92,6 +93,44 @@ describe('BridgeUI', () => {
       expect(addBtn.classList.contains('hidden')).toBe(false);
       expect(removeBtn.classList.contains('hidden')).toBe(false);
       expect(bridgeUI.rowMap.size).toBe(0);
+    });
+  });
+
+  describe('clearActiveButtons', () => {
+    it('should remove active class from all buttons', () => {
+      const listAllBtn = document.getElementById('listAllTracksBtn');
+      const findUnavailableBtn = document.getElementById('findUnavailableBtn');
+      
+      listAllBtn.classList.add('active');
+      findUnavailableBtn.classList.add('active');
+      
+      bridgeUI.clearActiveButtons();
+      
+      expect(listAllBtn.classList.contains('active')).toBe(false);
+      expect(findUnavailableBtn.classList.contains('active')).toBe(false);
+    });
+  });
+
+  describe('setActiveButton', () => {
+    it('should set the active class on the specified button and clear others', () => {
+      const listAllBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.LIST_ALL_TRACKS);
+      const findUnavailableBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_UNAVAILABLE);
+      
+      listAllBtn.classList.add(CONSTANTS.UI.CLASSES.ACTIVE);
+      
+      bridgeUI.setActiveButton(CONSTANTS.UI.BUTTON_IDS.FIND_UNAVAILABLE);
+      
+      expect(findUnavailableBtn.classList.contains(CONSTANTS.UI.CLASSES.ACTIVE)).toBe(true);
+      expect(listAllBtn.classList.contains(CONSTANTS.UI.CLASSES.ACTIVE)).toBe(false);
+    });
+
+    it('should do nothing if buttonId does not exist', () => {
+      const listAllBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.LIST_ALL_TRACKS);
+      listAllBtn.classList.add(CONSTANTS.UI.CLASSES.ACTIVE);
+      
+      bridgeUI.setActiveButton('nonExistentBtn');
+      
+      expect(listAllBtn.classList.contains(CONSTANTS.UI.CLASSES.ACTIVE)).toBe(false);
     });
   });
 
