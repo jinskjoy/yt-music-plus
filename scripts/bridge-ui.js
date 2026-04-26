@@ -1,5 +1,6 @@
 import { UIHelper, MediaGridRow, PlaylistCard } from '../utils/ui-helper.js';
 import { BrowserUtils } from '../utils/utils.js';
+import { CONSTANTS } from '../utils/constants.js';
 
 /**
  * BridgeUI - Handles all DOM interactions for the Bridge script within the page context
@@ -131,7 +132,7 @@ export class BridgeUI {
     if (searchInput.dataset.initialized) return;
     searchInput.dataset.initialized = 'true';
 
-    const debouncedSearch = BrowserUtils.debounce((e) => this.filterGridItems(e.target.value), 250);
+    const debouncedSearch = BrowserUtils.debounce((e) => this.filterGridItems(e.target.value), CONSTANTS.UI.DEBOUNCE_DELAY_MS);
     
     searchInput.addEventListener('input', (e) => {
       debouncedSearch(e);
@@ -246,19 +247,32 @@ export class BridgeUI {
   }
 
   /**
-   * Initializes the refresh button
+   * Initializes the playlist refresh buttons
    */
   initRefreshButton() {
-    const btn = document.getElementById('refreshPlaylistsBtn');
-    if (btn && !btn.dataset.initialized) {
-      btn.dataset.initialized = 'true';
-      btn.addEventListener('click', async () => {
-        btn.disabled = true;
-        const originalText = btn.textContent;
-        btn.textContent = 'Refreshing...';
-        await this.bridge.initPlaylistFetching(true);
-        btn.disabled = false;
-        btn.textContent = originalText;
+    const refreshBtn = document.getElementById('refreshPlaylistsBtn');
+    if (refreshBtn && !refreshBtn.dataset.initialized) {
+      refreshBtn.dataset.initialized = 'true';
+      refreshBtn.addEventListener('click', async () => {
+        refreshBtn.disabled = true;
+        const originalText = refreshBtn.textContent;
+        refreshBtn.textContent = 'Loading...';
+        await this.bridge.initPlaylistFetching(true, true);
+        refreshBtn.disabled = false;
+        refreshBtn.textContent = originalText;
+      });
+    }
+
+    const loadAllBtn = document.getElementById('loadAllPlaylistsBtn');
+    if (loadAllBtn && !loadAllBtn.dataset.initialized) {
+      loadAllBtn.dataset.initialized = 'true';
+      loadAllBtn.addEventListener('click', async () => {
+        loadAllBtn.disabled = true;
+        const originalText = loadAllBtn.textContent;
+        loadAllBtn.textContent = 'Loading...';
+        await this.bridge.initPlaylistFetching(true, false);
+        loadAllBtn.disabled = false;
+        loadAllBtn.textContent = originalText;
       });
     }
   }

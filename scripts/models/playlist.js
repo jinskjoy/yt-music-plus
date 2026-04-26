@@ -9,13 +9,15 @@ export class Playlist {
    * @param {string} [params.subtitle] - Subtitle (usually contains owner/track count)
    * @param {string} [params.owner] - The owner of the playlist
    * @param {string} [params.thumbnail] - URL to the playlist thumbnail
+   * @param {boolean} [params.isEditable] - Whether the playlist is editable by the user
    */
-  constructor({ id, title, subtitle = '', owner = '', thumbnail = '' }) {
+  constructor({ id, title, subtitle = '', owner = '', thumbnail = '', isEditable = false }) {
     this.id = id;
     this.title = title;
     this.subtitle = subtitle;
     this.owner = owner;
     this.thumbnail = thumbnail;
+    this.isEditable = isEditable;
   }
 
   /**

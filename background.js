@@ -40,6 +40,19 @@ class BackgroundService {
           sendResponse({ success: true });
           break;
 
+        case 'settingsUpdated':
+          // Broadcast settings to all YouTube Music tabs
+          chrome.tabs.query({ url: '*://music.youtube.com/*' }, (tabs) => {
+            tabs.forEach((tab) => {
+              chrome.tabs.sendMessage(tab.id, {
+                action: 'settingsUpdated',
+                settings: message.settings
+              });
+            });
+          });
+          sendResponse({ success: true });
+          break;
+
         default:
           sendResponse({ success: false, message: 'Unknown action' });
       }

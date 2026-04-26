@@ -117,4 +117,33 @@ describe('YTMusicParser', () => {
       expect(YTMusicParser.parseTextField({ runs: [{ text: 'a' }, { text: 'b' }] })).toBe('ab');
     });
   });
+
+  describe('isPlaylistEditable', () => {
+    it('should return true if an edit keyword is found (case-insensitive)', () => {
+      const menuItems = [{
+        menuNavigationItemRenderer: {
+          text: { runs: [{ text: 'EDIT PLAYLIST' }] }
+        }
+      }];
+      expect(YTMusicParser.isPlaylistEditable(menuItems)).toBe(true);
+    });
+
+    it('should return true if an edit endpoint is found', () => {
+      const menuItems = [{
+        menuNavigationItemRenderer: {
+          navigationEndpoint: { playlistEditorEndpoint: {} }
+        }
+      }];
+      expect(YTMusicParser.isPlaylistEditable(menuItems)).toBe(true);
+    });
+
+    it('should return false if no edit markers are found', () => {
+      const menuItems = [{
+        menuNavigationItemRenderer: {
+          text: { runs: [{ text: 'Add to queue' }] }
+        }
+      }];
+      expect(YTMusicParser.isPlaylistEditable(menuItems)).toBe(false);
+    });
+  });
 });

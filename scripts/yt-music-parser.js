@@ -1,18 +1,18 @@
 import { Playlist } from './models/playlist.js';
 import { Track } from './models/track.js';
+import { CONSTANTS } from '../utils/constants.js';
 
 /**
  * YTMusicParser - Handles parsing of YouTube Music API responses
  */
 export class YTMusicParser {
-  static FILTER_TEXTS = [', ', ' & ', ' - ', 'Song', 'Video', ' • '];
-
   /**
-   * Parses editable playlists from API response
+   * Parses playlists from API response
    * @param {Object} data - API response data
+   * @param {boolean} onlyEditable - Whether to only return editable playlists
    * @returns {Array<Playlist>}
    */
-  static parseEditablePlaylistsFromResponse(data) {
+  static parsePlaylistsFromResponse(data, onlyEditable = false) {
     const playlists = [];
     if (!data) return playlists;
 
@@ -42,7 +42,9 @@ export class YTMusicParser {
 
         const playlist = this.extractPlaylistFromMusicTwoRowRenderer(renderer);
         if (playlist) {
-          playlists.push(playlist);
+          if (!onlyEditable || playlist.isEditable) {
+            playlists.push(playlist);
+          }
         }
       });
     } catch (error) {
@@ -50,6 +52,13 @@ export class YTMusicParser {
     }
 
     return playlists;
+  }
+
+  /**
+   * Backward compatibility for parseEditablePlaylistsFromResponse
+   */
+  static parseEditablePlaylistsFromResponse(data) {
+    return this.parsePlaylistsFromResponse(data, true);
   }
 
   /**
@@ -75,8 +84,19 @@ export class YTMusicParser {
    */
   static extractPlaylistFromMusicTwoRowRenderer(renderer) {
     const menuItems = renderer?.menu?.menuRenderer?.items || [];
-    const playlistId = this.getPlaylistIdFromMenuItems(menuItems);
-    if (!playlistId) return null;
+    const playlistInfo = this.getPlaylistInfoFromMenuItems(menuItems);
+    
+    let id = playlistInfo.id;
+    if (!id) {
+      // Fallback: try to get ID from renderer's own navigation endpoint
+      const endpoint = renderer?.navigationEndpoint;
+      id = endpoint?.browseEndpoint?.browseId || endpoint?.watchPlaylistEndpoint?.playlistId;
+    }
+    
+    if (!id) return null;
+    
+    // Cleanup ID (strip VL prefix if present)
+    if (id.startsWith('VL')) id = id.substring(2);
 
     const title = this.parseTextField(renderer?.title);
     if (!title) return null;
@@ -86,30 +106,82 @@ export class YTMusicParser {
     const owner = subtitleRuns?.[0]?.text || '';
     const thumbnail = renderer?.thumbnailRenderer?.musicThumbnailRenderer?.thumbnail?.thumbnails?.slice(-1)?.[0]?.url || '';
 
+    // Final editability check using menu text runs as well
+    const isEditable = playlistInfo.isEditable || this.isPlaylistEditable(menuItems);
+
     return new Playlist({
-      id: playlistId,
+      id,
       title,
       subtitle,
       owner,
-      thumbnail
+      thumbnail,
+      isEditable
     });
   }
 
   /**
-   * Extracts playlist ID from menu items
+   * Checks if a playlist is editable based on menu items
+   * @param {Array} menuItems - Array of menu items
+   * @returns {boolean}
    */
-  static getPlaylistIdFromMenuItems(menuItems) {
+  static isPlaylistEditable(menuItems) {
+    if (!menuItems || !Array.isArray(menuItems)) return false;
+    
+    const editKeywords = CONSTANTS.PARSER.EDIT_KEYWORDS;
+    
+    for (const item of menuItems) {
+      const renderer = item?.menuNavigationItemRenderer || item?.menuServiceItemRenderer;
+      if (renderer?.text?.runs) {
+        const text = renderer.text.runs.map(run => run?.text || '').join('').toLowerCase();
+        if (editKeywords.some(keyword => text.includes(keyword))) return true;
+      }
+      
+      const endpoint = renderer?.navigationEndpoint || renderer?.serviceEndpoint;
+      if (endpoint?.playlistEditorEndpoint || endpoint?.playlistEditEndpoint) return true;
+    }
+    return false;
+  }
+
+  /**
+   * Extracts playlist info (ID and editability) from menu items
+   */
+  static getPlaylistInfoFromMenuItems(menuItems) {
+    let id = null;
+    let isEditable = false;
+
     for (const menuItem of menuItems) {
-      const endpoint = menuItem?.menuNavigationItemRenderer?.navigationEndpoint || menuItem?.navigationEndpoint;
+      const renderer = menuItem?.menuNavigationItemRenderer || menuItem?.menuServiceItemRenderer || menuItem?.toggleMenuServiceItemRenderer;
+      if (!renderer) continue;
+
+      const endpoint = renderer?.navigationEndpoint || renderer?.serviceEndpoint || renderer?.defaultServiceEndpoint;
       if (!endpoint) continue;
 
       const playlistId = endpoint?.playlistEditorEndpoint?.playlistId
         || endpoint?.playlistEditEndpoint?.playlistId
-        || endpoint?.browseEndpoint?.browseId;
+        || endpoint?.browseEndpoint?.browseId
+        || endpoint?.watchPlaylistEndpoint?.playlistId
+        || endpoint?.addToPlaylistEndpoint?.playlistId
+        || endpoint?.queueAddEndpoint?.queueTarget?.playlistId
+        || endpoint?.likeEndpoint?.target?.playlistId;
 
-      if (playlistId) return playlistId;
+      if (playlistId) {
+        id = playlistId;
+      }
+
+      if (endpoint?.playlistEditorEndpoint || endpoint?.playlistEditEndpoint) {
+        isEditable = true;
+      }
     }
-    return null;
+
+    return { id, isEditable };
+  }
+
+  /**
+   * Extracts playlist ID from menu items
+   * @deprecated Use getPlaylistInfoFromMenuItems
+   */
+  static getPlaylistIdFromMenuItems(menuItems) {
+    return this.getPlaylistInfoFromMenuItems(menuItems).id;
   }
 
   /**
@@ -142,7 +214,7 @@ export class YTMusicParser {
             ?.text?.runs?.[0]?.text || '';
 
           const artists = musicItemRenderer?.flexColumns?.[1]?.musicResponsiveListItemFlexColumnRenderer
-            ?.text?.runs?.map(run => run.text).filter(text => !this.FILTER_TEXTS.includes(text)) || [];
+            ?.text?.runs?.map(run => run.text).filter(text => !CONSTANTS.PARSER.FILTER_TEXTS.includes(text)) || [];
 
           const album = musicItemRenderer?.flexColumns?.[2]?.musicResponsiveListItemFlexColumnRenderer
             ?.text?.runs?.[0]?.text || '';
@@ -290,7 +362,7 @@ export class YTMusicParser {
 
       const artists = subtitleRuns
         .map(run => run.text)
-        .filter(text => !this.FILTER_TEXTS.includes(text)) || [];
+        .filter(text => !CONSTANTS.PARSER.FILTER_TEXTS.includes(text)) || [];
 
       const album = musicItemRenderer?.flexColumns?.[2]?.musicResponsiveListItemFlexColumnRenderer
         ?.text?.runs?.[0]?.text || '';

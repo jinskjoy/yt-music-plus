@@ -1,18 +1,13 @@
 import { StorageManager } from './utils/storage.js';
+import { CONSTANTS } from './utils/constants.js';
 
 /**
  * OptionsPage - Manages the extension's options/settings page
  * Handles loading, saving, and resetting user preferences
  */
 class OptionsPage {
-  // Constants for UI behavior
-  static STATUS_MESSAGE_DURATION = 3000;
-
   constructor() {
-    this.defaultSettings = {
-      showNavButton: true,
-      showPlaylistButton: true,
-    };
+    this.defaultSettings = CONSTANTS.SETTINGS.DEFAULT;
     this.storageManager = new StorageManager();
     this.form = document.getElementById('settingsForm');
     this.statusMessage = document.getElementById('statusMessage');
@@ -144,7 +139,7 @@ class OptionsPage {
 
     setTimeout(() => {
       this.statusMessage.classList.remove('show');
-    }, OptionsPage.STATUS_MESSAGE_DURATION);
+    }, CONSTANTS.UI.STATUS_DURATION_MS);
   }
 }
 

@@ -1,3 +1,5 @@
+import { CONSTANTS } from '../utils/constants.js';
+
 /**
  * PlayerHandler - Handles playback controls within the YouTube Music UI
  * Provides play, pause, and seek functionality for each track
@@ -6,7 +8,7 @@ export class PlayerHandler {
   constructor() {
     this.initialized = false;
     this.retryCount = 0;
-    this.maxRetries = 10;
+    this.maxRetries = CONSTANTS.PLAYER.MAX_RETRIES;
   }
 
   /**
@@ -27,7 +29,7 @@ export class PlayerHandler {
     if (!this.api) {
       if (this.retryCount < this.maxRetries) {
         this.retryCount++;
-        setTimeout(() => this.init(), 1000);
+        setTimeout(() => this.init(), CONSTANTS.PLAYER.RETRY_INTERVAL_MS);
       } else {
         console.error('PlayerHandler: Failed to initialize after max retries.');
       }

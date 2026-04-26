@@ -1,5 +1,6 @@
 import { UIHelper } from '../utils/ui-helper.js';
 import { Track } from './models/track.js';
+import { CONSTANTS } from '../utils/constants.js';
 
 /**
  * TrackProcessor - Handles the logic for processing tracks and finding replacements
@@ -27,7 +28,7 @@ export class TrackProcessor {
       }
       item.searchCancelled = false;
       item.replacement = null;
-      this.bridge.ui.addItem(item, this.bridge.constructor.BASE_URL, i++);
+      this.bridge.ui.addItem(item, CONSTANTS.API.BASE_URL, i++);
     }
 
     i = 1;
@@ -54,9 +55,9 @@ export class TrackProcessor {
       }
       
       item.isSearching = false;
-      this.bridge.ui.updateItemRow(item, this.bridge.constructor.BASE_URL, i++);
+      this.bridge.ui.updateItemRow(item, CONSTANTS.API.BASE_URL, i++);
 
-      await this.bridge.sleep(this.bridge.constructor.TIMEOUT_DURATION);
+      await this.bridge.sleep(CONSTANTS.API.TIMEOUT_DURATION_MS);
     }
     
     if (this.bridge.session.isCancelled) {
@@ -64,7 +65,7 @@ export class TrackProcessor {
         if (!itemsToProcess[j - 1].isGeneric && !itemsToProcess[j - 1].isSkipped) {
           itemsToProcess[j - 1].isSearching = false;
           itemsToProcess[j - 1].searchCancelled = true;
-          this.bridge.ui.updateItemRow(itemsToProcess[j - 1], this.bridge.constructor.BASE_URL, j);
+          this.bridge.ui.updateItemRow(itemsToProcess[j - 1], CONSTANTS.API.BASE_URL, j);
         }
       }
     }
@@ -184,7 +185,7 @@ export class TrackProcessor {
         track.isSearching = true;
         track.searchCancelled = false;
         track.replacement = null;
-        this.bridge.ui.addItem(track, this.bridge.constructor.BASE_URL, i++);
+        this.bridge.ui.addItem(track, CONSTANTS.API.BASE_URL, i++);
       }
 
       i = 1;
@@ -205,16 +206,16 @@ export class TrackProcessor {
         }
         
         track.isSearching = false;
-        this.bridge.ui.updateItemRow(track, this.bridge.constructor.BASE_URL, i++);
+        this.bridge.ui.updateItemRow(track, CONSTANTS.API.BASE_URL, i++);
 
-        await this.bridge.sleep(this.bridge.constructor.TIMEOUT_DURATION);
+        await this.bridge.sleep(CONSTANTS.API.TIMEOUT_DURATION_MS);
       }
       
       if (this.bridge.session.isCancelled) {
         for (let j = i; j <= videoTracks.length; j++) {
           videoTracks[j - 1].isSearching = false;
           videoTracks[j - 1].searchCancelled = true;
-          this.bridge.ui.updateItemRow(videoTracks[j - 1], this.bridge.constructor.BASE_URL, j);
+          this.bridge.ui.updateItemRow(videoTracks[j - 1], CONSTANTS.API.BASE_URL, j);
         }
       }
 
@@ -277,7 +278,7 @@ export class TrackProcessor {
         track.isSearching = false;
         track.searchCancelled = false;
         track.replacement = null;
-        this.bridge.ui.addItem(track, this.bridge.constructor.BASE_URL, i++);
+        this.bridge.ui.addItem(track, CONSTANTS.API.BASE_URL, i++);
       }
 
       document.getElementById('replaceSelectedBtn')?.classList.add('hidden');
@@ -307,7 +308,7 @@ export class TrackProcessor {
       this.bridge.ui.toggleSearchProgress(true, false);
       this.bridge.ui.setProgressText('Scanning folder for media files...');
 
-      const mediaExtensions = ['.mp3', '.flac', '.m4a', '.ogg', '.wav', '.aac', '.wma', '.opus'];
+      const mediaExtensions = CONSTANTS.MEDIA.EXTENSIONS;
       const files = [];
 
       await TrackProcessor.#getFilesRecursively(dirHandle, mediaExtensions, files);
@@ -318,7 +319,7 @@ export class TrackProcessor {
       const localTracks = files.map(file => {
         const rawName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
         const name = rawName.replace(/[_-]/g, ' ').replace(/\s+/g, ' ').trim();
-        const isGeneric = name.length < 3 || Track.GENERIC_NAME_REGEX.test(name);
+        const isGeneric = name.length < 3 || CONSTANTS.REGEX.GENERIC_NAME.test(name);
         return new Track({
           name: name,
           artists: [],
@@ -332,7 +333,7 @@ export class TrackProcessor {
       this.bridge.localTracks = localTracks;
 
       let i = 1;
-      localTracks.forEach(track => this.bridge.ui.addItem(track, this.bridge.constructor.BASE_URL, i++));
+      localTracks.forEach(track => this.bridge.ui.addItem(track, CONSTANTS.API.BASE_URL, i++));
 
       if (localTracks.length > 0) {
         let progressMsg = `Displayed ${localTracks.length} tracks.`;
@@ -376,7 +377,7 @@ export class TrackProcessor {
 
       const localTracks = lines.map(line => {
         const name = line.trim();
-        const isGeneric = name.length < 3 || Track.GENERIC_NAME_REGEX.test(name);
+        const isGeneric = name.length < 3 || CONSTANTS.REGEX.GENERIC_NAME.test(name);
         return new Track({
           name: name,
           artists: [],
@@ -390,7 +391,7 @@ export class TrackProcessor {
       this.bridge.localTracks = localTracks;
 
       let i = 1;
-      localTracks.forEach(track => this.bridge.ui.addItem(track, this.bridge.constructor.BASE_URL, i++));
+      localTracks.forEach(track => this.bridge.ui.addItem(track, CONSTANTS.API.BASE_URL, i++));
 
       if (localTracks.length > 0) {
         let progressMsg = `Displayed ${localTracks.length} tracks.`;
