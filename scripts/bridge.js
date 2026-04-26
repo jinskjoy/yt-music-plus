@@ -497,7 +497,7 @@ import { CONSTANTS } from '../utils/constants.js';
       const selectionScreen = document.getElementById('playlistSelectionScreen');
       if (selectionScreen) selectionScreen.classList.add('hidden');
 
-      this.resetActionButtonsForPlaylist();
+      this.ui.resetActionButtonsForPlaylist(playlist);
 
       UIHelper.toggleGrid(false);
       this.localTracks = [];
@@ -510,50 +510,6 @@ import { CONSTANTS } from '../utils/constants.js';
         document.getElementById('ytMusicPlusClearSearchBtn')?.classList.add('hidden');
         this.ui.filterGridItems('');
       }
-    }
-
-    /**
-     * Resets action buttons visibility for a newly selected playlist
-     */
-    resetActionButtonsForPlaylist() {
-      const isEditable = this.currentSelectedPlaylist?.isEditable !== false;
-
-      document.getElementById('findLocalReplacementsBtn')?.classList.add('hidden');
-      document.getElementById('findUnavailableBtn')?.classList.remove('hidden');
-      document.getElementById('findVideoTracksBtn')?.classList.remove('hidden');
-      document.getElementById('importFromFolderBtn')?.classList.remove('hidden');
-      document.getElementById('importFromFileBtn')?.classList.remove('hidden');
-      document.getElementById('listAllTracksBtn')?.classList.remove('hidden');
-      
-      const replaceBtn = document.getElementById('replaceSelectedBtn');
-      const removeBtn = document.getElementById('removeSelectedBtn');
-      const addBtn = document.getElementById('addSelectedBtn');
-
-      if (replaceBtn) replaceBtn.classList.toggle('hidden', !isEditable);
-      if (removeBtn) removeBtn.classList.toggle('hidden', !isEditable);
-      if (addBtn) addBtn.classList.toggle('hidden', !isEditable);
-    }
-
-    /**
-     * Updates visibility of buttons for local import feature
-     */
-    updateImportButtonVisibility() {
-      const isEditable = this.currentSelectedPlaylist?.isEditable !== false;
-
-      document.getElementById('findLocalReplacementsBtn')?.classList.remove('hidden');
-      document.getElementById('findUnavailableBtn')?.classList.remove('hidden');
-      document.getElementById('findVideoTracksBtn')?.classList.remove('hidden');
-      document.getElementById('importFromFolderBtn')?.classList.remove('hidden');
-      document.getElementById('importFromFileBtn')?.classList.remove('hidden');
-      document.getElementById('listAllTracksBtn')?.classList.remove('hidden');
-      
-      const replaceBtn = document.getElementById('replaceSelectedBtn');
-      const removeBtn = document.getElementById('removeSelectedBtn');
-      const addBtn = document.getElementById('addSelectedBtn');
-
-      if (replaceBtn) replaceBtn.classList.add('hidden');
-      if (removeBtn) removeBtn.classList.add('hidden');
-      if (addBtn) addBtn.classList.toggle('hidden', !isEditable);
     }
 
     /**

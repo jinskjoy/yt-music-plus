@@ -342,7 +342,7 @@ export class TrackProcessor {
         if (genericCount > 0) progressMsg += ` (${genericCount} generic names ignored).`;
         progressMsg += ` Click "Start Search" to search for the checked tracks on YouTube Music.`;
         this.bridge.ui.setProgressText(progressMsg);
-        this.bridge.updateImportButtonVisibility();
+        this.bridge.ui.updateImportButtonVisibility(this.bridge.currentSelectedPlaylist);
         UIHelper.updateCheckAllCheckbox();
       } else {
         this.bridge.ui.setProgressText('No media files found in the selected folder.');
@@ -400,7 +400,7 @@ export class TrackProcessor {
         if (genericCount > 0) progressMsg += ` (${genericCount} generic names ignored).`;
         progressMsg += ` Click "Start Search" to search for the checked tracks on YouTube Music.`;
         this.bridge.ui.setProgressText(progressMsg);
-        this.bridge.updateImportButtonVisibility();
+        this.bridge.ui.updateImportButtonVisibility(this.bridge.currentSelectedPlaylist);
         UIHelper.updateCheckAllCheckbox();
       } else {
         this.bridge.ui.setProgressText('No valid tracks found in the file.');
