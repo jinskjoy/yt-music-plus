@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { PlayerHandler } from '../../scripts/player-handler.js';
+import { CONSTANTS } from '../../utils/constants.js';
 
 describe('PlayerHandler', () => {
   let handler;
@@ -103,5 +104,88 @@ describe('PlayerHandler', () => {
 
     handler.seekBy(10);
     expect(mockApi.seekBy).toHaveBeenCalledWith(10);
+  });
+
+  it('should return video data', () => {
+    const videoData = { video_id: 'vid123', author: 'Artist', title: 'Song' };
+    const mockApi = { getVideoData: vi.fn().mockReturnValue(videoData) };
+    const mockApp = document.createElement('ytmusic-app');
+    mockApp.playerApi = mockApi;
+    document.body.appendChild(mockApp);
+
+    expect(handler.getVideoData()).toEqual(videoData);
+  });
+
+  it('should call nextVideo', () => {
+    const mockApi = { nextVideo: vi.fn() };
+    const mockApp = document.createElement('ytmusic-app');
+    mockApp.playerApi = mockApi;
+    document.body.appendChild(mockApp);
+
+    handler.nextTrack();
+    expect(mockApi.nextVideo).toHaveBeenCalled();
+  });
+
+  it('should call previousVideo', () => {
+    const mockApi = { previousVideo: vi.fn() };
+    const mockApp = document.createElement('ytmusic-app');
+    mockApp.playerApi = mockApi;
+    document.body.appendChild(mockApp);
+
+    handler.previousTrack();
+    expect(mockApi.previousVideo).toHaveBeenCalled();
+  });
+
+  it('should get and set volume', () => {
+    const mockApi = { 
+      getVolume: vi.fn().mockReturnValue(50),
+      setVolume: vi.fn()
+    };
+    const mockApp = document.createElement('ytmusic-app');
+    mockApp.playerApi = mockApi;
+    document.body.appendChild(mockApp);
+
+    expect(handler.getVolume()).toBe(50);
+    handler.setVolume(80);
+    expect(mockApi.setVolume).toHaveBeenCalledWith(80);
+  });
+
+  it('should handle muting', () => {
+    const mockApi = { 
+      isMuted: vi.fn().mockReturnValue(false),
+      mute: vi.fn(),
+      unMute: vi.fn()
+    };
+    const mockApp = document.createElement('ytmusic-app');
+    mockApp.playerApi = mockApi;
+    document.body.appendChild(mockApp);
+
+    expect(handler.isMuted()).toBe(false);
+    handler.mute();
+    expect(mockApi.mute).toHaveBeenCalled();
+    handler.unMute();
+    expect(mockApi.unMute).toHaveBeenCalled();
+  });
+
+  it('should get current time and duration', () => {
+    const mockApi = { 
+      getCurrentTime: vi.fn().mockReturnValue(120),
+      getDuration: vi.fn().mockReturnValue(300)
+    };
+    const mockApp = document.createElement('ytmusic-app');
+    mockApp.playerApi = mockApi;
+    document.body.appendChild(mockApp);
+
+    expect(handler.getCurrentTime()).toBe(120);
+    expect(handler.getDuration()).toBe(300);
+  });
+
+  it('should return player state', () => {
+    const mockApi = { getPlayerState: vi.fn().mockReturnValue(CONSTANTS.PLAYER.STATE.PLAYING) };
+    const mockApp = document.createElement('ytmusic-app');
+    mockApp.playerApi = mockApi;
+    document.body.appendChild(mockApp);
+
+    expect(handler.getPlayerState()).toBe(CONSTANTS.PLAYER.STATE.PLAYING);
   });
 });

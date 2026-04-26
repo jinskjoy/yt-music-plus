@@ -316,7 +316,7 @@ import { CONSTANTS } from '../utils/constants.js';
         holder.classList.toggle('minimized', isMinimized);
         
         if (minimizeBtn) {
-          minimizeBtn.textContent = isMinimized ? '+' : '−';
+          minimizeBtn.textContent = isMinimized ? '⤢' : '−';
           minimizeBtn.setAttribute('aria-label', isMinimized ? 'Restore popup' : 'Minimize popup');
         }
       }
@@ -369,8 +369,11 @@ import { CONSTANTS } from '../utils/constants.js';
           }
 
           // Restore on header click if minimized
-          // Ensure we didn't click other interactive elements like links
-          if (container.classList.contains('minimized') && !target.closest('a')) {
+          if (container.classList.contains('minimized')) {
+            // If it's a link, prevent default action
+            if (target.closest('a')) {
+              e.preventDefault();
+            }
             this.toggleMinimize();
           }
         });

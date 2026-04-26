@@ -63,4 +63,55 @@ export class PlayerHandler {
   seekBy(seconds) {
     this.api?.seekBy(seconds);
   }
+
+  /**
+   * Additional player methods
+   */
+  getVideoData() {
+    return this.api?.getVideoData() || null;
+  }
+
+  nextTrack() {
+    this.api?.nextVideo();
+  }
+
+  previousTrack() {
+    this.api?.previousVideo();
+  }
+
+  getVolume() {
+    return this.api?.getVolume() || 0;
+  }
+
+  setVolume(volume) {
+    this.api?.setVolume(volume);
+  }
+
+  isMuted() {
+    return this.api?.isMuted() || false;
+  }
+
+  mute() {
+    this.api?.mute();
+  }
+
+  unMute() {
+    this.api?.unMute();
+  }
+
+  getCurrentTime() {
+    return this.api?.getCurrentTime() || 0;
+  }
+
+  getDuration() {
+    return this.api?.getDuration() || 0;
+  }
+
+  /**
+   * Gets the current state of the player
+   * @returns {number} Value from CONSTANTS.PLAYER.STATE
+   */
+  getPlayerState() {
+    return this.api?.getPlayerState() || 0;
+  }
 }

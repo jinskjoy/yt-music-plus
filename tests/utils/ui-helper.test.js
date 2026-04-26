@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { UIHelper, MediaItem } from '../../utils/ui-helper.js';
+import { CONSTANTS } from '../../utils/constants.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -75,6 +76,43 @@ describe('UIHelper', () => {
       expect(el.querySelector('.media-artist').textContent).toBe('Test Artist');
       expect(el.querySelector('.media-link').href).toBe('https://youtube.com/watch?v=123');
       expect(el.querySelector('.media-thumbnail').src).toBe('https://img.com/123.jpg');
+    });
+
+    it('should show/hide play and pause buttons on hover based on player state', () => {
+      const media = { videoId: 'vid123', name: 'Test Song' };
+      const playerHandler = {
+        getVideoData: vi.fn(),
+        getPlayerState: vi.fn(),
+        playTrack: vi.fn(),
+        pauseTrack: vi.fn(),
+        seekBy: vi.fn()
+      };
+
+      const el = MediaItem.render(media, playerHandler);
+      const mediaInfo = el.querySelector('.media-info');
+      const playBtn = el.querySelector('.btn-play');
+      const pauseBtn = el.querySelector('.btn-pause');
+
+      // Case 1: Playing the current track
+      playerHandler.getVideoData.mockReturnValue({ video_id: 'vid123' });
+      playerHandler.getPlayerState.mockReturnValue(CONSTANTS.PLAYER.STATE.PLAYING); // Playing
+      
+      mediaInfo.dispatchEvent(new MouseEvent('mouseenter'));
+      expect(playBtn.classList.contains('hidden')).toBe(true);
+      expect(pauseBtn.classList.contains('hidden')).toBe(false);
+
+      // Case 2: Paused on the current track
+      playerHandler.getPlayerState.mockReturnValue(CONSTANTS.PLAYER.STATE.PAUSED); // Paused
+      mediaInfo.dispatchEvent(new MouseEvent('mouseenter'));
+      expect(playBtn.classList.contains('hidden')).toBe(false);
+      expect(pauseBtn.classList.contains('hidden')).toBe(true);
+
+      // Case 3: Different track playing
+      playerHandler.getVideoData.mockReturnValue({ video_id: 'different' });
+      playerHandler.getPlayerState.mockReturnValue(CONSTANTS.PLAYER.STATE.PLAYING); // Playing
+      mediaInfo.dispatchEvent(new MouseEvent('mouseenter'));
+      expect(playBtn.classList.contains('hidden')).toBe(false);
+      expect(pauseBtn.classList.contains('hidden')).toBe(true);
     });
   });
 });
