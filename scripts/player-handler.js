@@ -9,6 +9,8 @@ export class PlayerHandler {
     this.initialized = false;
     this.retryCount = 0;
     this.maxRetries = CONSTANTS.PLAYER.MAX_RETRIES;
+    this.localPlayer = null;
+    this.currentLocalFile = null;
   }
 
   /**
@@ -44,6 +46,9 @@ export class PlayerHandler {
    * Playback actions
    */
   playTrack(videoId) {
+    // Stop local player if running
+    this.pauseLocalTrack();
+
     const playerApi = this.api;
     if (!playerApi) return;
     
@@ -56,12 +61,44 @@ export class PlayerHandler {
     }
   }
 
+  playLocalFile(file) {
+    if (!file) return;
+
+    // Pause YouTube player
+    this.api?.pauseVideo();
+
+    if (!this.localPlayer) {
+      this.localPlayer = new Audio();
+    }
+
+    if (this.currentLocalFile !== file) {
+      if (this.localPlayer.src) {
+        URL.revokeObjectURL(this.localPlayer.src);
+      }
+      this.localPlayer.src = URL.createObjectURL(file);
+      this.currentLocalFile = file;
+    }
+
+    this.localPlayer.play();
+  }
+
   pauseTrack() {
     this.api?.pauseVideo();
+    this.pauseLocalTrack();
+  }
+
+  pauseLocalTrack() {
+    if (this.localPlayer && !this.localPlayer.paused) {
+      this.localPlayer.pause();
+    }
   }
 
   seekBy(seconds) {
-    this.api?.seekBy(seconds);
+    if (this.localPlayer && !this.localPlayer.paused) {
+      this.localPlayer.currentTime += seconds;
+    } else {
+      this.api?.seekBy(seconds);
+    }
   }
 
   /**
@@ -112,6 +149,18 @@ export class PlayerHandler {
    * @returns {number} Value from CONSTANTS.PLAYER.STATE
    */
   getPlayerState() {
+    if (this.localPlayer && !this.localPlayer.paused) {
+      return CONSTANTS.PLAYER.STATE.PLAYING;
+    }
     return this.api?.getPlayerState() ?? CONSTANTS.PLAYER.STATE.UNSTARTED;
+  }
+
+  /**
+   * Checks if a local file is currently playing
+   * @param {File} file 
+   * @returns {boolean}
+   */
+  isLocalFilePlaying(file) {
+    return this.localPlayer && !this.localPlayer.paused && this.currentLocalFile === file;
   }
 }

@@ -188,4 +188,51 @@ describe('PlayerHandler', () => {
 
     expect(handler.getPlayerState()).toBe(CONSTANTS.PLAYER.STATE.PLAYING);
   });
+
+  describe('Local playback', () => {
+    it('should play local file and pause YouTube player', () => {
+      const mockApi = { pauseVideo: vi.fn() };
+      const mockApp = document.createElement('ytmusic-app');
+      mockApp.playerApi = mockApi;
+      document.body.appendChild(mockApp);
+
+      const mockFile = new File([''], 'test.mp3', { type: 'audio/mpeg' });
+      
+      // Mock Audio play and paused property
+      const playSpy = vi.spyOn(Audio.prototype, 'play').mockImplementation(function() {
+        vi.spyOn(this, 'paused', 'get').mockReturnValue(false);
+        return Promise.resolve();
+      });
+      
+      handler.playLocalFile(mockFile);
+
+      expect(mockApi.pauseVideo).toHaveBeenCalled();
+      expect(playSpy).toHaveBeenCalled();
+      expect(handler.isLocalFilePlaying(mockFile)).toBe(true);
+    });
+
+    it('should pause local playback', () => {
+      const mockFile = new File([''], 'test.mp3', { type: 'audio/mpeg' });
+      const pauseSpy = vi.spyOn(Audio.prototype, 'pause').mockImplementation(() => {});
+      
+      // Simulate playing
+      handler.localPlayer = new Audio();
+      handler.currentLocalFile = mockFile;
+      vi.spyOn(handler.localPlayer, 'paused', 'get').mockReturnValue(false);
+
+      handler.pauseLocalTrack();
+      expect(pauseSpy).toHaveBeenCalled();
+    });
+
+    it('should seek local playback', () => {
+      const mockFile = new File([''], 'test.mp3', { type: 'audio/mpeg' });
+      handler.localPlayer = new Audio();
+      handler.currentLocalFile = mockFile;
+      vi.spyOn(handler.localPlayer, 'paused', 'get').mockReturnValue(false);
+      handler.localPlayer.currentTime = 10;
+
+      handler.seekBy(5);
+      expect(handler.localPlayer.currentTime).toBe(15);
+    });
+  });
 });

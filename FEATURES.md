@@ -72,8 +72,9 @@ This document provides a comprehensive list of features for the YouTube Music + 
 - **Behavior**:
     - Parses file names to create a search list.
     - Filters out "generic" or short filenames (e.g., "track 01").
+    - **Preview Playback**: Allows users to preview local audio files directly in the popup before searching.
     - Allows users to search for these tracks on YTM.
-- **Testable Case**: Select a local folder; verify files are listed; click "Start Search" to find them on YTM.
+- **Testable Case**: Select a local folder; verify files are listed; hover over a track and click "Play" to preview; click "Start Search" to find them on YTM.
 
 ### 2.5 Import from File
 - **Feature**: Reads a `.txt` file where each line is a song title.
