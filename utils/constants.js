@@ -83,6 +83,7 @@ export const CONSTANTS = {
     SELECTORS: {
       YT_MUSIC_HEADER: 'ytmusic-responsive-header-renderer',
       ITEMS_GRID_CHECKBOXES: '#yt-music-plus-itemsGridContainer .item-checkbox',
+      ACTIVE_ACTION_BUTTON: '.playlist-action-buttons .btn.active',
     }
   },
   SETTINGS: {
@@ -90,6 +91,7 @@ export const CONSTANTS = {
       showNavButton: true,
       showPlaylistButton: true,
       loadAllPlaylists: false,
+      autoListAllTracks: true,
       hideWarningMessage: false
     }
   },

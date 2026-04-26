@@ -48,9 +48,17 @@ export class BridgeUI {
    * Clears the active state from all playlist action buttons
    */
   clearActiveButtons() {
-    document.querySelectorAll(`.${CONSTANTS.UI.CLASSES.PLAYLIST_ACTION_BUTTONS} .${CONSTANTS.UI.CLASSES.BTN}.${CONSTANTS.UI.CLASSES.ACTIVE}`).forEach(btn => {
+    document.querySelectorAll(CONSTANTS.UI.SELECTORS.ACTIVE_ACTION_BUTTON).forEach(btn => {
       btn.classList.remove(CONSTANTS.UI.CLASSES.ACTIVE);
     });
+  }
+
+  /**
+   * Checks if any playlist action button is currently active
+   * @returns {boolean} True if a button is active
+   */
+  hasActiveActionButton() {
+    return !!document.querySelector(CONSTANTS.UI.SELECTORS.ACTIVE_ACTION_BUTTON);
   }
 
   /**

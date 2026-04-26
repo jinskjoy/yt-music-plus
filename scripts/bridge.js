@@ -527,6 +527,12 @@ import { CONSTANTS } from '../utils/constants.js';
         document.getElementById(CONSTANTS.UI.ELEMENT_IDS.CLEAR_SEARCH_BTN)?.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
         this.ui.filterGridItems('');
       }
+
+      // Auto-list tracks if enabled and no button is active
+      if (this.extSettings?.autoListAllTracks !== false && !this.ui.hasActiveActionButton()) {
+        this.processor.listAllTracks();
+        this.ui.setActiveButton(CONSTANTS.UI.BUTTON_IDS.LIST_ALL_TRACKS);
+      }
     }
 
     /**

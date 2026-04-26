@@ -300,7 +300,7 @@
 }
 
 .btn-primary:hover:not(:disabled),
-.btn-primary.active:not(:disabled) {
+.btn-primary.active {
     background-color: white;
     color: black;
 }
