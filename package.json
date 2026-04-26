@@ -4,7 +4,7 @@
   "description": "Chrome extension for YouTube Music with utilities to remove unavailable tracks, find replacements, and more.",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite dev",
     "build": "vite build",
     "pack": "npm run build && mkdir -p dist-zip && cd dist && zip -r ../dist-zip/yt-music-plus-v$(node -p \"require('./manifest.json').version\").zip . && cd ..",
     "test": "vitest run"

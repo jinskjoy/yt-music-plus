@@ -38,10 +38,6 @@ export class BridgeUI {
       container.replaceChildren();
     }
     document.querySelector(`.${CONSTANTS.UI.CLASSES.ITEMS_GRID_WRAPPER}`)?.classList.remove(CONSTANTS.UI.CLASSES.LIST_ONLY_MODE);
-
-    document.getElementById(CONSTANTS.UI.BUTTON_IDS.REPLACE_SELECTED)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
-    document.getElementById(CONSTANTS.UI.BUTTON_IDS.ADD_SELECTED)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
-    document.getElementById(CONSTANTS.UI.BUTTON_IDS.REMOVE_SELECTED)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
   }
 
   /**
@@ -154,12 +150,62 @@ export class BridgeUI {
   }
 
   /**
+   * Toggles the visibility of the target selection UI
+   * @param {boolean} isVisible - Whether the target selection is active
+   */
+  setTargetSelectionVisibility(isVisible) {
+    const cancelBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.CANCEL_TARGET_SELECTION);
+    if (cancelBtn) cancelBtn.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !isVisible);
+
+    const detailsScreen = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_DETAILS_SCREEN);
+    if (detailsScreen) detailsScreen.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, isVisible);
+
+    const selectionScreen = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_SELECTION_SCREEN);
+    if (selectionScreen) selectionScreen.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !isVisible);
+
+    if (isVisible) {
+      this.updatePopupTitle(CONSTANTS.UI.STRINGS.SELECT_TARGET_TITLE);
+    }
+  }
+
+  /**
+   * Sets the list-only mode for the grid
+   * @param {boolean} isListOnly - Whether to enable list-only mode
+   */
+  setListOnlyMode(isListOnly) {
+    document.querySelector(`.${CONSTANTS.UI.CLASSES.ITEMS_GRID_WRAPPER}`)?.classList.toggle(CONSTANTS.UI.CLASSES.LIST_ONLY_MODE, isListOnly);
+  }
+
+  /**
+   * Updates the visibility of the target playlist container
+   * @param {boolean} isVisible 
+   */
+  setTargetContainerVisibility(isVisible) {
+    document.getElementById(CONSTANTS.UI.ELEMENT_IDS.TARGET_PLAYLIST_CONTAINER)?.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !isVisible);
+  }
+
+  /**
+   * Updates visibility of bulk action buttons
+   * @param {Object} options - { replace, add, remove } visibility flags
+   */
+  updateActionButtonsVisibility(options = {}) {
+    const replaceBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.REPLACE_SELECTED);
+    const removeBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.REMOVE_SELECTED);
+    const addBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.ADD_SELECTED);
+
+    if (replaceBtn && options.replace !== undefined) replaceBtn.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !options.replace);
+    if (removeBtn && options.remove !== undefined) removeBtn.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !options.remove);
+    if (addBtn && options.add !== undefined) addBtn.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !options.add);
+  }
+
+  /**
    * Resets action buttons visibility for a newly selected playlist
    * @param {Object} playlist - The selected playlist object
    */
   resetActionButtonsForPlaylist(playlist) {
     const isEditable = playlist?.isEditable !== false;
 
+    this.setTargetContainerVisibility(false);
     document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_LOCAL_REPLACEMENTS)?.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
     document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_UNAVAILABLE)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
     document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_VIDEO_TRACKS)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
@@ -167,13 +213,11 @@ export class BridgeUI {
     document.getElementById(CONSTANTS.UI.BUTTON_IDS.IMPORT_FROM_FILE)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
     document.getElementById(CONSTANTS.UI.BUTTON_IDS.LIST_ALL_TRACKS)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
     
-    const replaceBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.REPLACE_SELECTED);
-    const removeBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.REMOVE_SELECTED);
-    const addBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.ADD_SELECTED);
-
-    if (replaceBtn) replaceBtn.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !isEditable);
-    if (removeBtn) removeBtn.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !isEditable);
-    if (addBtn) addBtn.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !isEditable);
+    this.updateActionButtonsVisibility({
+      replace: isEditable,
+      remove: isEditable,
+      add: isEditable
+    });
   }
 
   /**
@@ -183,6 +227,7 @@ export class BridgeUI {
   updateImportButtonVisibility(playlist) {
     const isEditable = playlist?.isEditable !== false;
 
+    this.setTargetContainerVisibility(true);
     document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_LOCAL_REPLACEMENTS)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
     document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_UNAVAILABLE)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
     document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_VIDEO_TRACKS)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
@@ -190,13 +235,11 @@ export class BridgeUI {
     document.getElementById(CONSTANTS.UI.BUTTON_IDS.IMPORT_FROM_FILE)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
     document.getElementById(CONSTANTS.UI.BUTTON_IDS.LIST_ALL_TRACKS)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
     
-    const replaceBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.REPLACE_SELECTED);
-    const removeBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.REMOVE_SELECTED);
-    const addBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.ADD_SELECTED);
-
-    if (replaceBtn) replaceBtn.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
-    if (removeBtn) removeBtn.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
-    if (addBtn) addBtn.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !isEditable);
+    this.updateActionButtonsVisibility({
+      replace: false,
+      remove: false,
+      add: isEditable
+    });
   }
 
   /**
@@ -274,9 +317,33 @@ export class BridgeUI {
 
     playlistsCache.forEach((playlist) => {
       const card = PlaylistCard.render(playlist);
-      card.addEventListener('click', () => this.bridge.onPlaylistSelected(playlist));
+      card.addEventListener('click', () => {
+        if (this.bridge.isSelectingTarget) {
+          this.bridge.onTargetPlaylistSelected(playlist);
+        } else {
+          this.bridge.onPlaylistSelected(playlist);
+        }
+      });
       playlistsGrid.appendChild(card);
     });
+  }
+
+  /**
+   * Updates the target playlist display
+   * @param {Object} playlist - The target playlist
+   */
+  updateTargetPlaylistDisplay(playlist) {
+    const container = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.TARGET_PLAYLIST_CONTAINER);
+    const nameElement = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.TARGET_PLAYLIST_NAME);
+    
+    if (container && nameElement) {
+      if (playlist) {
+        nameElement.textContent = playlist.title;
+        container.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+      } else {
+        container.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
+      }
+    }
   }
 
   /**

@@ -27,3 +27,6 @@ Follow the coding style guidelines below when modifying or adding to the codebas
 ## UI & State Management
 - **Minimized State:** When implementing "minimize" or "collapse" functionality, use a top-level CSS class (e.g., `.minimized`) on the container. Ensure that clicking the header or a dedicated toggle button restores the state using a centralized `toggleMinimize` method.
 - **Event Delegation:** Prefer adding listeners to parent containers (like the popup header) for actions that should apply to the whole component state.
+
+## Testing & Validation
+- **Run Tests Before Commit:** Always run all automated tests (e.g., `npm test`) before making a commit to ensure no regressions are introduced.

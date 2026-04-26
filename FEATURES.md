@@ -89,6 +89,16 @@ This document provides a comprehensive list of features for the YouTube Music + 
 - **Use Case**: Intended for bulk deletion or general management.
 - **Testable Case**: Click "List All Tracks"; verify all tracks are displayed in the grid.
 
+### 2.7 Target Playlist Selection
+- **Feature**: Allows selecting a different target playlist for track importation.
+- **Behavior**:
+    - Appears when importing from a local folder or file.
+    - Displays the currently active playlist as the default target.
+    - "Change" button opens the playlist selection screen to pick a different target.
+    - "Cancel" button in the selection screen allows returning without changing the target.
+    - Respects user settings for loading editable or all playlists by default, with an option to load all.
+- **Testable Case**: Import tracks from a file; click "Change" next to the target playlist name; select a different playlist; verify that "Add Selected" adds the tracks to that playlist.
+
 ---
 
 ## 3. Track Management & Bulk Operations
