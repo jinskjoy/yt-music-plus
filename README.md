@@ -24,6 +24,7 @@ Managing large YouTube Music playlists can be a chore. Songs become unavailable,
 ## Features
 
 - **Find Unavailable Tracks:** Automatically scan your playlists for "greyed out" unavailable tracks and find suitable replacements.
+- **Playlist Discovery:** Choose between loading only editable playlists or your entire library, including liked playlists and albums.
 - **Find Video Tracks:** Scan your playlists for video tracks and find official audio replacements to improve audio quality and consistency.
 - **Import Local Music:** Scan a local folder of music files or import a list from a text file. The extension will search for these tracks on YouTube Music, allowing you to add them to any of your playlists.
 - **Integrated Track Playback:** Preview any track directly within the extension's grid. Hover over track details to access playback controls (Play, Pause, Skip) without leaving the popup.
