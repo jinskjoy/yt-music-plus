@@ -529,8 +529,7 @@ import { CONSTANTS } from '../utils/constants.js';
       }
 
       // Auto-list tracks if enabled and no button is active
-      const hasActiveButton = document.querySelector(`.${CONSTANTS.UI.CLASSES.PLAYLIST_ACTION_BUTTONS} .${CONSTANTS.UI.CLASSES.BTN}.${CONSTANTS.UI.CLASSES.ACTIVE}`);
-      if (this.extSettings?.autoListAllTracks !== false && !hasActiveButton) {
+      if (this.extSettings?.autoListAllTracks !== false && !this.ui.hasActiveActionButton()) {
         this.processor.listAllTracks();
         this.ui.setActiveButton(CONSTANTS.UI.BUTTON_IDS.LIST_ALL_TRACKS);
       }

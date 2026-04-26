@@ -269,6 +269,12 @@ export class TrackProcessor {
       if (!currentPlaylistId) return;
 
       const items = await this.ytMusicAPI.getPlaylistItems(currentPlaylistId);
+      
+      // Race condition check: Verify if we are still on the same playlist
+      if (this.bridge.currentSelectedPlaylist?.id !== currentPlaylistId) {
+        return;
+      }
+
       this.bridge.ui.setProgressText(`Found ${items.length} tracks. Select tracks to remove.`);
 
       if (items.length === 0) return;
