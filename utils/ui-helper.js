@@ -35,6 +35,10 @@ export class MediaItem {
     if (playerHandler && (media.videoId || media.localFile) && controls) {
       controls.classList.remove('hidden');
       
+      // Cache control buttons to avoid redundant DOM queries
+      const playBtn = controls.querySelector('.btn-play');
+      const pauseBtn = controls.querySelector('.btn-pause');
+
       const bindControl = (selector, action) => {
         const btn = controls.querySelector(selector);
         if (btn) {
@@ -55,11 +59,14 @@ export class MediaItem {
           const currentVideoData = playerHandler.getVideoData();
           const playerState = playerHandler.getPlayerState();
           const isCurrentTrack = currentVideoData && currentVideoData.video_id === media.videoId;
-          isPlaying = isCurrentTrack && playerState === CONSTANTS.PLAYER.STATE.PLAYING;
+          
+          // Use an array for active playback states to improve scalability
+          const activeStates = [
+            CONSTANTS.PLAYER.STATE.PLAYING,
+            CONSTANTS.PLAYER.STATE.BUFFERING
+          ];
+          isPlaying = isCurrentTrack && activeStates.includes(playerState);
         }
-
-        const playBtn = controls.querySelector('.btn-play');
-        const pauseBtn = controls.querySelector('.btn-pause');
 
         if (playBtn) playBtn.classList.toggle('hidden', isPlaying);
         if (pauseBtn) pauseBtn.classList.toggle('hidden', !isPlaying);
@@ -73,8 +80,6 @@ export class MediaItem {
         }
         
         // Immediate optimistic update
-        const playBtn = controls.querySelector('.btn-play');
-        const pauseBtn = controls.querySelector('.btn-pause');
         if (playBtn) playBtn.classList.add('hidden');
         if (pauseBtn) pauseBtn.classList.remove('hidden');
         
@@ -84,8 +89,6 @@ export class MediaItem {
       bindControl('.btn-pause', () => {
         playerHandler.pauseTrack();
         // Immediate optimistic update
-        const playBtn = controls.querySelector('.btn-play');
-        const pauseBtn = controls.querySelector('.btn-pause');
         if (playBtn) playBtn.classList.remove('hidden');
         if (pauseBtn) pauseBtn.classList.add('hidden');
 
@@ -99,6 +102,9 @@ export class MediaItem {
       if (mediaInfo) {
         mediaInfo.addEventListener('mouseenter', updateButtonVisibility);
       }
+
+      // Initial visibility update
+      updateButtonVisibility();
     } else {
       controls?.remove();
     }
