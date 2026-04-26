@@ -527,6 +527,13 @@ import { CONSTANTS } from '../utils/constants.js';
         document.getElementById(CONSTANTS.UI.ELEMENT_IDS.CLEAR_SEARCH_BTN)?.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
         this.ui.filterGridItems('');
       }
+
+      // Auto-list tracks if enabled and no button is active
+      const hasActiveButton = document.querySelector(`.${CONSTANTS.UI.CLASSES.PLAYLIST_ACTION_BUTTONS} .${CONSTANTS.UI.CLASSES.BTN}.${CONSTANTS.UI.CLASSES.ACTIVE}`);
+      if (this.extSettings?.autoListAllTracks !== false && !hasActiveButton) {
+        this.processor.listAllTracks();
+        this.ui.setActiveButton(CONSTANTS.UI.BUTTON_IDS.LIST_ALL_TRACKS);
+      }
     }
 
     /**

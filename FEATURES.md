@@ -42,6 +42,7 @@ This document provides a comprehensive list of features for the YouTube Music + 
     - Toggle Navigation Button.
     - Toggle Playlist Page Button.
     - **Always load all playlists**: When enabled, the extension fetches all playlists from the user's library by default instead of only editable ones.
+    - **Automatically list all tracks on playlist selection**: When enabled (default), the extension will automatically trigger "List All Tracks" when a playlist is selected, provided no other action is currently active.
     - Reset "Hide Warning Message" state.
     - Save/Reset to Defaults buttons.
 - **Testable Case**: Change a setting, save, and verify the UI updates accordingly on music.youtube.com.
@@ -55,6 +56,7 @@ This document provides a comprehensive list of features for the YouTube Music + 
 - **Refresh Options**:
     - **Load Editable Playlists**: Re-fetches only the playlists that the user has permission to edit.
     - **Load All Playlists**: Fetches all playlists found in the user's library, including liked playlists and albums added as playlists.
+- **Auto-Listing**: By default, selecting a playlist from the grid will automatically fetch and display all its tracks if no other button is active. This behavior can be toggled in Settings.
 - **Default Behavior**: Defaults to editable playlists unless "Always load all playlists" is enabled in settings.
 - **Testable Case**: Click "Load Editable Playlists" and verify only owned/editable playlists appear; click "Load All Playlists" and verify a broader set of playlists is loaded.
 

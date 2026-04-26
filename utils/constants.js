@@ -90,6 +90,7 @@ export const CONSTANTS = {
       showNavButton: true,
       showPlaylistButton: true,
       loadAllPlaylists: false,
+      autoListAllTracks: true,
       hideWarningMessage: false
     }
   },
