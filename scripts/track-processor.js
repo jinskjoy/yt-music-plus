@@ -325,6 +325,7 @@ export class TrackProcessor {
           artists: [],
           album: '',
           isLocal: true,
+          localFile: file,
           isSearching: !isGeneric,
           isGeneric: isGeneric
         });

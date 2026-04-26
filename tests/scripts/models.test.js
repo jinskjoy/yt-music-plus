@@ -42,6 +42,18 @@ describe('Track Class', () => {
     expect(track.toSearchQuery()).toBe('Song - Album - Artist 1, Artist 2');
   });
 
+  it('should handle local file correctly', () => {
+    const mockFile = { name: 'test.mp3' };
+    const track = new Track({
+      name: 'Local Song',
+      isLocal: true,
+      localFile: mockFile
+    });
+
+    expect(track.isLocal).toBe(true);
+    expect(track.localFile).toBe(mockFile);
+  });
+
   it('should handle replacement as a Track instance', () => {
     const replacementData = { name: 'Replacement' };
     const track = new Track({

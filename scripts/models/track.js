@@ -21,6 +21,7 @@ export class Track {
    * @param {boolean} [params.isSearching] - Current search status
    * @param {boolean} [params.searchCancelled] - Whether searching was cancelled
    * @param {boolean} [params.isSkipped] - Whether the track was skipped during processing
+   * @param {File} [params.localFile] - The actual File object for local tracks
    * @param {Track|Object} [params.replacement] - Found replacement track
    */
   constructor({
@@ -38,6 +39,7 @@ export class Track {
     isSearching = false,
     searchCancelled = false,
     isSkipped = false,
+    localFile = null,
     replacement = null
   }) {
     this.name = name;
@@ -54,6 +56,7 @@ export class Track {
     this.isSearching = isSearching;
     this.searchCancelled = searchCancelled;
     this.isSkipped = isSkipped;
+    this.localFile = localFile;
     
     this.replacement = null;
     if (replacement) {

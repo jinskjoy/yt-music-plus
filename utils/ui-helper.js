@@ -31,8 +31,8 @@ export class MediaItem {
       thumb.remove();
     }
 
-    // Setup player controls if playerHandler and videoId are provided
-    if (playerHandler && media.videoId && controls) {
+    // Setup player controls if playerHandler and (videoId or localFile) are provided
+    if (playerHandler && (media.videoId || media.localFile) && controls) {
       controls.classList.remove('hidden');
       
       const bindControl = (selector, action) => {
@@ -47,10 +47,16 @@ export class MediaItem {
       };
 
       const updateButtonVisibility = () => {
-        const currentVideoData = playerHandler.getVideoData();
-        const playerState = playerHandler.getPlayerState();
-        const isCurrentTrack = currentVideoData && currentVideoData.video_id === media.videoId;
-        const isPlaying = isCurrentTrack && playerState === CONSTANTS.PLAYER.STATE.PLAYING;
+        let isPlaying = false;
+        
+        if (media.localFile) {
+          isPlaying = playerHandler.isLocalFilePlaying(media.localFile);
+        } else if (media.videoId) {
+          const currentVideoData = playerHandler.getVideoData();
+          const playerState = playerHandler.getPlayerState();
+          const isCurrentTrack = currentVideoData && currentVideoData.video_id === media.videoId;
+          isPlaying = isCurrentTrack && playerState === CONSTANTS.PLAYER.STATE.PLAYING;
+        }
 
         const playBtn = controls.querySelector('.btn-play');
         const pauseBtn = controls.querySelector('.btn-pause');
@@ -60,7 +66,12 @@ export class MediaItem {
       };
 
       bindControl('.btn-play', () => {
-        playerHandler.playTrack(media.videoId);
+        if (media.localFile) {
+          playerHandler.playLocalFile(media.localFile);
+        } else {
+          playerHandler.playTrack(media.videoId);
+        }
+        
         // Immediate optimistic update
         const playBtn = controls.querySelector('.btn-play');
         const pauseBtn = controls.querySelector('.btn-pause');
