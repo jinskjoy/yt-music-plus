@@ -103,6 +103,7 @@ import { CONSTANTS } from '../utils/constants.js';
       this.thumbnail = item.thumbnail;
       this.url = item.videoId ? baseUrl + item.videoId : null;
       this.videoId = item.videoId;
+      this.localFile = item.localFile;
       this.playlistSetVideoId = item.playlistSetVideoId;
       this.isGoodMatch = item.isGoodMatch;
       this.isPending = false;
