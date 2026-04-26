@@ -1,5 +1,6 @@
 # <img src="images/yt-music-plus-logo-circle.png" width="40"> YouTube Music +
 
+[![Version](https://img.shields.io/badge/version-1.4.0-blue.svg)](manifest.json)
 
 A browser extension to keep your YouTube Music playlists fresh, clean, and more.
 
@@ -25,7 +26,9 @@ Managing large YouTube Music playlists can be a chore. Songs become unavailable,
 - **Find Unavailable Tracks:** Automatically scan your playlists for "greyed out" unavailable tracks and find suitable replacements.
 - **Find Video Tracks:** Scan your playlists for video tracks and find official audio replacements to improve audio quality and consistency.
 - **Import Local Music:** Scan a local folder of music files or import a list from a text file. The extension will search for these tracks on YouTube Music, allowing you to add them to any of your playlists.
+- **Integrated Track Playback:** Preview any track directly within the extension's grid. Hover over track details to access playback controls (Play, Pause, Skip) without leaving the popup.
 - **List All Tracks:** View all tracks in a playlist in a simple list, making it easy to select and remove multiple tracks at once.
+- **Visual Feedback:** Action buttons highlight when active, clearly indicating the current view or operation.
 - **Flexible Actions:** After finding replacements, you can choose to replace the original tracks, add the new tracks alongside the old ones, or just remove the original tracks.
 
 ## How to Use
