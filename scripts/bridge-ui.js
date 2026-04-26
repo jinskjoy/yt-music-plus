@@ -42,8 +42,12 @@ export class BridgeUI {
     document.getElementById('replaceSelectedBtn')?.classList.remove('hidden');
     document.getElementById('addSelectedBtn')?.classList.remove('hidden');
     document.getElementById('removeSelectedBtn')?.classList.remove('hidden');
+  }
 
-    // Clear active button state
+  /**
+   * Clears the active state from all playlist action buttons
+   */
+  clearActiveButtons() {
     document.querySelectorAll('.playlist-action-buttons .btn.active').forEach(btn => {
       btn.classList.remove('active');
     });
@@ -55,9 +59,7 @@ export class BridgeUI {
    */
   setActiveButton(buttonId) {
     // First clear any existing active buttons in this section
-    document.querySelectorAll('.playlist-action-buttons .btn.active').forEach(btn => {
-      btn.classList.remove('active');
-    });
+    this.clearActiveButtons();
 
     // Set the new button as active
     const btn = document.getElementById(buttonId);

@@ -301,6 +301,7 @@ import { CONSTANTS } from '../utils/constants.js';
           this.toggleMinimize();
         }
       }
+      this.ui.clearActiveButtons();
       this.enableReload();
     }
 
@@ -395,24 +396,24 @@ import { CONSTANTS } from '../utils/constants.js';
 
       // Action button listeners
       this.attachButtonListener('findUnavailableBtn', () => {
-        this.ui.setActiveButton('findUnavailableBtn');
         this.processor.findUnavailableTracks();
+        this.ui.setActiveButton('findUnavailableBtn');
       });
       this.attachButtonListener('findVideoTracksBtn', () => {
-        this.ui.setActiveButton('findVideoTracksBtn');
         this.processor.findVideoTracks();
+        this.ui.setActiveButton('findVideoTracksBtn');
       });
       this.attachButtonListener('replaceSelectedBtn', () => this.replaceSelectedItems());
       this.attachButtonListener('addSelectedBtn', () => this.addSelectedItems());
       this.attachButtonListener('removeSelectedBtn', () => this.removeSelectedItems());
       this.attachButtonListener('importFromFolderBtn', () => {
-        this.ui.setActiveButton('importFromFolderBtn');
         this.processor.importFromFolder();
+        this.ui.setActiveButton('importFromFolderBtn');
       });
       this.attachButtonListener('findLocalReplacementsBtn', () => this.findReplacementsForLocalTracks());
       this.attachButtonListener('listAllTracksBtn', () => {
-        this.ui.setActiveButton('listAllTracksBtn');
         this.processor.listAllTracks();
+        this.ui.setActiveButton('listAllTracksBtn');
       });
       this.attachButtonListener('importFromFileBtn', () => {
         document.getElementById('importFileInput')?.click();
@@ -421,8 +422,8 @@ import { CONSTANTS } from '../utils/constants.js';
       const fileInput = document.getElementById('importFileInput');
       if (fileInput) {
         fileInput.addEventListener('change', (e) => {
-          this.ui.setActiveButton('importFromFileBtn');
           this.processor.importFromFile(e);
+          this.ui.setActiveButton('importFromFileBtn');
         });
       }
 
@@ -502,6 +503,7 @@ import { CONSTANTS } from '../utils/constants.js';
 
       if (!this.currentSelectedPlaylist || this.currentSelectedPlaylist.id !== playlist.id) {
         this.ui.clearPlaylistItemsContainer();
+        this.ui.clearActiveButtons();
         this.currentSelectedPlaylist = playlist;
         this.ui.setProgressText('');
       }

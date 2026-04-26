@@ -73,19 +73,17 @@ describe('BridgeUI', () => {
   });
 
   describe('clearPlaylistItemsContainer', () => {
-    it('should clear rows, ensure action buttons are visible and clear active buttons', () => {
+    it('should clear rows and ensure action buttons are visible', () => {
       const container = document.getElementById('yt-music-plus-itemsGridContainer');
       container.appendChild(document.createElement('div'));
       
       const replaceBtn = document.getElementById('replaceSelectedBtn');
       const addBtn = document.getElementById('addSelectedBtn');
       const removeBtn = document.getElementById('removeSelectedBtn');
-      const listAllBtn = document.getElementById('listAllTracksBtn');
       
       replaceBtn.classList.add('hidden');
       addBtn.classList.add('hidden');
       removeBtn.classList.add('hidden');
-      listAllBtn.classList.add('active');
 
       bridgeUI.clearPlaylistItemsContainer();
 
@@ -93,8 +91,22 @@ describe('BridgeUI', () => {
       expect(replaceBtn.classList.contains('hidden')).toBe(false);
       expect(addBtn.classList.contains('hidden')).toBe(false);
       expect(removeBtn.classList.contains('hidden')).toBe(false);
-      expect(listAllBtn.classList.contains('active')).toBe(false);
       expect(bridgeUI.rowMap.size).toBe(0);
+    });
+  });
+
+  describe('clearActiveButtons', () => {
+    it('should remove active class from all buttons', () => {
+      const listAllBtn = document.getElementById('listAllTracksBtn');
+      const findUnavailableBtn = document.getElementById('findUnavailableBtn');
+      
+      listAllBtn.classList.add('active');
+      findUnavailableBtn.classList.add('active');
+      
+      bridgeUI.clearActiveButtons();
+      
+      expect(listAllBtn.classList.contains('active')).toBe(false);
+      expect(findUnavailableBtn.classList.contains('active')).toBe(false);
     });
   });
 
