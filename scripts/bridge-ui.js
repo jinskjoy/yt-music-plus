@@ -114,7 +114,7 @@ export class BridgeUI {
         if (replacementCol) {
           const ignoreBtn = document.createElement('button');
           ignoreBtn.className = `${CONSTANTS.UI.CLASSES.BTN} ${CONSTANTS.UI.CLASSES.BTN_PRIMARY} ${CONSTANTS.UI.CLASSES.IGNORE_GROUP_BTN} btn-icon`;
-          ignoreBtn.innerHTML = '✕';
+          ignoreBtn.textContent = '✕';
           ignoreBtn.title = 'Ignore this group';
           ignoreBtn.type = 'button';
           ignoreBtn.addEventListener('click', () => {
