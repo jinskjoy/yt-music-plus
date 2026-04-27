@@ -89,7 +89,17 @@ This document provides a comprehensive list of features for the YouTube Music + 
 - **Use Case**: Intended for bulk deletion or general management.
 - **Testable Case**: Click "List All Tracks"; verify all tracks are displayed in the grid.
 
-### 2.7 Target Playlist Selection
+### 2.7 Duplicate Track Check
+- **Feature**: Scans the selected playlist for duplicate tracks.
+- **Detection Logic**: Identifies duplicates based on matching Video IDs or highly similar titles (0.9 similarity threshold).
+- **Grouping**: Visually groups duplicate tracks with distinct borders and alternating background colors for easy identification.
+- **Default Selection**: In each group, the extension automatically marks the first available audio track (non-video) to be kept.
+- **Actions**:
+    - **Keep Only Selected**: Bulk removal of all unmarked tracks in duplicate groups.
+    - **Ignore Group**: An icon button (✕) in each group to remove it from the list without modifying the playlist.
+- **Testable Case**: Select a playlist with duplicates; click "Find Duplicate Tracks"; verify grouping and default selection; click "Keep Only Selected" and verify unmarked duplicates are removed.
+
+### 2.8 Target Playlist Selection
 - **Feature**: Allows selecting a different target playlist for track importation.
 - **Behavior**:
     - Appears when importing from a local folder or file.
