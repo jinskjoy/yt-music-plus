@@ -263,6 +263,7 @@ export class TrackProcessor {
     this.bridge.ui.clearPlaylistItemsContainer();
     this.bridge.ui.resetActionButtonsForPlaylist(this.bridge.currentSelectedPlaylist);
     this.bridge.ui.setTargetContainerVisibility(false);
+    this.bridge.ui.setDuplicateTrackMode(true);
     this.bridge.ui.toggleSearchProgress(true, true);
     this.bridge.ui.setProgressText(MESSAGES.SEARCH.FINDING_DUPLICATES);
 
@@ -299,14 +300,22 @@ export class TrackProcessor {
         const keepIndex = audioTrackIndex !== -1 ? audioTrackIndex : 0;
 
         group.forEach((track, trackIndex) => {
-          track.isChecked = (trackIndex === keepIndex);
+          const isToKeep = (trackIndex === keepIndex);
           track.isSearching = false;
           track.searchCancelled = false;
           track.replacement = null;
-          this.bridge.ui.addItem(track, CONSTANTS.API.BASE_URL, i++, {
+          
+          // Pass the isChecked state to addItem
+          const gridRow = this.bridge.ui.addItem(track, CONSTANTS.API.BASE_URL, i++, {
             isStart: trackIndex === 0,
             groupIndex
           });
+          
+          // Set the checkbox state explicitly
+          const checkbox = gridRow.querySelector(`.${CONSTANTS.UI.CLASSES.ITEM_CHECKBOX}`);
+          if (checkbox) {
+            checkbox.checked = isToKeep;
+          }
         });
       });
 

@@ -56,7 +56,11 @@ export class BridgeUI {
     if (container) {
       container.replaceChildren();
     }
-    document.querySelector(`.${CONSTANTS.UI.CLASSES.ITEMS_GRID_WRAPPER}`)?.classList.remove(CONSTANTS.UI.CLASSES.LIST_ONLY_MODE);
+    const wrapper = document.querySelector(`.${CONSTANTS.UI.CLASSES.ITEMS_GRID_WRAPPER}`);
+    if (wrapper) {
+      wrapper.classList.remove(CONSTANTS.UI.CLASSES.LIST_ONLY_MODE);
+      wrapper.classList.remove(CONSTANTS.UI.CLASSES.DUPLICATE_TRACK_MODE);
+    }
   }
 
   /**
@@ -125,6 +129,7 @@ export class BridgeUI {
 
     document.getElementById(CONSTANTS.UI.ELEMENT_IDS.ITEMS_GRID_CONTAINER)?.appendChild(gridRow);
     this.rowMap.set(index, gridRow);
+    return gridRow;
   }
 
   /**
@@ -315,6 +320,14 @@ export class BridgeUI {
         remove: true
       });
     }
+  }
+
+  /**
+   * Sets the duplicate track mode for the grid
+   * @param {boolean} isDuplicateMode - Whether to enable duplicate mode
+   */
+  setDuplicateTrackMode(isDuplicateMode) {
+    document.querySelector(`.${CONSTANTS.UI.CLASSES.ITEMS_GRID_WRAPPER}`)?.classList.toggle(CONSTANTS.UI.CLASSES.DUPLICATE_TRACK_MODE, isDuplicateMode);
   }
 
   /**

@@ -106,6 +106,7 @@ export const CONSTANTS = {
       BTN_SECONDARY: 'btn-secondary',
       BTN_DANGER: 'btn-danger',
       LIST_ONLY_MODE: 'list-only-mode',
+      DUPLICATE_TRACK_MODE: 'duplicate-track-mode',
       ITEM_CHECKBOX: 'item-checkbox',
       GRID_ROW: 'grid-row',
       BTN: 'btn',

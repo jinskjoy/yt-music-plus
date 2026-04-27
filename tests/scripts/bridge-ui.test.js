@@ -341,6 +341,18 @@ describe('BridgeUI', () => {
     });
   });
 
+  describe('setDuplicateTrackMode', () => {
+    it('should toggle duplicate track mode class', () => {
+      const gridWrapper = document.querySelector('.items-grid-wrapper');
+      
+      bridgeUI.setDuplicateTrackMode(true);
+      expect(gridWrapper.classList.contains('duplicate-track-mode')).toBe(true);
+      
+      bridgeUI.setDuplicateTrackMode(false);
+      expect(gridWrapper.classList.contains('duplicate-track-mode')).toBe(false);
+    });
+  });
+
   describe('updateTargetPlaylistDisplay', () => {
     it('should show container and set name when playlist is provided', () => {
       const playlist = { title: 'My Target Playlist' };

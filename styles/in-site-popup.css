@@ -581,12 +581,16 @@
 
 /* List Only Mode Adjustments */
 .items-grid-wrapper.list-only-mode .grid-col-replacement,
-.items-grid-wrapper.list-only-mode .items-grid-header .grid-col-replacement {
+.items-grid-wrapper.list-only-mode .items-grid-header .grid-col-replacement,
+.items-grid-wrapper.duplicate-track-mode .grid-col-replacement,
+.items-grid-wrapper.duplicate-track-mode .items-grid-header .grid-col-replacement {
     display: none;
 }
 
 .items-grid-wrapper.list-only-mode .items-grid-header,
-.items-grid-wrapper.list-only-mode .grid-row {
+.items-grid-wrapper.list-only-mode .grid-row,
+.items-grid-wrapper.duplicate-track-mode .items-grid-header,
+.items-grid-wrapper.duplicate-track-mode .grid-row {
     grid-template-columns: 35px 1fr 35px;
 }
 

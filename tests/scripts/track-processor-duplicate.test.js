@@ -16,8 +16,6 @@ vi.mock('../../utils/ui-helper.js', () => ({
 vi.mock('../../utils/utils.js', () => ({
   TextSimilarity: {
     isGoodMatch: vi.fn((t1, t2, threshold) => {
-      // Use the threshold passed to the mock
-      const effectiveThreshold = threshold || CONSTANTS.API.SIMILARITY_THRESHOLD;
       if (t1 === t2) return true;
       if (t1.includes('Shake It Off') && t2.includes('Shake It Off')) return true;
       return false;
@@ -37,6 +35,16 @@ describe('TrackProcessor - Duplicate Track Check', () => {
       getCurrentPlaylistIdFromURL: vi.fn(() => 'PL123')
     };
 
+    const mockAddItem = vi.fn((track, baseUrl, index) => {
+      const el = document.createElement('div');
+      el.className = 'grid-row';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.className = CONSTANTS.UI.CLASSES.ITEM_CHECKBOX;
+      el.appendChild(cb);
+      return el;
+    });
+
     mockBridge = {
       ytMusicAPI: mockYTMusicAPI,
       session: {
@@ -49,9 +57,10 @@ describe('TrackProcessor - Duplicate Track Check', () => {
         clearPlaylistItemsContainer: vi.fn(),
         resetActionButtonsForPlaylist: vi.fn(),
         setTargetContainerVisibility: vi.fn(),
+        setDuplicateTrackMode: vi.fn(),
         toggleSearchProgress: vi.fn(),
         setProgressText: vi.fn(),
-        addItem: vi.fn(),
+        addItem: mockAddItem,
         updateActionButtonsVisibility: vi.fn()
       },
       currentSelectedPlaylist: { id: 'PL123', title: 'Test Playlist', isEditable: true },
@@ -106,10 +115,13 @@ describe('TrackProcessor - Duplicate Track Check', () => {
 
       await processor.findDuplicateTracks();
 
-      // Check that the second track (audio) was marked to keep (isChecked = true)
-      const calls = mockBridge.ui.addItem.mock.calls;
-      expect(calls[0][0].isChecked).toBe(false); // First track (video)
-      expect(calls[1][0].isChecked).toBe(true);  // Second track (audio)
+      // Get the returned elements from addItem calls
+      const rows = mockBridge.ui.addItem.mock.results.map(r => r.value);
+      const cb1 = rows[0].querySelector('.' + CONSTANTS.UI.CLASSES.ITEM_CHECKBOX);
+      const cb2 = rows[1].querySelector('.' + CONSTANTS.UI.CLASSES.ITEM_CHECKBOX);
+
+      expect(cb1.checked).toBe(false); // First track (video)
+      expect(cb2.checked).toBe(true);  // Second track (audio)
     });
 
     it('should show no duplicates message when none found', async () => {
