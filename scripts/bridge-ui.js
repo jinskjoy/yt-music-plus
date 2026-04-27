@@ -100,8 +100,27 @@ export class BridgeUI {
     const gridRow = MediaGridRow.render(originalMedia, replacementMedia, index, this.bridge.playerHandler);
     
     if (groupInfo) {
-      if (groupInfo.isStart) gridRow.classList.add(CONSTANTS.UI.CLASSES.DUPLICATE_GROUP_START);
+      if (groupInfo.isStart) {
+        gridRow.classList.add(CONSTANTS.UI.CLASSES.DUPLICATE_GROUP_START);
+        
+        // Add "Ignore Group" button to the first row of a duplicate group
+        const replacementCol = gridRow.querySelector(`.${CONSTANTS.UI.CLASSES.GRID_COL_REPLACEMENT}`);
+        if (replacementCol) {
+          const ignoreBtn = document.createElement('button');
+          ignoreBtn.className = `${CONSTANTS.UI.CLASSES.BTN} ${CONSTANTS.UI.CLASSES.BTN_SECONDARY} ${CONSTANTS.UI.CLASSES.IGNORE_GROUP_BTN}`;
+          ignoreBtn.textContent = 'Ignore Group';
+          ignoreBtn.title = 'Remove this group from the duplicate list without deleting tracks from the playlist.';
+          ignoreBtn.type = 'button';
+          ignoreBtn.addEventListener('click', () => {
+            const allGroupRows = document.querySelectorAll(`.${CONSTANTS.UI.CLASSES.GRID_ROW}[data-group-index="${groupInfo.groupIndex}"]`);
+            allGroupRows.forEach(row => row.remove());
+            UIHelper.updateCheckAllCheckbox();
+          });
+          replacementCol.appendChild(ignoreBtn);
+        }
+      }
       gridRow.classList.add(CONSTANTS.UI.CLASSES.DUPLICATE_GROUP_ROW);
+      gridRow.dataset.groupIndex = groupInfo.groupIndex;
     }
 
     document.getElementById(CONSTANTS.UI.ELEMENT_IDS.ITEMS_GRID_CONTAINER)?.appendChild(gridRow);

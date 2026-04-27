@@ -38,6 +38,7 @@ export const CONSTANTS = {
       ADD_SELECTED: 'addSelectedBtn',
       REMOVE_SELECTED: 'removeSelectedBtn',
       KEEP_ONLY_SELECTED: 'keepOnlySelectedBtn',
+      IGNORE_GROUP: 'ignoreGroupBtn',
       FIND_REPLACE: 'findReplaceBtn',
       SYNC_PLAYLIST: 'syncPlaylistBtn',
       ADD_TO_PLAYLIST: 'addToPlaylistBtn',
@@ -139,6 +140,7 @@ export const CONSTANTS = {
       PLAYLIST_INFO_SECTION: 'playlist-info-section',
       DUPLICATE_GROUP_START: 'duplicate-group-start',
       DUPLICATE_GROUP_ROW: 'duplicate-group-row',
+      IGNORE_GROUP_BTN: 'ignore-group-btn',
     },
     SELECTORS: {
       YT_MUSIC_HEADER: 'ytmusic-responsive-header-renderer',
