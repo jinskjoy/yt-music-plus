@@ -312,6 +312,26 @@ describe('BridgeUI', () => {
     });
   });
 
+  describe('setListOnlyMode', () => {
+    it('should toggle list-only mode class and update buttons visibility', () => {
+      const gridWrapper = document.querySelector('.items-grid-wrapper');
+      const replaceBtn = document.getElementById('replaceSelectedBtn');
+      const addBtn = document.getElementById('addSelectedBtn');
+      const removeBtn = document.getElementById('removeSelectedBtn');
+      const listAllBtn = document.getElementById('listAllTracksBtn');
+      const findUnavailableBtn = document.getElementById('findUnavailableBtn');
+      
+      bridgeUI.setListOnlyMode(true);
+      
+      expect(gridWrapper.classList.contains('list-only-mode')).toBe(true);
+      expect(replaceBtn.classList.contains('hidden')).toBe(true);
+      expect(addBtn.classList.contains('hidden')).toBe(true);
+      expect(removeBtn.classList.contains('hidden')).toBe(false);
+      expect(listAllBtn.classList.contains('hidden')).toBe(true);
+      expect(findUnavailableBtn.classList.contains('hidden')).toBe(false);
+    });
+  });
+
   describe('updateTargetPlaylistDisplay', () => {
     it('should show container and set name when playlist is provided', () => {
       const playlist = { title: 'My Target Playlist' };

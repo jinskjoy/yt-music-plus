@@ -117,10 +117,20 @@ export class PopupManager {
 
     const selectionScreen = popupElement.querySelector('#playlistSelectionScreen');
     const detailsScreen = popupElement.querySelector('#playlistDetailsScreen');
+    const footer = popupElement.querySelector('#ytMusicPlusSelectionFooter');
     
     if (selectionScreen && detailsScreen) {
       selectionScreen.classList.remove('hidden');
       detailsScreen.classList.add('hidden');
+    }
+
+    if (footer) {
+      footer.querySelector('#playlistSelectionActions')?.classList.remove('hidden');
+      footer.querySelector('#playlistCounts')?.classList.remove('hidden');
+      footer.querySelector('#selectionCount')?.classList.add('hidden');
+      footer.querySelector('#progressText')?.classList.add('hidden');
+      footer.querySelector('#searchProgress')?.classList.add('hidden');
+      footer.querySelector('#cancelSearchBtn')?.classList.add('hidden');
     }
 
     const titleElement = popupElement.querySelector('#popupTitle');
@@ -138,10 +148,17 @@ export class PopupManager {
 
     const selectionScreen = popupElement.querySelector('#playlistSelectionScreen');
     const detailsScreen = popupElement.querySelector('#playlistDetailsScreen');
+    const footer = popupElement.querySelector('#ytMusicPlusSelectionFooter');
     
     if (selectionScreen && detailsScreen) {
       selectionScreen.classList.add('hidden');
       detailsScreen.classList.remove('hidden');
+    }
+
+    if (footer) {
+      footer.querySelector('#playlistSelectionActions')?.classList.add('hidden');
+      footer.querySelector('#playlistCounts')?.classList.add('hidden');
+      footer.querySelector('#selectionCount')?.classList.remove('hidden');
     }
   }
 

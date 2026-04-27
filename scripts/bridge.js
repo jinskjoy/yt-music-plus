@@ -281,6 +281,7 @@ import { CONSTANTS } from '../utils/constants.js';
         this.popupElements.holder.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
       }
 
+      this.ui.setPlaylistScreenVisibility(true);
       await this.initPlaylistFetching();
 
       const currentPlaylistId = this.ytMusicAPI.getCurrentPlaylistIdFromURL();
@@ -457,7 +458,7 @@ import { CONSTANTS } from '../utils/constants.js';
     /**
      * Initializes playlist fetching and display
      */
-    async initPlaylistFetching(forceRefresh = false, onlyEditable = null) {
+    async initPlaylistFetching(forceRefresh = false, onlyEditable = null, isTargetSelection = false) {
       if (this.isFetchingPlaylists) return;
 
       // Determine default value for onlyEditable if not provided
@@ -466,7 +467,12 @@ import { CONSTANTS } from '../utils/constants.js';
       }
 
       if (!forceRefresh && this.playlistsCache && this.playlistsCache.length > 0) {
-        this.ui.displayPlaylistsForSelection(this.playlistsCache);
+        const displayedPlaylists = onlyEditable ? this.playlistsCache.filter(p => p.isEditable) : this.playlistsCache;
+        if (isTargetSelection) {
+          this.ui.displayTargetPlaylists(displayedPlaylists, this.playlistsCache);
+        } else {
+          this.ui.displayPlaylistsForSelection(displayedPlaylists, this.playlistsCache);
+        }
         this.ui.hidePlaylistLoadingIndicator();
         this.ui.initRefreshButton();
         return;
@@ -474,18 +480,24 @@ import { CONSTANTS } from '../utils/constants.js';
 
       this.isFetchingPlaylists = true;
 
-      const loadingIndicator = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLISTS_LOADING_INDICATOR);
-      if (loadingIndicator) loadingIndicator.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+      if (isTargetSelection) {
+        this.ui.toggleTargetSearchProgress(true);
+      } else {
+        const loadingIndicator = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLISTS_LOADING_INDICATOR);
+        if (loadingIndicator) loadingIndicator.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+      }
       
-      const playlistsGrid = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLISTS_GRID);
+      const playlistsGridId = isTargetSelection ? CONSTANTS.UI.ELEMENT_IDS.TARGET_PLAYLISTS_GRID : CONSTANTS.UI.ELEMENT_IDS.PLAYLISTS_GRID;
+      const playlistsGrid = document.getElementById(playlistsGridId);
       if (playlistsGrid) playlistsGrid.replaceChildren();
 
       try {
-        let playlists = await this.ytMusicAPI.getPlaylists(onlyEditable);
+        // Always fetch all to get correct counts for the footer
+        let playlists = await this.ytMusicAPI.getPlaylists(false);
         
         if (playlists.length === 0) {
           await this.sleep(CONSTANTS.PLAYER.RETRY_INTERVAL_MS);
-          playlists = await this.ytMusicAPI.getPlaylists(onlyEditable);
+          playlists = await this.ytMusicAPI.getPlaylists(false);
         }
         
         this.playlistsCache = playlists;
@@ -493,8 +505,14 @@ import { CONSTANTS } from '../utils/constants.js';
         console.error('YouTube Music +: Error fetching playlists', error);
         this.playlistsCache = [];
       } finally {
-        this.ui.displayPlaylistsForSelection(this.playlistsCache);
-        this.ui.hidePlaylistLoadingIndicator();
+        const displayedPlaylists = onlyEditable ? this.playlistsCache.filter(p => p.isEditable) : this.playlistsCache;
+        if (isTargetSelection) {
+          this.ui.displayTargetPlaylists(displayedPlaylists, this.playlistsCache);
+          this.ui.toggleTargetSearchProgress(false);
+        } else {
+          this.ui.displayPlaylistsForSelection(displayedPlaylists, this.playlistsCache);
+          this.ui.hidePlaylistLoadingIndicator();
+        }
         this.ui.initRefreshButton();
         this.isFetchingPlaylists = false;
       }
@@ -504,41 +522,42 @@ import { CONSTANTS } from '../utils/constants.js';
      * Handles playlist selection
      */
     onPlaylistSelected(playlist) {
+      const isNewPlaylist = !this.currentSelectedPlaylist || this.currentSelectedPlaylist.id !== playlist.id;
+      
       UIHelper.setPlaylistDetails(playlist);
-
-      if (!this.currentSelectedPlaylist || this.currentSelectedPlaylist.id !== playlist.id) {
-        this.ui.clearPlaylistItemsContainer();
+      
+      if (isNewPlaylist) {
+        // Only clear UI state if it's a different playlist
         this.ui.clearActiveButtons();
+        this.ui.setListOnlyMode(false);
+        this.ui.clearPlaylistItemsContainer();
         this.currentSelectedPlaylist = playlist;
         this.targetPlaylist = playlist; // Default target is the selected playlist
         this.ui.setProgressText('');
+        this.localTracks = [];
+        UIHelper.toggleGrid(false);
       }
 
-      const detailsScreen = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_DETAILS_SCREEN);
-      if (detailsScreen) detailsScreen.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
-
-      const selectionScreen = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_SELECTION_SCREEN);
-      if (selectionScreen) selectionScreen.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
-
-      this.ui.resetActionButtonsForPlaylist(playlist);
-      this.ui.updateTargetPlaylistDisplay(this.targetPlaylist);
-
-      UIHelper.toggleGrid(false);
-      this.localTracks = [];
+      this.ui.setPlaylistScreenVisibility(false);
       this.ui.updatePopupTitle(`Playlist: ${playlist.title}`);
       
-      this.ui.initSearchBox();
-      const searchInput = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.SEARCH_INPUT);
-      if (searchInput) {
-        searchInput.value = '';
-        document.getElementById(CONSTANTS.UI.ELEMENT_IDS.CLEAR_SEARCH_BTN)?.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
-        this.ui.filterGridItems('');
-      }
+      if (isNewPlaylist) {
+        this.ui.resetActionButtonsForPlaylist(playlist);
+        this.ui.updateTargetPlaylistDisplay(this.targetPlaylist);
+        
+        this.ui.initSearchBox();
+        const searchInput = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.SEARCH_INPUT);
+        if (searchInput) {
+          searchInput.value = '';
+          document.getElementById(CONSTANTS.UI.ELEMENT_IDS.CLEAR_SEARCH_BTN)?.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
+          this.ui.filterGridItems('');
+        }
 
-      // Auto-list tracks if enabled and no button is active
-      if (this.extSettings?.autoListAllTracks !== false && !this.ui.hasActiveActionButton()) {
-        this.processor.listAllTracks();
-        this.ui.setActiveButton(CONSTANTS.UI.BUTTON_IDS.LIST_ALL_TRACKS);
+        // Auto-list tracks if enabled and no button is active
+        if (this.extSettings?.autoListAllTracks !== false && !this.ui.hasActiveActionButton()) {
+          this.processor.listAllTracks();
+          this.ui.setActiveButton(CONSTANTS.UI.BUTTON_IDS.LIST_ALL_TRACKS);
+        }
       }
     }
 
@@ -547,12 +566,9 @@ import { CONSTANTS } from '../utils/constants.js';
      */
     async showPlaylistSelectionForTarget() {
       this.isSelectingTarget = true;
-      this.ui.setTargetSelectionVisibility(true);
+      this.ui.setTargetModalVisibility(true);
       
-      // If we only have editable playlists in cache, but user might want to see all
-      // We rely on the existing refresh/load all buttons in the selection screen.
-      // But we should ensure the current cache is displayed.
-      this.ui.displayPlaylistsForSelection(this.playlistsCache);
+      await this.initPlaylistFetching(false, null, true);
     }
 
     /**
@@ -575,7 +591,7 @@ import { CONSTANTS } from '../utils/constants.js';
      */
     finishTargetSelection() {
       this.isSelectingTarget = false;
-      this.ui.setTargetSelectionVisibility(false);
+      this.ui.setTargetModalVisibility(false);
       this.ui.updateTargetPlaylistDisplay(this.targetPlaylist);
       this.ui.updatePopupTitle(`Playlist: ${this.currentSelectedPlaylist.title}`);
     }

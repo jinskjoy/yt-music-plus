@@ -111,7 +111,9 @@ export class YTMusicAPI {
     for (const browseId of CONSTANTS.API.PLAYLIST_BROWSE_IDS) {
       try {
         const response = await this.fetchBrowsePlaylists(browseId);
-        const playlists = YTMusicParser.parsePlaylistsFromResponse(response, onlyEditable);
+        // Always parse all to ensure we have full counts in the future if needed,
+        // but we filter here to keep the API contract.
+        const playlists = YTMusicParser.parsePlaylistsFromResponse(response, false);
         playlists.forEach(p => {
           if (!allPlaylists.has(p.id)) {
             allPlaylists.set(p.id, p);
@@ -125,8 +127,9 @@ export class YTMusicAPI {
       }
     }
 
-    if (allPlaylists.size > 0) {
-      return Array.from(allPlaylists.values());
+    const result = Array.from(allPlaylists.values());
+    if (result.length > 0) {
+      return onlyEditable ? result.filter(p => p.isEditable) : result;
     }
 
     if (lastError) throw lastError;

@@ -110,17 +110,29 @@ export class MediaItem {
     }
 
     title.textContent = media.name || 'Unknown Title';
+    title.title = media.name || '';
 
     if (media.artist) {
       artist.textContent = media.artist;
+      artist.title = media.artist;
     } else {
       artist.remove();
     }
 
     if (media.url) {
       link.href = media.url;
+      // Ensure link clicks are not intercepted by column click handlers or other delegation
+      link.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
     } else {
       link.remove();
+    }
+
+    // Add title for hover showing full details if it's truncated
+    const mediaInfo = item.querySelector('.media-info');
+    if (mediaInfo) {
+      mediaInfo.title = `${media.name || 'Unknown Title'} - ${media.artist || 'Unknown Artist'}`;
     }
 
     return item;
@@ -424,18 +436,22 @@ export class UIHelper {
     if (footer) {
       const checkedCount = Array.from(allCheckboxes).filter(cb => cb.checked).length;
       const totalCount = allCheckboxes.length;
-      const textContainer = footer.querySelector('.footer-right') || footer;
+      const selectionCountEl = document.getElementById('selectionCount');
       
-      if (totalCount > 0) {
-        textContainer.textContent = `${checkedCount} of ${totalCount} item${totalCount !== 1 ? 's' : ''} selected`;
-        textContainer.classList.remove('hidden');
-      } else {
-        textContainer.classList.add('hidden');
+      const isSelectionView = !document.getElementById('playlistSelectionScreen')?.classList.contains('hidden');
+
+      if (selectionCountEl) {
+        if (totalCount > 0 && !isSelectionView) {
+          selectionCountEl.textContent = `${checkedCount} of ${totalCount} item${totalCount !== 1 ? 's' : ''} selected`;
+          selectionCountEl.classList.remove('hidden');
+        } else {
+          selectionCountEl.textContent = '';
+          selectionCountEl.classList.add('hidden');
+        }
       }
 
-      const progressText = document.getElementById('progressText');
-      const hasProgressText = progressText && !progressText.classList.contains('hidden');
-      footer.classList.toggle('hidden', !(totalCount > 0 || isSearching || hasProgressText));
+      // The footer itself should NOT be hidden anymore as it contains common links
+      footer.classList.remove('hidden');
     }
   }
 
