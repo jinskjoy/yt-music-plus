@@ -49,6 +49,7 @@ export const CONSTANTS = {
       LOAD_ALL_PLAYLISTS: 'loadAllPlaylistsBtn',
       CLOSE_POPUP: 'closePopupBtn',
       MINIMIZE_POPUP: 'minimizePopupBtn',
+      OPEN_SETTINGS: 'openSettingsLink',
       SELECT_TARGET_PLAYLIST: 'selectTargetPlaylistBtn',
       CANCEL_TARGET_SELECTION: 'cancelTargetSelectionBtn',
       REFRESH_TARGET_PLAYLISTS: 'refreshTargetPlaylistsBtn',
