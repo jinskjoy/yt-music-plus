@@ -374,8 +374,8 @@ export class TrackProcessor {
       localTracks.forEach(track => this.bridge.ui.addItem(track, CONSTANTS.API.BASE_URL, i++));
 
       if (localTracks.length > 0) {
-        let progressMsg = `Displayed ${localTracks.length} tracks.`;
         const genericCount = localTracks.filter(t => t.isGeneric).length;
+        let progressMsg = MESSAGES.RESULTS.FOUND_TRACKS(localTracks.length);
         if (genericCount > 0) progressMsg += ` (${genericCount} generic names ignored).`;
         progressMsg += ` Click "Start Search" to search for the checked tracks on YouTube Music.`;
         this.bridge.ui.setProgressText(progressMsg);
@@ -432,8 +432,8 @@ export class TrackProcessor {
       localTracks.forEach(track => this.bridge.ui.addItem(track, CONSTANTS.API.BASE_URL, i++));
 
       if (localTracks.length > 0) {
-        let progressMsg = `Displayed ${localTracks.length} tracks.`;
         const genericCount = localTracks.filter(t => t.isGeneric).length;
+        let progressMsg = MESSAGES.RESULTS.FOUND_TRACKS(localTracks.length);
         if (genericCount > 0) progressMsg += ` (${genericCount} generic names ignored).`;
         progressMsg += ` Click "Start Search" to search for the checked tracks on YouTube Music.`;
         this.bridge.ui.setProgressText(progressMsg);
