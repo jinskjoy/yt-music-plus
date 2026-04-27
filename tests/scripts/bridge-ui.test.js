@@ -282,32 +282,39 @@ describe('BridgeUI', () => {
     it('should reset buttons correctly for editable playlist', () => {
       const playlist = { isEditable: true };
       const replaceBtn = document.getElementById('replaceSelectedBtn');
+      const keepBtn = document.getElementById('keepOnlySelectedBtn');
       replaceBtn.classList.add('hidden');
+      keepBtn.classList.remove('hidden');
       
       bridgeUI.resetActionButtonsForPlaylist(playlist);
       
       expect(replaceBtn.classList.contains('hidden')).toBe(false);
+      expect(keepBtn.classList.contains('hidden')).toBe(true);
     });
 
     it('should hide buttons for non-editable playlist', () => {
       const playlist = { isEditable: false };
       const replaceBtn = document.getElementById('replaceSelectedBtn');
+      const keepBtn = document.getElementById('keepOnlySelectedBtn');
       
       bridgeUI.resetActionButtonsForPlaylist(playlist);
       
       expect(replaceBtn.classList.contains('hidden')).toBe(true);
+      expect(keepBtn.classList.contains('hidden')).toBe(true);
     });
 
-    it('should hide Replace and Remove buttons in import mode and show target playlist container', () => {
+    it('should hide Replace, Remove, and Keep buttons in import mode and show target playlist container', () => {
       const playlist = { isEditable: true };
       const replaceBtn = document.getElementById('replaceSelectedBtn');
       const removeBtn = document.getElementById('removeSelectedBtn');
+      const keepBtn = document.getElementById('keepOnlySelectedBtn');
       const targetContainer = document.getElementById('targetPlaylistContainer');
       
       bridgeUI.updateImportButtonVisibility(playlist);
       
       expect(replaceBtn.classList.contains('hidden')).toBe(true);
       expect(removeBtn.classList.contains('hidden')).toBe(true);
+      expect(keepBtn.classList.contains('hidden')).toBe(true);
       expect(targetContainer.classList.contains('hidden')).toBe(false);
     });
   });
@@ -320,6 +327,7 @@ describe('BridgeUI', () => {
       const removeBtn = document.getElementById('removeSelectedBtn');
       const listAllBtn = document.getElementById('listAllTracksBtn');
       const findUnavailableBtn = document.getElementById('findUnavailableBtn');
+      const keepBtn = document.getElementById('keepOnlySelectedBtn');
       
       bridgeUI.setListOnlyMode(true);
       
@@ -329,6 +337,7 @@ describe('BridgeUI', () => {
       expect(removeBtn.classList.contains('hidden')).toBe(false);
       expect(listAllBtn.classList.contains('hidden')).toBe(false); // Should be visible but active
       expect(findUnavailableBtn.classList.contains('hidden')).toBe(false);
+      expect(keepBtn.classList.contains('hidden')).toBe(true);
     });
   });
 

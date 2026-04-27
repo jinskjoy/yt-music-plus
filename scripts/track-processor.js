@@ -2,6 +2,7 @@ import { UIHelper } from '../utils/ui-helper.js';
 import { Track } from './models/track.js';
 import { CONSTANTS } from '../utils/constants.js';
 import { MESSAGES } from '../utils/ui-messages.js';
+import { TextSimilarity } from '../utils/utils.js';
 
 /**
  * TrackProcessor - Handles the logic for processing tracks and finding replacements
@@ -254,6 +255,78 @@ export class TrackProcessor {
    }
 
   /**
+   * Finds and groups duplicate tracks in the playlist
+   * @async
+   */
+  async findDuplicateTracks() {
+    this.bridge.session.isCancelled = false;
+    this.bridge.ui.clearPlaylistItemsContainer();
+    this.bridge.ui.resetActionButtonsForPlaylist(this.bridge.currentSelectedPlaylist);
+    this.bridge.ui.setTargetContainerVisibility(false);
+    this.bridge.ui.toggleSearchProgress(true, true);
+    this.bridge.ui.setProgressText(MESSAGES.SEARCH.FINDING_DUPLICATES);
+
+    try {
+      const currentPlaylistId = this.bridge.currentSelectedPlaylist?.id || 
+                                this.ytMusicAPI.getCurrentPlaylistIdFromURL();
+
+      if (!currentPlaylistId) return;
+
+      const items = await this.ytMusicAPI.getPlaylistItems(currentPlaylistId);
+      
+      if (this.bridge.session.isCancelled) return;
+      if (items.length === 0) {
+        this.bridge.ui.setProgressText(MESSAGES.RESULTS.NO_TRACKS_FOUND);
+        return;
+      }
+
+      // Group tracks by duplicate criteria
+      const groups = this.#groupTracksByDuplicates(items);
+      const duplicateGroups = groups.filter(group => group.length > 1);
+
+      if (duplicateGroups.length === 0) {
+        this.bridge.ui.setProgressText(MESSAGES.RESULTS.NO_DUPLICATES_FOUND);
+        return;
+      }
+
+      const totalDuplicateTracks = duplicateGroups.reduce((acc, g) => acc + g.length, 0);
+      this.bridge.ui.setProgressText(MESSAGES.RESULTS.FOUND_DUPLICATE_GROUPS(duplicateGroups.length, totalDuplicateTracks));
+
+      let i = 1;
+      duplicateGroups.forEach((group, groupIndex) => {
+        // By default the first audio track (if present) should be selected to keep
+        const audioTrackIndex = group.findIndex(t => !t.isVideo);
+        const keepIndex = audioTrackIndex !== -1 ? audioTrackIndex : 0;
+
+        group.forEach((track, trackIndex) => {
+          track.isChecked = (trackIndex === keepIndex);
+          track.isSearching = false;
+          track.searchCancelled = false;
+          track.replacement = null;
+          this.bridge.ui.addItem(track, CONSTANTS.API.BASE_URL, i++, {
+            isStart: trackIndex === 0,
+            groupIndex
+          });
+        });
+      });
+
+      this.bridge.ui.updateActionButtonsVisibility({
+        replace: false,
+        add: false,
+        remove: false,
+        keep: true
+      });
+
+      UIHelper.updateCheckAllCheckbox();
+    } catch (error) {
+      console.error('Duplicate check error:', error);
+      this.bridge.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('finding duplicate tracks'));
+    } finally {
+      this.bridge.ui.toggleSearchProgress(false);
+    }
+  }
+
+  /**
    * Sets progress message for video track results
    */
   setVideoTrackProgressMessage(videoTracks) {
@@ -328,6 +401,94 @@ export class TrackProcessor {
     } finally {
       this.bridge.ui.toggleSearchProgress(false);
     }
+  }
+
+  /**
+   * Removes unmarked tracks from duplicate groups
+   * @async
+   */
+  async keepOnlySelected() {
+    const allRows = Array.from(document.querySelectorAll(`.${CONSTANTS.UI.CLASSES.GRID_ROW}.${CONSTANTS.UI.CLASSES.DUPLICATE_GROUP_ROW}`));
+    const itemsToRemove = allRows
+      .filter(row => {
+        const checkbox = row.querySelector(`.${CONSTANTS.UI.CLASSES.ITEM_CHECKBOX}`);
+        return checkbox && !checkbox.checked;
+      })
+      .map(row => {
+        const originalMedia = JSON.parse(row.dataset.originalMedia || '{}');
+        return {
+          videoId: originalMedia.videoId,
+          setVideoId: originalMedia.playlistSetVideoId,
+          originalMedia
+        };
+      })
+      .filter(item => item.videoId && item.setVideoId);
+
+    if (itemsToRemove.length === 0) return;
+
+    const keepCount = allRows.length - itemsToRemove.length;
+    if (!confirm(MESSAGES.ACTIONS.KEEP_SELECTED_CONFIRM(keepCount, itemsToRemove.length))) {
+      return;
+    }
+
+    try {
+      this.bridge.beforeActionsOnSelectedItems();
+      this.bridge.ui.setProgressText(MESSAGES.ACTIONS.REMOVING_SELECTED);
+
+      const playlistId = this.bridge.currentSelectedPlaylist?.id || 
+                        this.ytMusicAPI.getCurrentPlaylistIdFromURL();
+
+      if (!playlistId) return;
+
+      const success = await this.ytMusicAPI.removeItemsFromPlaylist(playlistId, itemsToRemove);
+
+      if (success) {
+        itemsToRemove.forEach(item => {
+          UIHelper.removeMediaGridRow(item.originalMedia);
+        });
+        this.bridge.ui.setProgressText(MESSAGES.ACTIONS.KEEP_COMPLETE(itemsToRemove.length));
+      } else {
+        this.bridge.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('removing duplicates'));
+      }
+    } catch (error) {
+      this.bridge.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('removing duplicates'));
+    } finally {
+      await this.bridge.afterActionsOnSelectedItems(true);
+    }
+  }
+
+  /**
+   * Groups tracks by video ID or title similarity
+   * @private
+   */
+  #groupTracksByDuplicates(tracks) {
+    const groups = [];
+    const processedIndices = new Set();
+    const STRICT_THRESHOLD = 0.9; // Stricter threshold for duplicates
+
+    for (let i = 0; i < tracks.length; i++) {
+      if (processedIndices.has(i)) continue;
+
+      const group = [tracks[i]];
+      processedIndices.add(i);
+
+      for (let j = i + 1; j < tracks.length; j++) {
+        if (processedIndices.has(j)) continue;
+
+        const t1 = tracks[i];
+        const t2 = tracks[j];
+
+        const isSameId = t1.videoId && t2.videoId && t1.videoId === t2.videoId;
+        const isSimilarTitle = TextSimilarity.isGoodMatch(t1.name, t2.name, STRICT_THRESHOLD);
+
+        if (isSameId || isSimilarTitle) {
+          group.push(tracks[j]);
+          processedIndices.add(j);
+        }
+      }
+      groups.push(group);
+    }
+    return groups;
   }
 
   /**

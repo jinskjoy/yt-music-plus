@@ -94,10 +94,16 @@ export class BridgeUI {
   /**
    * Adds an item row to the display
    */
-  addItem(item, baseUrl, index) {
+  addItem(item, baseUrl, index, groupInfo = null) {
     const { originalMedia, replacementMedia } = this.bridge._createMediaObjects(item, baseUrl);
 
     const gridRow = MediaGridRow.render(originalMedia, replacementMedia, index, this.bridge.playerHandler);
+    
+    if (groupInfo) {
+      if (groupInfo.isStart) gridRow.classList.add(CONSTANTS.UI.CLASSES.DUPLICATE_GROUP_START);
+      gridRow.classList.add(CONSTANTS.UI.CLASSES.DUPLICATE_GROUP_ROW);
+    }
+
     document.getElementById(CONSTANTS.UI.ELEMENT_IDS.ITEMS_GRID_CONTAINER)?.appendChild(gridRow);
     this.rowMap.set(index, gridRow);
   }
@@ -105,7 +111,7 @@ export class BridgeUI {
   /**
    * Updates an existing item row
    */
-  updateItemRow(item, baseUrl, index) {
+  updateItemRow(item, baseUrl, index, groupInfo = null) {
     const oldRow = this.rowMap.get(index);
     if (oldRow) {
       const oldCheckbox = oldRow.querySelector(`.${CONSTANTS.UI.CLASSES.ITEM_CHECKBOX}`);
@@ -115,6 +121,11 @@ export class BridgeUI {
       const { originalMedia, replacementMedia } = this.bridge._createMediaObjects(item, baseUrl);
       const newRow = MediaGridRow.render(originalMedia, replacementMedia, index, this.bridge.playerHandler);
       
+      if (groupInfo) {
+        if (groupInfo.isStart) newRow.classList.add(CONSTANTS.UI.CLASSES.DUPLICATE_GROUP_START);
+        newRow.classList.add(CONSTANTS.UI.CLASSES.DUPLICATE_GROUP_ROW);
+      }
+
       const newCheckbox = newRow.querySelector(`.${CONSTANTS.UI.CLASSES.ITEM_CHECKBOX}`);
       if (newCheckbox && oldCheckbox && userInteracted) {
         newCheckbox.checked = wasChecked;
@@ -150,9 +161,11 @@ export class BridgeUI {
     const buttonIds = [
       CONSTANTS.UI.BUTTON_IDS.FIND_UNAVAILABLE,
       CONSTANTS.UI.BUTTON_IDS.FIND_VIDEO_TRACKS,
+      CONSTANTS.UI.BUTTON_IDS.FIND_DUPLICATE_TRACKS,
       CONSTANTS.UI.BUTTON_IDS.REPLACE_SELECTED,
       CONSTANTS.UI.BUTTON_IDS.ADD_SELECTED,
       CONSTANTS.UI.BUTTON_IDS.REMOVE_SELECTED,
+      CONSTANTS.UI.BUTTON_IDS.KEEP_ONLY_SELECTED,
       CONSTANTS.UI.BUTTON_IDS.BACK_BUTTON,
       CONSTANTS.UI.BUTTON_IDS.IMPORT_FROM_FOLDER,
       CONSTANTS.UI.BUTTON_IDS.IMPORT_FROM_FILE,
@@ -295,16 +308,18 @@ export class BridgeUI {
 
   /**
    * Updates visibility of bulk action buttons
-   * @param {Object} options - { replace, add, remove } visibility flags
+   * @param {Object} options - { replace, add, remove, keep } visibility flags
    */
   updateActionButtonsVisibility(options = {}) {
     const replaceBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.REPLACE_SELECTED);
     const removeBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.REMOVE_SELECTED);
     const addBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.ADD_SELECTED);
+    const keepBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.KEEP_ONLY_SELECTED);
 
     if (replaceBtn && options.replace !== undefined) replaceBtn.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !options.replace);
     if (removeBtn && options.remove !== undefined) removeBtn.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !options.remove);
     if (addBtn && options.add !== undefined) addBtn.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !options.add);
+    if (keepBtn && options.keep !== undefined) keepBtn.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !options.keep);
   }
 
   /**
@@ -318,6 +333,7 @@ export class BridgeUI {
     document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_LOCAL_REPLACEMENTS)?.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
     document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_UNAVAILABLE)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
     document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_VIDEO_TRACKS)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+    document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_DUPLICATE_TRACKS)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
     document.getElementById(CONSTANTS.UI.BUTTON_IDS.IMPORT_FROM_FOLDER)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
     document.getElementById(CONSTANTS.UI.BUTTON_IDS.IMPORT_FROM_FILE)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
     document.getElementById(CONSTANTS.UI.BUTTON_IDS.LIST_ALL_TRACKS)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
@@ -325,7 +341,8 @@ export class BridgeUI {
     this.updateActionButtonsVisibility({
       replace: isEditable,
       remove: isEditable,
-      add: isEditable
+      add: isEditable,
+      keep: false
     });
   }
 

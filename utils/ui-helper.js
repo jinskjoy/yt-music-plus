@@ -432,6 +432,9 @@ export class UIHelper {
     const replaceBtn = popupElement.querySelector(`#${CONSTANTS.UI.BUTTON_IDS.REPLACE_SELECTED}`);
     if (replaceBtn) replaceBtn.disabled = isSearching || isListOnlyMode ? true : !anyCheckedWithReplacement;
 
+    const keepBtn = popupElement.querySelector(`#${CONSTANTS.UI.BUTTON_IDS.KEEP_ONLY_SELECTED}`);
+    if (keepBtn) keepBtn.disabled = isSearching ? true : !anyChecked;
+
     const footer = popupElement.querySelector(`#${CONSTANTS.UI.ELEMENT_IDS.SELECTION_FOOTER}`);
     if (footer) {
       const checkedCount = Array.from(allCheckboxes).filter(cb => cb.checked).length;

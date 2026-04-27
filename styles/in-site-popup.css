@@ -820,6 +820,21 @@
     background-color: #fff3cd;
 }
 
+/* Duplicate Group Styles */
+.duplicate-group-start {
+    border-top: 2px solid #1976d2 !important;
+    margin-top: 4px;
+}
+
+.duplicate-group-row {
+    background-color: #f0f7ff;
+}
+
+.duplicate-group-row:hover {
+    background-color: #e3f2fd;
+}
+
+
 .chrome-store-link,
 .chrome-store-link:visited,
 .chrome-store-link:active,

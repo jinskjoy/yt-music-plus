@@ -51,6 +51,7 @@
                     </div>
                     <div class="action-row">
                         <button id="importFromFolderBtn" class="btn btn-primary" type="button" title="Scan a local folder on your computer for audio files to search and add to this playlist.">Import from Folder</button>
+                        <button id="findDuplicateTracksBtn" class="btn btn-primary" type="button" title="Scan this playlist for duplicate tracks based on title and video ID.">Find Duplicate Tracks</button>
                         <button id="importFromFileBtn" class="btn btn-primary" type="button" title="Import a text file containing a list of song titles to search and add to this playlist. The file should contain one song title per line.">Import from File</button>
                         <input type="file" id="importFileInput" class="hidden" accept=".txt" />
                     </div>
@@ -76,6 +77,8 @@
                     <button id="removeSelectedBtn" class="btn btn-danger" type="button" disabled
                         title="This action will remove the selected items from the playlist. It will not add replacements.">Remove
                         Selected</button>
+                    <button id="keepOnlySelectedBtn" class="btn btn-danger hidden" type="button" disabled
+                        title="Remove all other duplicates in the group and keep only the selected one.">Keep Only Selected</button>
                     <button id="findLocalReplacementsBtn" class="btn btn-primary hidden" type="button">Start Search</button>
 
                     <div id="targetPlaylistContainer" class="target-playlist-container hidden">
