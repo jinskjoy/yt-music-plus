@@ -94,6 +94,7 @@ export const CONSTANTS = {
       NO_PLAYLISTS_TEMPLATE: 'yt-music-plus-no-playlists-template',
       SELECT_ALL_CHECKBOX: 'yt-music-plus-selectAllCheckbox',
       ACTION_BUTTONS_TEMPLATE: 'yt-music-plus-action-buttons-template',
+      IGNORE_GROUP_BTN_TEMPLATE: 'yt-music-plus-ignore-group-btn-template',
       WARNING_MESSAGE: 'yt-music-plus-warningMessage',
       SELECT_ALL_CHECKBOX_ID: 'yt-music-plus-selectAllCheckbox',
       CLOSE_WARNING_BTN: 'closeWarningBtn',

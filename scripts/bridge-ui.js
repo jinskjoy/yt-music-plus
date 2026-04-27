@@ -106,30 +106,32 @@ export class BridgeUI {
     const gridRow = MediaGridRow.render(originalMedia, replacementMedia, displayIndex, this.bridge.playerHandler);
     
     if (groupInfo) {
+      this.#applyDuplicateGroupStyling(gridRow, groupInfo);
+      
       if (groupInfo.isStart) {
-        gridRow.classList.add(CONSTANTS.UI.CLASSES.DUPLICATE_GROUP_START);
-        
         // Add "Ignore Group" button to the first row of a duplicate group
         const replacementCol = gridRow.querySelector(`.${CONSTANTS.UI.CLASSES.GRID_COL_REPLACEMENT}`);
         if (replacementCol) {
-          const ignoreBtn = document.createElement('button');
-          ignoreBtn.className = `${CONSTANTS.UI.CLASSES.BTN} ${CONSTANTS.UI.CLASSES.BTN_PRIMARY} ${CONSTANTS.UI.CLASSES.IGNORE_GROUP_BTN} btn-icon`;
-          ignoreBtn.textContent = '✕';
-          ignoreBtn.title = 'Ignore this duplicate group (removes from list, doesn\'t delete tracks)';
-          ignoreBtn.type = 'button';
-          ignoreBtn.addEventListener('click', () => {
-            const allGroupRows = document.querySelectorAll(`.${CONSTANTS.UI.CLASSES.GRID_ROW}[data-group-index="${groupInfo.groupIndex}"]`);
-            allGroupRows.forEach(row => row.remove());
-            UIHelper.updateCheckAllCheckbox();
-          });
-          replacementCol.appendChild(ignoreBtn);
+          const template = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.IGNORE_GROUP_BTN_TEMPLATE);
+          if (template) {
+            const ignoreBtn = template.content.cloneNode(true).firstElementChild;
+            ignoreBtn.addEventListener('click', () => {
+              const groupIndex = groupInfo.groupIndex;
+              const allGroupRows = document.querySelectorAll(`.${CONSTANTS.UI.CLASSES.GRID_ROW}[data-group-index="${groupIndex}"]`);
+              
+              // Remove all rows in the group from rowMap and DOM
+              allGroupRows.forEach(row => {
+                const rowIndex = parseInt(row.dataset.serialNumber);
+                this.rowMap.delete(rowIndex);
+                row.remove();
+              });
+              
+              UIHelper.updateCheckAllCheckbox();
+            });
+            replacementCol.appendChild(ignoreBtn);
+          }
         }
       }
-      
-      const isAltGroup = groupInfo.groupIndex % 2 !== 0;
-      const groupClass = isAltGroup ? CONSTANTS.UI.CLASSES.ALT_DUPLICATE_GROUP_ROW : CONSTANTS.UI.CLASSES.DUPLICATE_GROUP_ROW;
-      gridRow.classList.add(groupClass);
-      gridRow.dataset.groupIndex = groupInfo.groupIndex;
     }
 
     document.getElementById(CONSTANTS.UI.ELEMENT_IDS.ITEMS_GRID_CONTAINER)?.appendChild(gridRow);
@@ -151,8 +153,7 @@ export class BridgeUI {
       const newRow = MediaGridRow.render(originalMedia, replacementMedia, index, this.bridge.playerHandler);
       
       if (groupInfo) {
-        if (groupInfo.isStart) newRow.classList.add(CONSTANTS.UI.CLASSES.DUPLICATE_GROUP_START);
-        newRow.classList.add(CONSTANTS.UI.CLASSES.DUPLICATE_GROUP_ROW);
+        this.#applyDuplicateGroupStyling(newRow, groupInfo);
       }
 
       const newCheckbox = newRow.querySelector(`.${CONSTANTS.UI.CLASSES.ITEM_CHECKBOX}`);
@@ -170,6 +171,21 @@ export class BridgeUI {
       oldRow.parentNode?.replaceChild(newRow, oldRow);
       this.rowMap.set(index, newRow);
     }
+  }
+
+  /**
+   * Applies duplicate group styling to a row
+   * @private
+   */
+  #applyDuplicateGroupStyling(gridRow, groupInfo) {
+    if (groupInfo.isStart) {
+      gridRow.classList.add(CONSTANTS.UI.CLASSES.DUPLICATE_GROUP_START);
+    }
+    
+    const isAltGroup = groupInfo.groupIndex % 2 !== 0;
+    const groupClass = isAltGroup ? CONSTANTS.UI.CLASSES.ALT_DUPLICATE_GROUP_ROW : CONSTANTS.UI.CLASSES.DUPLICATE_GROUP_ROW;
+    gridRow.classList.add(groupClass);
+    gridRow.dataset.groupIndex = groupInfo.groupIndex;
   }
 
   /**
