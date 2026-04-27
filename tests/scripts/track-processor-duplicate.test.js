@@ -29,6 +29,11 @@ describe('TrackProcessor - Duplicate Track Check', () => {
   let mockYTMusicAPI;
 
   beforeEach(() => {
+    // Ensure window.confirm is defined for spying
+    if (typeof window.confirm === 'undefined') {
+      window.confirm = () => true;
+    }
+
     mockYTMusicAPI = {
       getPlaylistItems: vi.fn(),
       removeItemsFromPlaylist: vi.fn(),
@@ -166,7 +171,7 @@ describe('TrackProcessor - Duplicate Track Check', () => {
       document.body.appendChild(row1);
       document.body.appendChild(row2);
 
-      vi.spyOn(window, 'confirm').mockReturnValue(true);
+      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
       mockYTMusicAPI.removeItemsFromPlaylist.mockResolvedValue(true);
 
       await processor.keepOnlySelected();
@@ -179,6 +184,7 @@ describe('TrackProcessor - Duplicate Track Check', () => {
       // Cleanup
       document.body.removeChild(row1);
       document.body.removeChild(row2);
+      confirmSpy.mockRestore();
     });
   });
 });
