@@ -18,16 +18,7 @@ This document provides a comprehensive list of features for the YouTube Music + 
 - **Configurability**: Can be toggled on/off in Settings.
 - **Testable Case**: Navigate to a playlist page; verify button appears and auto-selects the playlist in the popup.
 
-### 1.3 Sidebar Panel
-- **Feature**: A fixed sidebar panel accessible via the extension icon (browser-specific behavior) or internal triggers.
-- **Components**:
-    - **Playlist List**: Displays all editable playlists.
-    - **Search Input**: Real-time filtering of the playlist list.
-    - **Statistics**: Shows usage or playlist statistics.
-    - **Refresh Button**: Manually trigger a refresh of playlist data.
-- **Testable Case**: Open sidebar; verify playlists are listed and filterable.
-
-### 1.4 Main Management Popup (In-site Dialog)
+### 1.3 Main Management Popup (In-site Dialog)
 - **Feature**: A central dialog for performing all major operations.
 - **Screens**:
     - **Playlist Selection Screen**: Grid of playlists with thumbnails and track counts.
@@ -36,7 +27,7 @@ This document provides a comprehensive list of features for the YouTube Music + 
 - **Minimize Option**: A "−" button in the header to collapse the popup to the bottom-right corner. When minimized, clicking the extension title or the "⤢" (expansion) icon restores it. The playlist title is hidden in the minimized view for a cleaner look.
 - **Testable Case**: Verify navigation between selection and details screens using the "Back" button; verify the popup minimizes and restores correctly.
 
-### 1.5 Settings/Options Page
+### 1.4 Settings/Options Page
 - **Feature**: A dedicated page for user preferences.
 - **Options**:
     - Toggle Navigation Button.
