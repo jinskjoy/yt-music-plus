@@ -1,6 +1,7 @@
 import { UIHelper } from '../utils/ui-helper.js';
 import { Track } from './models/track.js';
 import { CONSTANTS } from '../utils/constants.js';
+import { MESSAGES } from '../utils/ui-messages.js';
 
 /**
  * TrackProcessor - Handles the logic for processing tracks and finding replacements
@@ -40,7 +41,7 @@ export class TrackProcessor {
       }
 
       if (this.bridge.session.isCancelled) {
-        this.bridge.ui.setProgressText('Search cancelled.');
+        this.bridge.ui.setProgressText(MESSAGES.SEARCH.CANCELLING);
         break;
       }
 
@@ -95,15 +96,15 @@ export class TrackProcessor {
       foundCountText = `Found ${searchedItems.length} unavailable tracks and their replacements.`;
     }
 
-    let progressText = this.bridge.cancelSearch ? `Search cancelled. ${foundCountText}` : `Processing complete. ${foundCountText}`;
+    let progressText = this.bridge.session.isCancelled ? `Search cancelled. ${foundCountText}` : `Processing complete. ${foundCountText}`;
     
     progressText += this.#getMatchQualityWarning(searchedItems);
 
     this.bridge.ui.setProgressText(progressText);
-    if (!(isLocalImport && this.bridge.cancelSearch)) {
-      document.getElementById('findLocalReplacementsBtn')?.classList.add('hidden');
+    if (!(isLocalImport && this.bridge.session.isCancelled)) {
+      document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_LOCAL_REPLACEMENTS)?.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
     } else {
-      document.getElementById('findLocalReplacementsBtn')?.classList.remove('hidden');
+      document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_LOCAL_REPLACEMENTS)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
     }
   }
 
@@ -114,14 +115,14 @@ export class TrackProcessor {
   #getMatchQualityWarning(items) {
     const replacements = items.filter(item => item.replacement);
     const countOfReplacements = replacements.length;
-    if (countOfReplacements === 0) return '';
+    if (countOfReplacements === 0) return ` ${MESSAGES.RESULTS.NO_REPLACEMENTS_FOUND}`;
 
     const countOfGoodMatches = replacements.filter(item => item.replacement.isGoodMatch).length;
 
     if (countOfGoodMatches === 0) {
-      return ` ${countOfReplacements} replacements found but no good matches. Please review carefully.`;
+      return MESSAGES.RESULTS.MATCH_QUALITY_WARNING(`${countOfReplacements} replacements found but no good matches`);
     } else if (countOfGoodMatches < countOfReplacements) {
-      return ` ${countOfGoodMatches}/${countOfReplacements} are good matches. Some may need review.`;
+      return MESSAGES.RESULTS.MATCH_QUALITY_WARNING(`${countOfGoodMatches}/${countOfReplacements} are good matches`);
     }
     return '';
   }
@@ -136,7 +137,7 @@ export class TrackProcessor {
     this.bridge.ui.resetActionButtonsForPlaylist(this.bridge.currentSelectedPlaylist);
     this.bridge.ui.setTargetContainerVisibility(false);
     this.bridge.ui.toggleSearchProgress(true, true);
-    this.bridge.ui.setProgressText('Finding unavailable tracks...');
+    this.bridge.ui.setProgressText(MESSAGES.SEARCH.FINDING_UNAVAILABLE);
 
     try {
       const currentPlaylistId = this.bridge.currentSelectedPlaylist?.id || 
@@ -145,15 +146,24 @@ export class TrackProcessor {
       if (!currentPlaylistId) return;
 
       const items = await this.ytMusicAPI.getPlaylistItems(currentPlaylistId);
+      
+      if (this.bridge.session.isCancelled) return;
+      if (items.length === 0) {
+        this.bridge.ui.setProgressText(MESSAGES.RESULTS.NO_TRACKS_FOUND);
+        return;
+      }
+
       const unavailableItems = items.filter(item => item.isGreyedOut);
 
-      this.bridge.ui.setProgressText(`Found ${unavailableItems.length} unavailable tracks. Fetching replacements...`);
-
-      if (unavailableItems.length > 0) {
-        await this.processPlaylistItems(unavailableItems);
+      if (unavailableItems.length === 0) {
+        this.bridge.ui.setProgressText(MESSAGES.RESULTS.NO_UNAVAILABLE_FOUND);
+        return;
       }
+
+      this.bridge.ui.setProgressText(MESSAGES.RESULTS.FOUND_TRACKS(unavailableItems.length));
+      await this.processPlaylistItems(unavailableItems);
     } catch (error) {
-      this.bridge.ui.setProgressText('Error occurred while finding unavailable tracks.');
+      this.bridge.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('finding unavailable tracks'));
     } finally {
       this.bridge.ui.toggleSearchProgress(false);
     }
@@ -164,74 +174,84 @@ export class TrackProcessor {
    * @async
    */
   async findVideoTracks() {
-    this.bridge.session.isCancelled = false;
-    this.bridge.ui.clearPlaylistItemsContainer();
-    this.bridge.ui.resetActionButtonsForPlaylist(this.bridge.currentSelectedPlaylist);
-    this.bridge.ui.setTargetContainerVisibility(false);
-    this.bridge.ui.toggleSearchProgress(true, true);
-    this.bridge.ui.setProgressText('Finding video tracks...');
+     this.bridge.session.isCancelled = false;
+     this.bridge.ui.clearPlaylistItemsContainer();
+     this.bridge.ui.resetActionButtonsForPlaylist(this.bridge.currentSelectedPlaylist);
+     this.bridge.ui.setTargetContainerVisibility(false);
+     this.bridge.ui.toggleSearchProgress(true, true);
+     this.bridge.ui.setProgressText(MESSAGES.SEARCH.FINDING_VIDEO_TRACKS);
 
-    try {
-      const currentPlaylistId = this.bridge.currentSelectedPlaylist?.id || 
-                                this.ytMusicAPI.getCurrentPlaylistIdFromURL();
+     try {
+       const currentPlaylistId = this.bridge.currentSelectedPlaylist?.id || 
+                                 this.ytMusicAPI.getCurrentPlaylistIdFromURL();
 
-      if (!currentPlaylistId) return;
+       if (!currentPlaylistId) return;
 
-      const items = await this.ytMusicAPI.getPlaylistItems(currentPlaylistId);
-      const videoTracks = items.filter(item => item.isVideo);
+       const items = await this.ytMusicAPI.getPlaylistItems(currentPlaylistId);
 
-      this.bridge.ui.setProgressText(`Found ${videoTracks.length} video tracks. Fetching replacements...`);
+       if (this.bridge.session.isCancelled) return;
+       if (items.length === 0) {
+         this.bridge.ui.setProgressText(MESSAGES.RESULTS.NO_TRACKS_FOUND);
+         return;
+       }
 
-      if (videoTracks.length === 0) return;
+       const videoTracks = items.filter(item => item.isVideo);
 
-      let i = 1;
-      for (const track of videoTracks) {
-        track.isSearching = true;
-        track.searchCancelled = false;
-        track.replacement = null;
-        this.bridge.ui.addItem(track, CONSTANTS.API.BASE_URL, i++);
-      }
+       if (videoTracks.length === 0) {
+         this.bridge.ui.setProgressText(MESSAGES.RESULTS.NO_VIDEO_TRACKS_FOUND);
+         return;
+       }
 
-      i = 1;
-      this.bridge.session.start(videoTracks.length);
-      for (const track of videoTracks) {
-        this.bridge.session.updateProgress();
-        if (this.bridge.session.isCancelled) {
-          this.bridge.ui.setProgressText('Search cancelled.');
-          break;
-        }
+       this.bridge.ui.setProgressText(MESSAGES.RESULTS.FOUND_TRACKS(videoTracks.length));
 
-        try {
-          const searchResult = await this.ytMusicAPI.searchMusic(track);
-          const replacement = this.ytMusicAPI.getBestSearchResult(searchResult, track);
-          track.replacement = replacement;
-        } catch (error) {
-          track.replacement = null;
-        }
-        
-        track.isSearching = false;
-        this.bridge.ui.updateItemRow(track, CONSTANTS.API.BASE_URL, i++);
+       let i = 1;
+       for (const track of videoTracks) {
+         track.isSearching = true;
+         track.searchCancelled = false;
+         track.replacement = null;
+         this.bridge.ui.addItem(track, CONSTANTS.API.BASE_URL, i++);
+       }
 
-        await this.bridge.sleep(CONSTANTS.API.TIMEOUT_DURATION_MS);
-      }
-      
-      if (this.bridge.session.isCancelled) {
-        for (let j = i; j <= videoTracks.length; j++) {
-          videoTracks[j - 1].isSearching = false;
-          videoTracks[j - 1].searchCancelled = true;
-          this.bridge.ui.updateItemRow(videoTracks[j - 1], CONSTANTS.API.BASE_URL, j);
-        }
-      }
+       i = 1;
+       this.bridge.session.start(videoTracks.length);
+       for (const track of videoTracks) {
+         this.bridge.session.updateProgress();
+         if (this.bridge.session.isCancelled) {
+           this.bridge.ui.setProgressText(MESSAGES.SEARCH.CANCELLING);
+           break;
+         }
 
-      this.bridge.session.stop();
-      this.setVideoTrackProgressMessage(videoTracks);
-      UIHelper.updateCheckAllCheckbox();
-    } catch (error) {
-      this.bridge.ui.setProgressText('Error occurred while finding video tracks.');
-    } finally {
-      this.bridge.ui.toggleSearchProgress(false);
-    }
-  }
+         try {
+           const searchResult = await this.ytMusicAPI.searchMusic(track);
+           const replacement = this.ytMusicAPI.getBestSearchResult(searchResult, track);
+           track.replacement = replacement;
+         } catch (error) {
+           track.replacement = null;
+         }
+         
+         track.isSearching = false;
+         this.bridge.ui.updateItemRow(track, CONSTANTS.API.BASE_URL, i++);
+
+         await this.bridge.sleep(CONSTANTS.API.TIMEOUT_DURATION_MS);
+       }
+       
+       if (this.bridge.session.isCancelled) {
+         for (let j = i; j <= videoTracks.length; j++) {
+           videoTracks[j - 1].isSearching = false;
+           videoTracks[j - 1].searchCancelled = true;
+           this.bridge.ui.updateItemRow(videoTracks[j - 1], CONSTANTS.API.BASE_URL, j);
+         }
+       }
+
+       this.bridge.session.stop();
+       this.setVideoTrackProgressMessage(videoTracks);
+       UIHelper.updateCheckAllCheckbox();
+     } catch (error) {
+       this.bridge.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('finding video tracks'));
+     } finally {
+       this.bridge.ui.toggleSearchProgress(false);
+     }
+   }
 
   /**
    * Sets progress message for video track results
@@ -265,7 +285,7 @@ export class TrackProcessor {
     this.bridge.ui.setTargetContainerVisibility(false);
     this.bridge.ui.setListOnlyMode(true);
     this.bridge.ui.toggleSearchProgress(true, true);
-    this.bridge.ui.setProgressText('Fetching all tracks...');
+    this.bridge.ui.setProgressText(MESSAGES.SEARCH.FETCHING_ALL_TRACKS);
 
     try {
       const currentPlaylistId = this.bridge.currentSelectedPlaylist?.id || 
@@ -280,9 +300,13 @@ export class TrackProcessor {
         return;
       }
 
-      this.bridge.ui.setProgressText(`Found ${items.length} tracks. Select tracks to remove.`);
+      if (this.bridge.session.isCancelled) return;
+      if (items.length === 0) {
+        this.bridge.ui.setProgressText(MESSAGES.RESULTS.NO_TRACKS_FOUND);
+        return;
+      }
 
-      if (items.length === 0) return;
+      this.bridge.ui.setProgressText(MESSAGES.RESULTS.FOUND_TRACKS(items.length));
 
       let i = 1;
       for (const track of items) {
@@ -300,7 +324,7 @@ export class TrackProcessor {
 
       UIHelper.updateCheckAllCheckbox();
     } catch (error) {
-      this.bridge.ui.setProgressText('Error occurred while fetching tracks.');
+      this.bridge.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('fetching tracks'));
     } finally {
       this.bridge.ui.toggleSearchProgress(false);
     }
@@ -326,7 +350,7 @@ export class TrackProcessor {
 
       await TrackProcessor.#getFilesRecursively(dirHandle, mediaExtensions, files);
 
-      this.bridge.ui.setProgressText(`Found ${files.length} media files. Displaying list...`);
+      this.bridge.ui.setProgressText(MESSAGES.IMPORT.READING_FILES(files.length));
       this.bridge.ui.clearPlaylistItemsContainer();
 
       const localTracks = files.map(file => {
@@ -386,7 +410,7 @@ export class TrackProcessor {
       const text = await file.text();
       const lines = text.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0);
 
-      this.bridge.ui.setProgressText(`Found ${lines.length} tracks in file. Displaying list...`);
+      this.bridge.ui.setProgressText(MESSAGES.IMPORT.READING_FILES(lines.length));
       this.bridge.ui.clearPlaylistItemsContainer();
 
       const localTracks = lines.map(line => {

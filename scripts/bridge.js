@@ -9,6 +9,7 @@ import { BridgeUI } from './bridge-ui.js';
 import { TrackProcessor } from './track-processor.js';
 import { PlayerHandler } from './player-handler.js';
 import { CONSTANTS } from '../utils/constants.js';
+import { MESSAGES } from '../utils/ui-messages.js';
 
 (function () {
   /**
@@ -435,7 +436,7 @@ import { CONSTANTS } from '../utils/constants.js';
 
       this.attachButtonListener(CONSTANTS.UI.BUTTON_IDS.CANCEL_SEARCH, () => {
         this.cancelSearch = true;
-        this.ui.setProgressText('Cancelling search... Please wait.');
+        this.ui.setProgressText(MESSAGES.SEARCH.CANCELLING);
       });
 
       const cancelBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.CANCEL_SEARCH);
@@ -617,11 +618,14 @@ import { CONSTANTS } from '../utils/constants.js';
     /**
      * Performs cleanup after modifying selected items
      */
-    async afterActionsOnSelectedItems() {
+    async afterActionsOnSelectedItems(force = false) {
       try {
-        await this.initPlaylistFetching(true);
-        const playlistId = this.currentSelectedPlaylist?.id || 
-                          this.ytMusicAPI.getCurrentPlaylistIdFromURL();
+        // Refetch all playlists to update the cache but don't update the main playlist UI
+        if (force) {
+          this.playlistsCache = await this.ytMusicAPI.getPlaylists(false);
+        }
+        
+        const playlistId = this.currentSelectedPlaylist?.id;
         if (playlistId) {
           const updatedPlaylist = this.playlistsCache.find(p => p.id === playlistId);
           if (updatedPlaylist) {
@@ -644,13 +648,13 @@ import { CONSTANTS } from '../utils/constants.js';
       const selectedItems = UIHelper.getSelectedMediaItems();
       if (selectedItems.length === 0) return;
 
-      if (!confirm(`Are you sure you want to replace ${selectedItems.length} selected item${selectedItems.length !== 1 ? 's' : ''}?`)) {
+      if (!confirm(MESSAGES.ACTIONS.REPLACE_CONFIRM(selectedItems.length))) {
         return;
       }
 
       try {
         this.beforeActionsOnSelectedItems();
-        this.ui.setProgressText('Replacing selected items...');
+        this.ui.setProgressText(MESSAGES.ACTIONS.REPLACING_SELECTED);
 
         const playlistId = this.currentSelectedPlaylist?.id || 
                           this.ytMusicAPI.getCurrentPlaylistIdFromURL();
@@ -659,7 +663,7 @@ import { CONSTANTS } from '../utils/constants.js';
 
         let i = 1;
         for (const item of selectedItems) {
-          this.ui.setProgressText(`Replacing track ${i} of ${selectedItems.length}...`);
+          this.ui.setProgressText(MESSAGES.ACTIONS.REPLACE_ITEMS(i, selectedItems.length));
 
           if (item.replacementMedia?.videoId) {
             try {
@@ -684,9 +688,9 @@ import { CONSTANTS } from '../utils/constants.js';
         }
 
         const countReplaced = selectedItems.filter(item => item.replacementMedia?.videoId).length;
-        this.ui.setProgressText(countReplaced > 0 ? `All replacements completed. Replaced ${countReplaced} items.` : 'No valid replacements were made.');
+        this.ui.setProgressText(countReplaced > 0 ? MESSAGES.ACTIONS.REPLACE_COMPLETE(countReplaced) : MESSAGES.ACTIONS.NO_REPLACEMENTS_MADE);
       } catch (error) {
-        this.ui.setProgressText('Error occurred while replacing items.');
+        this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('replacing'));
       } finally {
         await this.afterActionsOnSelectedItems();
       }
@@ -697,7 +701,7 @@ import { CONSTANTS } from '../utils/constants.js';
      */
     async addSelectedItems() {
       this.beforeActionsOnSelectedItems();
-      this.ui.setProgressText('Adding selected items...');
+      this.ui.setProgressText(MESSAGES.ACTIONS.ADDING_SELECTED);
 
       try {
         const playlistId = this.targetPlaylist?.id || 
@@ -711,7 +715,7 @@ import { CONSTANTS } from '../utils/constants.js';
         const targetTitle = this.targetPlaylist?.title || this.currentSelectedPlaylist?.title || CONSTANTS.UI.STRINGS.PLAYLIST_FALLBACK;
 
         for (const item of selectedItems) {
-          this.ui.setProgressText(`${CONSTANTS.UI.STRINGS.IMPORT_ADD_PROGRESS_PREFIX} ${i} of ${selectedItems.length} to ${targetTitle}...`);
+          this.ui.setProgressText(MESSAGES.ACTIONS.ADD_ITEMS(i, selectedItems.length, targetTitle));
 
           if (item.replacementMedia?.videoId) {
             try {
@@ -725,9 +729,9 @@ import { CONSTANTS } from '../utils/constants.js';
         }
 
         const countAdded = selectedItems.filter(item => item.replacementMedia?.videoId).length;
-        this.ui.setProgressText(countAdded > 0 ? `${CONSTANTS.UI.STRINGS.IMPORT_ADD_COMPLETED} Added ${countAdded} items to ${targetTitle}.` : 'No valid items were added.');
+        this.ui.setProgressText(countAdded > 0 ? MESSAGES.ACTIONS.ADD_COMPLETE(countAdded, targetTitle) : MESSAGES.ACTIONS.NO_ADDITIONS_MADE);
       } catch (error) {
-        this.ui.setProgressText('Error occurred while adding items.');
+        this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('adding'));
       } finally {
         await this.afterActionsOnSelectedItems();
       }
@@ -746,7 +750,7 @@ import { CONSTANTS } from '../utils/constants.js';
 
       try {
         this.beforeActionsOnSelectedItems();
-        this.ui.setProgressText('Removing selected items...');
+        this.ui.setProgressText(MESSAGES.ACTIONS.REMOVING_SELECTED);
 
         const playlistId = this.currentSelectedPlaylist?.id || 
                           this.ytMusicAPI.getCurrentPlaylistIdFromURL();
@@ -755,7 +759,7 @@ import { CONSTANTS } from '../utils/constants.js';
 
         let i = 1;
         for (const item of selectedItems) {
-          this.ui.setProgressText(`Removing track ${i} of ${selectedItems.length}...`);
+          this.ui.setProgressText(MESSAGES.ACTIONS.REMOVING_ITEMS(i, selectedItems.length));
 
           try {
             const originalItemDetails = item.originalMedia;
@@ -773,9 +777,9 @@ import { CONSTANTS } from '../utils/constants.js';
           i++;
         }
 
-        this.ui.setProgressText(selectedItems.length > 0 ? `All removals completed. Removed ${selectedItems.length} items.` : 'No items were removed.');
+        this.ui.setProgressText(selectedItems.length > 0 ? MESSAGES.ACTIONS.REMOVAL_COMPLETE(selectedItems.length) : MESSAGES.ACTIONS.NO_REMOVALS);
       } catch (error) {
-        this.ui.setProgressText('Error occurred while removing items.');
+        this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('removing'));
       } finally {
         await this.afterActionsOnSelectedItems();
       }
