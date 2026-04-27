@@ -457,6 +457,11 @@ export class TrackProcessor {
           UIHelper.removeMediaGridRow(item.originalMedia);
         });
         this.bridge.ui.setProgressText(MESSAGES.ACTIONS.KEEP_COMPLETE(itemsToRemove.length));
+        
+        // Wait a moment for UI cleanup then refresh the duplicate list
+        setTimeout(() => {
+          this.findDuplicateTracks();
+        }, CONSTANTS.UI.UI_UPDATE_DELAY_MS);
       } else {
         this.bridge.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('removing duplicates'));
       }
