@@ -407,6 +407,13 @@ import { MESSAGES } from '../utils/ui-messages.js';
         this.processor.findVideoTracks();
         this.ui.setActiveButton(CONSTANTS.UI.BUTTON_IDS.FIND_VIDEO_TRACKS);
       });
+      this.attachButtonListener(CONSTANTS.UI.BUTTON_IDS.FIND_DUPLICATE_TRACKS, () => {
+        this.processor.findDuplicateTracks();
+        this.ui.setActiveButton(CONSTANTS.UI.BUTTON_IDS.FIND_DUPLICATE_TRACKS);
+      });
+      this.attachButtonListener(CONSTANTS.UI.BUTTON_IDS.KEEP_ONLY_SELECTED, () => {
+        this.processor.keepOnlySelected();
+      });
       this.attachButtonListener(CONSTANTS.UI.BUTTON_IDS.REPLACE_SELECTED, () => this.replaceSelectedItems());
       this.attachButtonListener(CONSTANTS.UI.BUTTON_IDS.ADD_SELECTED, () => this.addSelectedItems());
       this.attachButtonListener(CONSTANTS.UI.BUTTON_IDS.REMOVE_SELECTED, () => this.removeSelectedItems());

@@ -87,6 +87,15 @@ export class PopupManager {
       backButton.addEventListener('click', () => this.showPlaylistSelection());
     }
 
+    // Open settings handler
+    const settingsLink = popupElement.querySelector(`#${CONSTANTS.UI.BUTTON_IDS.OPEN_SETTINGS}`);
+    if (settingsLink) {
+      settingsLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        chrome.runtime.sendMessage({ action: 'openOptions' });
+      });
+    }
+
     // Close warning message handler
     const closeWarningBtn = popupElement.querySelector(`#${CONSTANTS.UI.ELEMENT_IDS.CLOSE_WARNING_BTN}`);
     if (closeWarningBtn) {

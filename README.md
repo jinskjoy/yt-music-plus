@@ -27,6 +27,7 @@ Managing large YouTube Music playlists can be a chore. Songs become unavailable,
 - **Find Unavailable Tracks:** Automatically scan your playlists for "greyed out" unavailable tracks and find suitable replacements.
 - **Playlist Discovery:** Choose between loading only editable playlists or your entire library, including liked playlists and albums.
 - **Find Video Tracks:** Scan your playlists for video tracks and find official audio replacements to improve audio quality and consistency.
+- **Find Duplicate Tracks:** Intelligently identify duplicate tracks based on Video ID or title similarity. Groups are visually marked, and the extension automatically picks the best version to keep.
 - **Import Local Music:** Scan a local folder of music files or import a list from a text file. The extension will search for these tracks on YouTube Music, allowing you to add them to any of your playlists.
 - **Integrated Track Playback:** Preview any track directly within the extension's grid. Hover over track details to access playback controls (Play, Pause, Skip) without leaving the popup.
 - **List All Tracks:** View all tracks in a playlist in a simple list, making it easy to select and remove multiple tracks at once.
@@ -65,6 +66,8 @@ The core functionality is cleaning up playlists. Here's how it works:
   - After scanning, you can search for the tracks on YouTube Music and add them to your selected playlist.
 
 - **Bulk Deleting:** Click "List All Tracks" to see every song in the playlist. Check the ones you want to remove and click "Remove Selected".
+
+- **Cleaning Duplicates:** Click "Find Duplicate Tracks" to see tracks grouped by similarity. The extension will pre-select the best audio versions to keep; simply click "Keep Only Selected" to remove the duplicates. You can also use the "✕" button to ignore specific groups.
 
 ## Contributing
 

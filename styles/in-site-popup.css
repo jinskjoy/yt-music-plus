@@ -585,9 +585,23 @@
     display: none;
 }
 
+.items-grid-wrapper.duplicate-track-mode .grid-col-replacement {
+    display: flex;
+    position: relative;
+}
+
+.items-grid-wrapper.duplicate-track-mode .grid-col-replacement .media-item {
+    display: none;
+}
+
 .items-grid-wrapper.list-only-mode .items-grid-header,
 .items-grid-wrapper.list-only-mode .grid-row {
     grid-template-columns: 35px 1fr 35px;
+}
+
+.items-grid-wrapper.duplicate-track-mode .items-grid-header,
+.items-grid-wrapper.duplicate-track-mode .grid-row {
+    grid-template-columns: 35px 1fr 80px 35px; /* Leave space for ignore button */
 }
 
 
@@ -819,6 +833,38 @@
 .potential-mismatch {
     background-color: #fff3cd;
 }
+
+/* Duplicate Group Styles */
+.duplicate-group-start {
+    border-top: 2px solid #1976d2 !important;
+    margin-top: 4px;
+}
+
+.duplicate-group-row {
+    background-color: #f0f7ff;
+}
+
+.alt-duplicate-group-row {
+    background-color: #f9f9f9;
+}
+
+.duplicate-group-row:hover,
+.alt-duplicate-group-row:hover {
+    background-color: #e3f2fd;
+}
+
+
+.ignore-group-btn {
+    width: 24px;
+    height: 24px;
+    font-size: 14px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
 
 .chrome-store-link,
 .chrome-store-link:visited,

@@ -56,7 +56,11 @@ export class BridgeUI {
     if (container) {
       container.replaceChildren();
     }
-    document.querySelector(`.${CONSTANTS.UI.CLASSES.ITEMS_GRID_WRAPPER}`)?.classList.remove(CONSTANTS.UI.CLASSES.LIST_ONLY_MODE);
+    const wrapper = document.querySelector(`.${CONSTANTS.UI.CLASSES.ITEMS_GRID_WRAPPER}`);
+    if (wrapper) {
+      wrapper.classList.remove(CONSTANTS.UI.CLASSES.LIST_ONLY_MODE);
+      wrapper.classList.remove(CONSTANTS.UI.CLASSES.DUPLICATE_TRACK_MODE);
+    }
   }
 
   /**
@@ -94,18 +98,51 @@ export class BridgeUI {
   /**
    * Adds an item row to the display
    */
-  addItem(item, baseUrl, index) {
+  addItem(item, baseUrl, index, groupInfo = null) {
     const { originalMedia, replacementMedia } = this.bridge._createMediaObjects(item, baseUrl);
 
-    const gridRow = MediaGridRow.render(originalMedia, replacementMedia, index, this.bridge.playerHandler);
+    // Use group-scoped index if available
+    const displayIndex = groupInfo ? groupInfo.indexInGroup + 1 : index;
+    const gridRow = MediaGridRow.render(originalMedia, replacementMedia, displayIndex, this.bridge.playerHandler);
+    
+    if (groupInfo) {
+      this.#applyDuplicateGroupStyling(gridRow, groupInfo);
+      
+      if (groupInfo.isStart) {
+        // Add "Ignore Group" button to the first row of a duplicate group
+        const replacementCol = gridRow.querySelector(`.${CONSTANTS.UI.CLASSES.GRID_COL_REPLACEMENT}`);
+        if (replacementCol) {
+          const template = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.IGNORE_GROUP_BTN_TEMPLATE);
+          if (template) {
+            const ignoreBtn = template.content.cloneNode(true).firstElementChild;
+            ignoreBtn.addEventListener('click', () => {
+              const groupIndex = groupInfo.groupIndex;
+              const allGroupRows = document.querySelectorAll(`.${CONSTANTS.UI.CLASSES.GRID_ROW}[data-group-index="${groupIndex}"]`);
+              
+              // Remove all rows in the group from rowMap and DOM
+              allGroupRows.forEach(row => {
+                const rowIndex = parseInt(row.dataset.serialNumber);
+                this.rowMap.delete(rowIndex);
+                row.remove();
+              });
+              
+              UIHelper.updateCheckAllCheckbox();
+            });
+            replacementCol.appendChild(ignoreBtn);
+          }
+        }
+      }
+    }
+
     document.getElementById(CONSTANTS.UI.ELEMENT_IDS.ITEMS_GRID_CONTAINER)?.appendChild(gridRow);
     this.rowMap.set(index, gridRow);
+    return gridRow;
   }
 
   /**
    * Updates an existing item row
    */
-  updateItemRow(item, baseUrl, index) {
+  updateItemRow(item, baseUrl, index, groupInfo = null) {
     const oldRow = this.rowMap.get(index);
     if (oldRow) {
       const oldCheckbox = oldRow.querySelector(`.${CONSTANTS.UI.CLASSES.ITEM_CHECKBOX}`);
@@ -115,6 +152,10 @@ export class BridgeUI {
       const { originalMedia, replacementMedia } = this.bridge._createMediaObjects(item, baseUrl);
       const newRow = MediaGridRow.render(originalMedia, replacementMedia, index, this.bridge.playerHandler);
       
+      if (groupInfo) {
+        this.#applyDuplicateGroupStyling(newRow, groupInfo);
+      }
+
       const newCheckbox = newRow.querySelector(`.${CONSTANTS.UI.CLASSES.ITEM_CHECKBOX}`);
       if (newCheckbox && oldCheckbox && userInteracted) {
         newCheckbox.checked = wasChecked;
@@ -130,6 +171,21 @@ export class BridgeUI {
       oldRow.parentNode?.replaceChild(newRow, oldRow);
       this.rowMap.set(index, newRow);
     }
+  }
+
+  /**
+   * Applies duplicate group styling to a row
+   * @private
+   */
+  #applyDuplicateGroupStyling(gridRow, groupInfo) {
+    if (groupInfo.isStart) {
+      gridRow.classList.add(CONSTANTS.UI.CLASSES.DUPLICATE_GROUP_START);
+    }
+    
+    const isAltGroup = groupInfo.groupIndex % 2 !== 0;
+    const groupClass = isAltGroup ? CONSTANTS.UI.CLASSES.ALT_DUPLICATE_GROUP_ROW : CONSTANTS.UI.CLASSES.DUPLICATE_GROUP_ROW;
+    gridRow.classList.add(groupClass);
+    gridRow.dataset.groupIndex = groupInfo.groupIndex;
   }
 
   /**
@@ -150,9 +206,11 @@ export class BridgeUI {
     const buttonIds = [
       CONSTANTS.UI.BUTTON_IDS.FIND_UNAVAILABLE,
       CONSTANTS.UI.BUTTON_IDS.FIND_VIDEO_TRACKS,
+      CONSTANTS.UI.BUTTON_IDS.FIND_DUPLICATE_TRACKS,
       CONSTANTS.UI.BUTTON_IDS.REPLACE_SELECTED,
       CONSTANTS.UI.BUTTON_IDS.ADD_SELECTED,
       CONSTANTS.UI.BUTTON_IDS.REMOVE_SELECTED,
+      CONSTANTS.UI.BUTTON_IDS.KEEP_ONLY_SELECTED,
       CONSTANTS.UI.BUTTON_IDS.BACK_BUTTON,
       CONSTANTS.UI.BUTTON_IDS.IMPORT_FROM_FOLDER,
       CONSTANTS.UI.BUTTON_IDS.IMPORT_FROM_FILE,
@@ -286,6 +344,19 @@ export class BridgeUI {
   }
 
   /**
+   * Sets the duplicate track mode for the grid
+   * @param {boolean} isDuplicateMode - Whether to enable duplicate mode
+   */
+  setDuplicateTrackMode(isDuplicateMode) {
+    document.querySelector(`.${CONSTANTS.UI.CLASSES.ITEMS_GRID_WRAPPER}`)?.classList.toggle(CONSTANTS.UI.CLASSES.DUPLICATE_TRACK_MODE, isDuplicateMode);
+    
+    const header = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.GRID_HEADER_REPLACEMENT);
+    if (header) {
+      header.textContent = isDuplicateMode ? 'Ignore Group' : 'Replacement Media';
+    }
+  }
+
+  /**
    * Updates the visibility of the target playlist container
    * @param {boolean} isVisible 
    */
@@ -295,16 +366,18 @@ export class BridgeUI {
 
   /**
    * Updates visibility of bulk action buttons
-   * @param {Object} options - { replace, add, remove } visibility flags
+   * @param {Object} options - { replace, add, remove, keep } visibility flags
    */
   updateActionButtonsVisibility(options = {}) {
     const replaceBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.REPLACE_SELECTED);
     const removeBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.REMOVE_SELECTED);
     const addBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.ADD_SELECTED);
+    const keepBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.KEEP_ONLY_SELECTED);
 
     if (replaceBtn && options.replace !== undefined) replaceBtn.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !options.replace);
     if (removeBtn && options.remove !== undefined) removeBtn.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !options.remove);
     if (addBtn && options.add !== undefined) addBtn.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !options.add);
+    if (keepBtn && options.keep !== undefined) keepBtn.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !options.keep);
   }
 
   /**
@@ -315,9 +388,11 @@ export class BridgeUI {
     const isEditable = playlist?.isEditable !== false;
 
     this.setTargetContainerVisibility(false);
+    this.setDuplicateTrackMode(false);
     document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_LOCAL_REPLACEMENTS)?.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
     document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_UNAVAILABLE)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
     document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_VIDEO_TRACKS)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+    document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_DUPLICATE_TRACKS)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
     document.getElementById(CONSTANTS.UI.BUTTON_IDS.IMPORT_FROM_FOLDER)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
     document.getElementById(CONSTANTS.UI.BUTTON_IDS.IMPORT_FROM_FILE)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
     document.getElementById(CONSTANTS.UI.BUTTON_IDS.LIST_ALL_TRACKS)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
@@ -325,7 +400,8 @@ export class BridgeUI {
     this.updateActionButtonsVisibility({
       replace: isEditable,
       remove: isEditable,
-      add: isEditable
+      add: isEditable,
+      keep: false
     });
   }
 
@@ -337,6 +413,7 @@ export class BridgeUI {
     const isEditable = playlist?.isEditable !== false;
 
     this.setTargetContainerVisibility(true);
+    this.setDuplicateTrackMode(false);
     document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_LOCAL_REPLACEMENTS)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
     document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_UNAVAILABLE)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
     document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_VIDEO_TRACKS)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);

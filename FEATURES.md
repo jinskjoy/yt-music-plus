@@ -18,16 +18,7 @@ This document provides a comprehensive list of features for the YouTube Music + 
 - **Configurability**: Can be toggled on/off in Settings.
 - **Testable Case**: Navigate to a playlist page; verify button appears and auto-selects the playlist in the popup.
 
-### 1.3 Sidebar Panel
-- **Feature**: A fixed sidebar panel accessible via the extension icon (browser-specific behavior) or internal triggers.
-- **Components**:
-    - **Playlist List**: Displays all editable playlists.
-    - **Search Input**: Real-time filtering of the playlist list.
-    - **Statistics**: Shows usage or playlist statistics.
-    - **Refresh Button**: Manually trigger a refresh of playlist data.
-- **Testable Case**: Open sidebar; verify playlists are listed and filterable.
-
-### 1.4 Main Management Popup (In-site Dialog)
+### 1.3 Main Management Popup (In-site Dialog)
 - **Feature**: A central dialog for performing all major operations.
 - **Screens**:
     - **Playlist Selection Screen**: Grid of playlists with thumbnails and track counts.
@@ -36,7 +27,7 @@ This document provides a comprehensive list of features for the YouTube Music + 
 - **Minimize Option**: A "−" button in the header to collapse the popup to the bottom-right corner. When minimized, clicking the extension title or the "⤢" (expansion) icon restores it. The playlist title is hidden in the minimized view for a cleaner look.
 - **Testable Case**: Verify navigation between selection and details screens using the "Back" button; verify the popup minimizes and restores correctly.
 
-### 1.5 Settings/Options Page
+### 1.4 Settings/Options Page
 - **Feature**: A dedicated page for user preferences.
 - **Options**:
     - Toggle Navigation Button.
@@ -89,7 +80,17 @@ This document provides a comprehensive list of features for the YouTube Music + 
 - **Use Case**: Intended for bulk deletion or general management.
 - **Testable Case**: Click "List All Tracks"; verify all tracks are displayed in the grid.
 
-### 2.7 Target Playlist Selection
+### 2.7 Duplicate Track Check
+- **Feature**: Scans the selected playlist for duplicate tracks.
+- **Detection Logic**: Identifies duplicates based on matching Video IDs or highly similar titles (0.9 similarity threshold).
+- **Grouping**: Visually groups duplicate tracks with distinct borders and alternating background colors for easy identification.
+- **Default Selection**: In each group, the extension automatically marks the first available audio track (non-video) to be kept.
+- **Actions**:
+    - **Keep Only Selected**: Bulk removal of all unmarked tracks in duplicate groups.
+    - **Ignore Group**: An icon button (✕) in each group to remove it from the list without modifying the playlist.
+- **Testable Case**: Select a playlist with duplicates; click "Find Duplicate Tracks"; verify grouping and default selection; click "Keep Only Selected" and verify unmarked duplicates are removed.
+
+### 2.8 Target Playlist Selection
 - **Feature**: Allows selecting a different target playlist for track importation.
 - **Behavior**:
     - Appears when importing from a local folder or file.

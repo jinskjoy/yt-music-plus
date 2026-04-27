@@ -182,6 +182,7 @@ export class MediaGridRow {
 
     const checkbox = row.querySelector(`.${CONSTANTS.UI.CLASSES.ITEM_CHECKBOX}`);
     const isListOnlyMode = document.querySelector(`.${CONSTANTS.UI.CLASSES.ITEMS_GRID_WRAPPER}`)?.classList.contains(CONSTANTS.UI.CLASSES.LIST_ONLY_MODE);
+    const isDuplicateMode = document.querySelector(`.${CONSTANTS.UI.CLASSES.ITEMS_GRID_WRAPPER}`)?.classList.contains(CONSTANTS.UI.CLASSES.DUPLICATE_TRACK_MODE);
     const hasReplacement = replacementMedia && replacementMedia.videoId;
     const isPending = replacementMedia && replacementMedia.isPending;
     const isGoodMatch = replacementMedia ? replacementMedia.isGoodMatch !== false : true;
@@ -190,7 +191,7 @@ export class MediaGridRow {
       ? replacementMedia.isChecked 
       : (!!hasReplacement && isGoodMatch);
 
-    if (!isListOnlyMode && !hasReplacement && !isPending) {
+    if (!isListOnlyMode && !isDuplicateMode && !hasReplacement && !isPending) {
       checkbox.disabled = true;
     }
     const originalCol = row.querySelector(`.${CONSTANTS.UI.CLASSES.GRID_COL_ORIGINAL}`);
@@ -420,6 +421,7 @@ export class UIHelper {
     });
 
     const isListOnlyMode = popupElement.querySelector(`.${CONSTANTS.UI.CLASSES.ITEMS_GRID_WRAPPER}`)?.classList.contains(CONSTANTS.UI.CLASSES.LIST_ONLY_MODE);
+    const isDuplicateMode = popupElement.querySelector(`.${CONSTANTS.UI.CLASSES.ITEMS_GRID_WRAPPER}`)?.classList.contains(CONSTANTS.UI.CLASSES.DUPLICATE_TRACK_MODE);
     const searchProgress = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.SEARCH_PROGRESS);
     const isSearching = searchProgress && !searchProgress.classList.contains(CONSTANTS.UI.CLASSES.HIDDEN);
 
@@ -427,10 +429,13 @@ export class UIHelper {
     if (removeBtn) removeBtn.disabled = isSearching ? true : !anyChecked;
 
     const addBtn = popupElement.querySelector(`#${CONSTANTS.UI.BUTTON_IDS.ADD_SELECTED}`);
-    if (addBtn) addBtn.disabled = isSearching || isListOnlyMode ? true : !anyCheckedWithReplacement;
+    if (addBtn) addBtn.disabled = isSearching || isListOnlyMode || isDuplicateMode ? true : !anyCheckedWithReplacement;
 
     const replaceBtn = popupElement.querySelector(`#${CONSTANTS.UI.BUTTON_IDS.REPLACE_SELECTED}`);
-    if (replaceBtn) replaceBtn.disabled = isSearching || isListOnlyMode ? true : !anyCheckedWithReplacement;
+    if (replaceBtn) replaceBtn.disabled = isSearching || isListOnlyMode || isDuplicateMode ? true : !anyCheckedWithReplacement;
+
+    const keepBtn = popupElement.querySelector(`#${CONSTANTS.UI.BUTTON_IDS.KEEP_ONLY_SELECTED}`);
+    if (keepBtn) keepBtn.disabled = isSearching ? true : !anyChecked;
 
     const footer = popupElement.querySelector(`#${CONSTANTS.UI.ELEMENT_IDS.SELECTION_FOOTER}`);
     if (footer) {

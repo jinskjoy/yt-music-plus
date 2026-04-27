@@ -53,6 +53,11 @@ class BackgroundService {
           sendResponse({ success: true });
           break;
 
+        case 'openOptions':
+          chrome.runtime.openOptionsPage();
+          sendResponse({ success: true });
+          break;
+
         default:
           sendResponse({ success: false, message: 'Unknown action' });
       }
