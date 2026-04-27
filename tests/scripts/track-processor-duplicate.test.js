@@ -143,7 +143,7 @@ describe('TrackProcessor - Duplicate Track Check', () => {
   });
 
   describe('keepOnlySelected', () => {
-    it('should remove unmarked tracks from the playlist', async () => {
+    it('should remove unmarked tracks from the playlist, including alternating groups', async () => {
       // Mock DOM elements
       const row1 = document.createElement('div');
       row1.className = `${CONSTANTS.UI.CLASSES.GRID_ROW} ${CONSTANTS.UI.CLASSES.DUPLICATE_GROUP_ROW}`;
@@ -155,7 +155,7 @@ describe('TrackProcessor - Duplicate Track Check', () => {
       row1.appendChild(cb1);
 
       const row2 = document.createElement('div');
-      row2.className = `${CONSTANTS.UI.CLASSES.GRID_ROW} ${CONSTANTS.UI.CLASSES.DUPLICATE_GROUP_ROW}`;
+      row2.className = `${CONSTANTS.UI.CLASSES.GRID_ROW} ${CONSTANTS.UI.CLASSES.ALT_DUPLICATE_GROUP_ROW}`; // ALT GROUP
       row2.dataset.originalMedia = JSON.stringify({ videoId: 'v2', playlistSetVideoId: 'ps2' });
       const cb2 = document.createElement('input');
       cb2.type = 'checkbox';

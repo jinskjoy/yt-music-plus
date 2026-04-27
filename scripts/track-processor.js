@@ -418,7 +418,7 @@ export class TrackProcessor {
    * @async
    */
   async keepOnlySelected() {
-    const allGroupRows = Array.from(document.querySelectorAll(`.${CONSTANTS.UI.CLASSES.GRID_ROW}.${CONSTANTS.UI.CLASSES.DUPLICATE_GROUP_ROW}`));
+    const allGroupRows = Array.from(document.querySelectorAll(`.${CONSTANTS.UI.CLASSES.GRID_ROW}.${CONSTANTS.UI.CLASSES.DUPLICATE_GROUP_ROW}, .${CONSTANTS.UI.CLASSES.GRID_ROW}.${CONSTANTS.UI.CLASSES.ALT_DUPLICATE_GROUP_ROW}`));
     
     // Separate into items to keep and items to remove
     const itemsToRemove = [];
