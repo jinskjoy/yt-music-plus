@@ -17,7 +17,16 @@ export default defineConfig(({ command }) => {
   }
 
   return {
-    plugins: [crx({ manifest: manifestConfig })],
+    plugins: [
+      crx({ manifest: manifestConfig }),
+      {
+        name: 'restart-on-update',
+        handleHotUpdate({ server }) {
+          server.restart()
+          return []
+        },
+      }
+    ],
     server: {
       port: 5173,
       strictPort: true,

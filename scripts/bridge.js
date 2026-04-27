@@ -9,6 +9,7 @@ import { BridgeUI } from './bridge-ui.js';
 import { TrackProcessor } from './track-processor.js';
 import { PlayerHandler } from './player-handler.js';
 import { CONSTANTS } from '../utils/constants.js';
+import { MESSAGES } from '../utils/ui-messages.js';
 
 (function () {
   /**
@@ -281,6 +282,7 @@ import { CONSTANTS } from '../utils/constants.js';
         this.popupElements.holder.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
       }
 
+      this.ui.setPlaylistScreenVisibility(true);
       await this.initPlaylistFetching();
 
       const currentPlaylistId = this.ytMusicAPI.getCurrentPlaylistIdFromURL();
@@ -434,7 +436,7 @@ import { CONSTANTS } from '../utils/constants.js';
 
       this.attachButtonListener(CONSTANTS.UI.BUTTON_IDS.CANCEL_SEARCH, () => {
         this.cancelSearch = true;
-        this.ui.setProgressText('Cancelling search... Please wait.');
+        this.ui.setProgressText(MESSAGES.SEARCH.CANCELLING);
       });
 
       const cancelBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.CANCEL_SEARCH);
@@ -457,7 +459,7 @@ import { CONSTANTS } from '../utils/constants.js';
     /**
      * Initializes playlist fetching and display
      */
-    async initPlaylistFetching(forceRefresh = false, onlyEditable = null) {
+    async initPlaylistFetching(forceRefresh = false, onlyEditable = null, isTargetSelection = false) {
       if (this.isFetchingPlaylists) return;
 
       // Determine default value for onlyEditable if not provided
@@ -466,7 +468,12 @@ import { CONSTANTS } from '../utils/constants.js';
       }
 
       if (!forceRefresh && this.playlistsCache && this.playlistsCache.length > 0) {
-        this.ui.displayPlaylistsForSelection(this.playlistsCache);
+        const displayedPlaylists = onlyEditable ? this.playlistsCache.filter(p => p.isEditable) : this.playlistsCache;
+        if (isTargetSelection) {
+          this.ui.displayTargetPlaylists(displayedPlaylists, this.playlistsCache);
+        } else {
+          this.ui.displayPlaylistsForSelection(displayedPlaylists, this.playlistsCache);
+        }
         this.ui.hidePlaylistLoadingIndicator();
         this.ui.initRefreshButton();
         return;
@@ -474,18 +481,24 @@ import { CONSTANTS } from '../utils/constants.js';
 
       this.isFetchingPlaylists = true;
 
-      const loadingIndicator = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLISTS_LOADING_INDICATOR);
-      if (loadingIndicator) loadingIndicator.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+      if (isTargetSelection) {
+        this.ui.toggleTargetSearchProgress(true);
+      } else {
+        const loadingIndicator = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLISTS_LOADING_INDICATOR);
+        if (loadingIndicator) loadingIndicator.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+      }
       
-      const playlistsGrid = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLISTS_GRID);
+      const playlistsGridId = isTargetSelection ? CONSTANTS.UI.ELEMENT_IDS.TARGET_PLAYLISTS_GRID : CONSTANTS.UI.ELEMENT_IDS.PLAYLISTS_GRID;
+      const playlistsGrid = document.getElementById(playlistsGridId);
       if (playlistsGrid) playlistsGrid.replaceChildren();
 
       try {
-        let playlists = await this.ytMusicAPI.getPlaylists(onlyEditable);
+        // Always fetch all to get correct counts for the footer
+        let playlists = await this.ytMusicAPI.getPlaylists(false);
         
         if (playlists.length === 0) {
           await this.sleep(CONSTANTS.PLAYER.RETRY_INTERVAL_MS);
-          playlists = await this.ytMusicAPI.getPlaylists(onlyEditable);
+          playlists = await this.ytMusicAPI.getPlaylists(false);
         }
         
         this.playlistsCache = playlists;
@@ -493,8 +506,14 @@ import { CONSTANTS } from '../utils/constants.js';
         console.error('YouTube Music +: Error fetching playlists', error);
         this.playlistsCache = [];
       } finally {
-        this.ui.displayPlaylistsForSelection(this.playlistsCache);
-        this.ui.hidePlaylistLoadingIndicator();
+        const displayedPlaylists = onlyEditable ? this.playlistsCache.filter(p => p.isEditable) : this.playlistsCache;
+        if (isTargetSelection) {
+          this.ui.displayTargetPlaylists(displayedPlaylists, this.playlistsCache);
+          this.ui.toggleTargetSearchProgress(false);
+        } else {
+          this.ui.displayPlaylistsForSelection(displayedPlaylists, this.playlistsCache);
+          this.ui.hidePlaylistLoadingIndicator();
+        }
         this.ui.initRefreshButton();
         this.isFetchingPlaylists = false;
       }
@@ -504,41 +523,42 @@ import { CONSTANTS } from '../utils/constants.js';
      * Handles playlist selection
      */
     onPlaylistSelected(playlist) {
+      const isNewPlaylist = !this.currentSelectedPlaylist || this.currentSelectedPlaylist.id !== playlist.id;
+      
       UIHelper.setPlaylistDetails(playlist);
-
-      if (!this.currentSelectedPlaylist || this.currentSelectedPlaylist.id !== playlist.id) {
-        this.ui.clearPlaylistItemsContainer();
+      
+      if (isNewPlaylist) {
+        // Only clear UI state if it's a different playlist
         this.ui.clearActiveButtons();
+        this.ui.setListOnlyMode(false);
+        this.ui.clearPlaylistItemsContainer();
         this.currentSelectedPlaylist = playlist;
         this.targetPlaylist = playlist; // Default target is the selected playlist
         this.ui.setProgressText('');
+        this.localTracks = [];
+        UIHelper.toggleGrid(false);
       }
 
-      const detailsScreen = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_DETAILS_SCREEN);
-      if (detailsScreen) detailsScreen.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
-
-      const selectionScreen = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_SELECTION_SCREEN);
-      if (selectionScreen) selectionScreen.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
-
-      this.ui.resetActionButtonsForPlaylist(playlist);
-      this.ui.updateTargetPlaylistDisplay(this.targetPlaylist);
-
-      UIHelper.toggleGrid(false);
-      this.localTracks = [];
+      this.ui.setPlaylistScreenVisibility(false);
       this.ui.updatePopupTitle(`Playlist: ${playlist.title}`);
       
-      this.ui.initSearchBox();
-      const searchInput = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.SEARCH_INPUT);
-      if (searchInput) {
-        searchInput.value = '';
-        document.getElementById(CONSTANTS.UI.ELEMENT_IDS.CLEAR_SEARCH_BTN)?.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
-        this.ui.filterGridItems('');
-      }
+      if (isNewPlaylist) {
+        this.ui.resetActionButtonsForPlaylist(playlist);
+        this.ui.updateTargetPlaylistDisplay(this.targetPlaylist);
+        
+        this.ui.initSearchBox();
+        const searchInput = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.SEARCH_INPUT);
+        if (searchInput) {
+          searchInput.value = '';
+          document.getElementById(CONSTANTS.UI.ELEMENT_IDS.CLEAR_SEARCH_BTN)?.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
+          this.ui.filterGridItems('');
+        }
 
-      // Auto-list tracks if enabled and no button is active
-      if (this.extSettings?.autoListAllTracks !== false && !this.ui.hasActiveActionButton()) {
-        this.processor.listAllTracks();
-        this.ui.setActiveButton(CONSTANTS.UI.BUTTON_IDS.LIST_ALL_TRACKS);
+        // Auto-list tracks if enabled and no button is active
+        if (this.extSettings?.autoListAllTracks !== false && !this.ui.hasActiveActionButton()) {
+          this.processor.listAllTracks();
+          this.ui.setActiveButton(CONSTANTS.UI.BUTTON_IDS.LIST_ALL_TRACKS);
+        }
       }
     }
 
@@ -547,12 +567,9 @@ import { CONSTANTS } from '../utils/constants.js';
      */
     async showPlaylistSelectionForTarget() {
       this.isSelectingTarget = true;
-      this.ui.setTargetSelectionVisibility(true);
+      this.ui.setTargetModalVisibility(true);
       
-      // If we only have editable playlists in cache, but user might want to see all
-      // We rely on the existing refresh/load all buttons in the selection screen.
-      // But we should ensure the current cache is displayed.
-      this.ui.displayPlaylistsForSelection(this.playlistsCache);
+      await this.initPlaylistFetching(false, null, true);
     }
 
     /**
@@ -575,7 +592,7 @@ import { CONSTANTS } from '../utils/constants.js';
      */
     finishTargetSelection() {
       this.isSelectingTarget = false;
-      this.ui.setTargetSelectionVisibility(false);
+      this.ui.setTargetModalVisibility(false);
       this.ui.updateTargetPlaylistDisplay(this.targetPlaylist);
       this.ui.updatePopupTitle(`Playlist: ${this.currentSelectedPlaylist.title}`);
     }
@@ -601,11 +618,14 @@ import { CONSTANTS } from '../utils/constants.js';
     /**
      * Performs cleanup after modifying selected items
      */
-    async afterActionsOnSelectedItems() {
+    async afterActionsOnSelectedItems(force = false) {
       try {
-        await this.initPlaylistFetching(true);
-        const playlistId = this.currentSelectedPlaylist?.id || 
-                          this.ytMusicAPI.getCurrentPlaylistIdFromURL();
+        // Refetch all playlists to update the cache but don't update the main playlist UI
+        if (force) {
+          this.playlistsCache = await this.ytMusicAPI.getPlaylists(false);
+        }
+        
+        const playlistId = this.currentSelectedPlaylist?.id;
         if (playlistId) {
           const updatedPlaylist = this.playlistsCache.find(p => p.id === playlistId);
           if (updatedPlaylist) {
@@ -628,51 +648,65 @@ import { CONSTANTS } from '../utils/constants.js';
       const selectedItems = UIHelper.getSelectedMediaItems();
       if (selectedItems.length === 0) return;
 
-      if (!confirm(`Are you sure you want to replace ${selectedItems.length} selected item${selectedItems.length !== 1 ? 's' : ''}?`)) {
+      if (!confirm(MESSAGES.ACTIONS.REPLACE_CONFIRM(selectedItems.length))) {
         return;
       }
 
       try {
         this.beforeActionsOnSelectedItems();
-        this.ui.setProgressText('Replacing selected items...');
+        this.ui.setProgressText(MESSAGES.ACTIONS.REPLACING_SELECTED);
 
         const playlistId = this.currentSelectedPlaylist?.id || 
                           this.ytMusicAPI.getCurrentPlaylistIdFromURL();
 
         if (!playlistId) return;
 
-        let i = 1;
-        for (const item of selectedItems) {
-          this.ui.setProgressText(`Replacing track ${i} of ${selectedItems.length}...`);
+        const itemsWithReplacement = selectedItems.filter(item => item.replacementMedia?.videoId);
+        const videoIdsToAdd = itemsWithReplacement.map(item => item.replacementMedia.videoId);
+        const itemsToRemove = itemsWithReplacement
+          .filter(item => item.originalMedia.videoId && item.originalMedia.playlistSetVideoId)
+          .map(item => ({
+            videoId: item.originalMedia.videoId,
+            setVideoId: item.originalMedia.playlistSetVideoId
+          }));
 
-          if (item.replacementMedia?.videoId) {
-            try {
-              const originalItemDetails = item.originalMedia;
-              const replacementItemDetails = item.replacementMedia;
-
-              await this.ytMusicAPI.addItemToPlaylist(playlistId, replacementItemDetails.videoId);
-              if (originalItemDetails.videoId && originalItemDetails.playlistSetVideoId) {
-                await this.ytMusicAPI.removeItemFromPlaylist(
-                  playlistId,
-                  originalItemDetails.videoId,
-                  originalItemDetails.playlistSetVideoId
-                );
+        let success = true;
+        if (videoIdsToAdd.length > 0) {
+          try {
+            // Bulk add replacements
+            const addSuccess = await this.ytMusicAPI.addItemsToPlaylist(playlistId, videoIdsToAdd);
+            
+            if (addSuccess) {
+              // Only remove originals if adding replacements succeeded
+              if (itemsToRemove.length > 0) {
+                const removeSuccess = await this.ytMusicAPI.removeItemsFromPlaylist(playlistId, itemsToRemove);
+                if (!removeSuccess) {
+                  success = false;
+                }
               }
 
-              UIHelper.removeMediaGridRow(originalItemDetails);
-            } catch (error) {
-              UIHelper.showErrorInGridRow(item.originalMedia, error.message || 'Failed to replace');
+              // Update UI for items that were processed (even if removal failed, addition succeeded)
+              itemsWithReplacement.forEach(item => {
+                UIHelper.removeMediaGridRow(item.originalMedia);
+              });
+            } else {
+              success = false;
             }
+          } catch (error) {
+            success = false;
           }
-          i++;
         }
 
-        const countReplaced = selectedItems.filter(item => item.replacementMedia?.videoId).length;
-        this.ui.setProgressText(countReplaced > 0 ? `All replacements completed. Replaced ${countReplaced} items.` : 'No valid replacements were made.');
+        if (!success) {
+          this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('replacing'));
+        } else {
+          const countReplaced = videoIdsToAdd.length;
+          this.ui.setProgressText(countReplaced > 0 ? MESSAGES.ACTIONS.REPLACE_COMPLETE(countReplaced) : MESSAGES.ACTIONS.NO_REPLACEMENTS_MADE);
+        }
       } catch (error) {
-        this.ui.setProgressText('Error occurred while replacing items.');
+        this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('replacing'));
       } finally {
-        await this.afterActionsOnSelectedItems();
+        await this.afterActionsOnSelectedItems(true);
       }
     }
 
@@ -680,8 +714,11 @@ import { CONSTANTS } from '../utils/constants.js';
      * Adds selected items to the playlist
      */
     async addSelectedItems() {
+      const selectedItems = UIHelper.getSelectedMediaItems();
+      if (selectedItems.length === 0) return;
+
       this.beforeActionsOnSelectedItems();
-      this.ui.setProgressText('Adding selected items...');
+      this.ui.setProgressText(MESSAGES.ACTIONS.ADDING_SELECTED);
 
       try {
         const playlistId = this.targetPlaylist?.id || 
@@ -690,30 +727,37 @@ import { CONSTANTS } from '../utils/constants.js';
 
         if (!playlistId) return;
 
-        const selectedItems = UIHelper.getSelectedMediaItems();
-        let i = 1;
         const targetTitle = this.targetPlaylist?.title || this.currentSelectedPlaylist?.title || CONSTANTS.UI.STRINGS.PLAYLIST_FALLBACK;
+        
+        const videoIdsToAdd = selectedItems
+          .filter(item => item.replacementMedia?.videoId)
+          .map(item => item.replacementMedia.videoId);
 
-        for (const item of selectedItems) {
-          this.ui.setProgressText(`${CONSTANTS.UI.STRINGS.IMPORT_ADD_PROGRESS_PREFIX} ${i} of ${selectedItems.length} to ${targetTitle}...`);
-
-          if (item.replacementMedia?.videoId) {
-            try {
-              await this.ytMusicAPI.addItemToPlaylist(playlistId, item.replacementMedia.videoId);
-              UIHelper.removeMediaGridRow(item.originalMedia);
-            } catch (error) {
-              UIHelper.showErrorInGridRow(item.originalMedia, error.message || 'Failed to add');
+        if (videoIdsToAdd.length > 0) {
+          try {
+            const addSuccess = await this.ytMusicAPI.addItemsToPlaylist(playlistId, videoIdsToAdd);
+            
+            if (addSuccess) {
+              // Remove added items from the UI
+              selectedItems.forEach(item => {
+                if (item.replacementMedia?.videoId) {
+                  UIHelper.removeMediaGridRow(item.originalMedia);
+                }
+              });
+              this.ui.setProgressText(MESSAGES.ACTIONS.ADD_COMPLETE(videoIdsToAdd.length, targetTitle));
+            } else {
+              this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('adding'));
             }
+          } catch (error) {
+            this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('adding'));
           }
-          i++;
+        } else {
+          this.ui.setProgressText(MESSAGES.ACTIONS.NO_ADDITIONS_MADE);
         }
-
-        const countAdded = selectedItems.filter(item => item.replacementMedia?.videoId).length;
-        this.ui.setProgressText(countAdded > 0 ? `${CONSTANTS.UI.STRINGS.IMPORT_ADD_COMPLETED} Added ${countAdded} items to ${targetTitle}.` : 'No valid items were added.');
       } catch (error) {
-        this.ui.setProgressText('Error occurred while adding items.');
+        this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('adding'));
       } finally {
-        await this.afterActionsOnSelectedItems();
+        await this.afterActionsOnSelectedItems(true);
       }
     }
 
@@ -730,38 +774,43 @@ import { CONSTANTS } from '../utils/constants.js';
 
       try {
         this.beforeActionsOnSelectedItems();
-        this.ui.setProgressText('Removing selected items...');
+        this.ui.setProgressText(MESSAGES.ACTIONS.REMOVING_SELECTED);
 
         const playlistId = this.currentSelectedPlaylist?.id || 
                           this.ytMusicAPI.getCurrentPlaylistIdFromURL();
 
         if (!playlistId) return;
 
-        let i = 1;
-        for (const item of selectedItems) {
-          this.ui.setProgressText(`Removing track ${i} of ${selectedItems.length}...`);
+        const itemsToRemove = selectedItems
+          .filter(item => item.originalMedia.videoId && item.originalMedia.playlistSetVideoId)
+          .map(item => ({
+            videoId: item.originalMedia.videoId,
+            setVideoId: item.originalMedia.playlistSetVideoId
+          }));
 
+        if (itemsToRemove.length > 0) {
           try {
-            const originalItemDetails = item.originalMedia;
-            if (originalItemDetails.videoId && originalItemDetails.playlistSetVideoId) {
-              await this.ytMusicAPI.removeItemFromPlaylist(
-                playlistId,
-                originalItemDetails.videoId,
-                originalItemDetails.playlistSetVideoId
-              );
+            const removeSuccess = await this.ytMusicAPI.removeItemsFromPlaylist(playlistId, itemsToRemove);
+            
+            if (removeSuccess) {
+              // Update UI
+              selectedItems.forEach(item => {
+                UIHelper.removeMediaGridRow(item.originalMedia);
+              });
+              this.ui.setProgressText(MESSAGES.ACTIONS.REMOVAL_COMPLETE(itemsToRemove.length));
+            } else {
+              this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('removing'));
             }
-            UIHelper.removeMediaGridRow(originalItemDetails);
           } catch (error) {
-            UIHelper.showErrorInGridRow(item.originalMedia, error.message || 'Failed to remove');
+            this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('removing'));
           }
-          i++;
+        } else {
+          this.ui.setProgressText(MESSAGES.ACTIONS.NO_REMOVALS);
         }
-
-        this.ui.setProgressText(selectedItems.length > 0 ? `All removals completed. Removed ${selectedItems.length} items.` : 'No items were removed.');
       } catch (error) {
-        this.ui.setProgressText('Error occurred while removing items.');
+        this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('removing'));
       } finally {
-        await this.afterActionsOnSelectedItems();
+        await this.afterActionsOnSelectedItems(true);
       }
     }
 

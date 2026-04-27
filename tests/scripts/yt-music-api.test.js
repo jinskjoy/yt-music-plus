@@ -84,19 +84,68 @@ describe('YTMusicAPI', () => {
     });
   });
 
-  describe('removeItemFromPlaylist', () => {
-    it('should send correct remove action', async () => {
+  describe('addItemsToPlaylist', () => {
+    it('should return true for empty videoIds', async () => {
+      const result = await api.addItemsToPlaylist('PL123', []);
+      expect(result).toBe(true);
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it('should send correct bulk add actions', async () => {
       global.fetch.mockResolvedValue({
         ok: true,
         json: async () => ({ status: 'STATUS_SUCCEEDED' }),
       });
 
-      const result = await api.removeItemFromPlaylist('PL123', 'vid456', 'set789');
+      const videoIds = ['vid1', 'vid2'];
+      const result = await api.addItemsToPlaylist('PL123', videoIds);
+      
       expect(result).toBe(true);
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('edit_playlist'),
         expect.objectContaining({
-          body: expect.stringContaining('ACTION_REMOVE_VIDEO')
+          body: expect.stringContaining('"action":"ACTION_ADD_VIDEO","addedVideoId":"vid1"')
+        })
+      );
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('edit_playlist'),
+        expect.objectContaining({
+          body: expect.stringContaining('"action":"ACTION_ADD_VIDEO","addedVideoId":"vid2"')
+        })
+      );
+    });
+  });
+
+  describe('removeItemsFromPlaylist', () => {
+    it('should return true for empty items', async () => {
+      const result = await api.removeItemsFromPlaylist('PL123', []);
+      expect(result).toBe(true);
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it('should send correct bulk remove actions', async () => {
+      global.fetch.mockResolvedValue({
+        ok: true,
+        json: async () => ({ status: 'STATUS_SUCCEEDED' }),
+      });
+
+      const items = [
+        { videoId: 'vid1', setVideoId: 'set1' },
+        { videoId: 'vid2', setVideoId: 'set2' }
+      ];
+      const result = await api.removeItemsFromPlaylist('PL123', items);
+      
+      expect(result).toBe(true);
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('edit_playlist'),
+        expect.objectContaining({
+          body: expect.stringContaining('"action":"ACTION_REMOVE_VIDEO","removedVideoId":"vid1","setVideoId":"set1"')
+        })
+      );
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('edit_playlist'),
+        expect.objectContaining({
+          body: expect.stringContaining('"action":"ACTION_REMOVE_VIDEO","removedVideoId":"vid2","setVideoId":"set2"')
         })
       );
     });

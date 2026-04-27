@@ -111,7 +111,9 @@ export class YTMusicAPI {
     for (const browseId of CONSTANTS.API.PLAYLIST_BROWSE_IDS) {
       try {
         const response = await this.fetchBrowsePlaylists(browseId);
-        const playlists = YTMusicParser.parsePlaylistsFromResponse(response, onlyEditable);
+        // Always parse all to ensure we have full counts in the future if needed,
+        // but we filter here to keep the API contract.
+        const playlists = YTMusicParser.parsePlaylistsFromResponse(response, false);
         playlists.forEach(p => {
           if (!allPlaylists.has(p.id)) {
             allPlaylists.set(p.id, p);
@@ -125,8 +127,9 @@ export class YTMusicAPI {
       }
     }
 
-    if (allPlaylists.size > 0) {
-      return Array.from(allPlaylists.values());
+    const result = Array.from(allPlaylists.values());
+    if (result.length > 0) {
+      return onlyEditable ? result.filter(p => p.isEditable) : result;
     }
 
     if (lastError) throw lastError;
@@ -233,9 +236,36 @@ export class YTMusicAPI {
   getBestSearchResult(searchResponse, originalQuery, similarityThreshold = CONSTANTS.API.SIMILARITY_THRESHOLD) {
     return YTMusicParser.getBestSearchResult(searchResponse, originalQuery, similarityThreshold);
   }
+/**
+ * Adds multiple videos to a playlist
+ * @async
+ * @param {string} playlistId - The ID of the playlist
+ * @param {Array<string>} videoIds - Array of video IDs to add
+ * @returns {Promise<boolean>}
+ */
+async addItemsToPlaylist(playlistId, videoIds) {
+  if (!videoIds || videoIds.length === 0) return true;
 
-  /**
-   * Adds a video to a playlist
+  try {
+    const response = await this.makePostRequest('/youtubei/v1/browse/edit_playlist?prettyPrint=false', {
+      context: this.getInnertubeContext(),
+      actions: videoIds.map(videoId => ({
+        action: 'ACTION_ADD_VIDEO',
+        addedVideoId: videoId,
+        dedupeOption: 'DEDUPE_OPTION_SKIP'
+      })),
+      playlistId: playlistId
+    });
+
+    return response?.status === 'STATUS_SUCCEEDED';
+  } catch (error) {
+    throw error;
+  }
+}
+
+/**
+ * Adds a video to a playlist
+...
    * @async
    */
   async addItemToPlaylist(playlistId, videoId) {
@@ -246,7 +276,7 @@ export class YTMusicAPI {
           {
             action: 'ACTION_ADD_VIDEO',
             addedVideoId: videoId,
-            dedupeOption: 'DEDUPE_OPTION_CHECK'
+            dedupeOption: 'DEDUPE_OPTION_SKIP'
           }
         ],
         playlistId: playlistId
@@ -257,9 +287,36 @@ export class YTMusicAPI {
       throw error;
     }
   }
+/**
+ * Removes multiple videos from a playlist
+ * @async
+ * @param {string} playlistId - The ID of the playlist
+ * @param {Array<{videoId: string, setVideoId: string}>} items - Array of objects with videoId and setVideoId
+ * @returns {Promise<boolean>}
+ */
+async removeItemsFromPlaylist(playlistId, items) {
+  if (!items || items.length === 0) return true;
 
-  /**
-   * Removes a video from a playlist
+  try {
+    const response = await this.makePostRequest('/youtubei/v1/browse/edit_playlist?prettyPrint=false', {
+      context: this.getInnertubeContext(),
+      actions: items.map(item => ({
+        action: 'ACTION_REMOVE_VIDEO',
+        removedVideoId: item.videoId,
+        setVideoId: item.setVideoId
+      })),
+      playlistId: playlistId
+    });
+
+    return response?.status === 'STATUS_SUCCEEDED';
+  } catch (error) {
+    throw error;
+  }
+}
+
+/**
+ * Removes a video from a playlist
+...
    * @async
    */
   async removeItemFromPlaylist(playlistId, videoId, playlistSetVideoId) {

@@ -9,6 +9,25 @@ export class BridgeUI {
   constructor(bridge) {
     this.bridge = bridge;
     this.rowMap = new Map();
+    this.initTargetModalButtons();
+  }
+
+  /**
+   * Initializes buttons for the target selection modal
+   */
+  initTargetModalButtons() {
+    const attach = (id, handler) => {
+      const btn = document.getElementById(id);
+      if (btn && !btn.dataset.initialized) {
+        btn.dataset.initialized = 'true';
+        btn.addEventListener('click', handler);
+      }
+    };
+
+    attach(CONSTANTS.UI.BUTTON_IDS.CLOSE_TARGET_MODAL, () => this.bridge.cancelTargetSelection());
+    attach(CONSTANTS.UI.BUTTON_IDS.CANCEL_TARGET_MODAL, () => this.bridge.cancelTargetSelection());
+    attach(CONSTANTS.UI.BUTTON_IDS.REFRESH_TARGET_PLAYLISTS, () => this.bridge.initPlaylistFetching(true, true, true));
+    attach(CONSTANTS.UI.BUTTON_IDS.LOAD_ALL_TARGET_PLAYLISTS, () => this.bridge.initPlaylistFetching(true, false, true));
   }
 
   /**
@@ -150,21 +169,103 @@ export class BridgeUI {
   }
 
   /**
-   * Toggles the visibility of the target selection UI
-   * @param {boolean} isVisible - Whether the target selection is active
+   * Toggles the visibility of the target selection modal
+   * @param {boolean} isVisible - Whether the target modal is visible
    */
-  setTargetSelectionVisibility(isVisible) {
-    const cancelBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.CANCEL_TARGET_SELECTION);
-    if (cancelBtn) cancelBtn.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !isVisible);
+  setTargetModalVisibility(isVisible) {
+    const modal = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.TARGET_PLAYLIST_MODAL);
+    if (modal) {
+      modal.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !isVisible);
+    }
+  }
 
+  /**
+   * Displays playlists in the target selection modal grid
+   * @param {Array} playlistsCache - Array of playlists to display
+   * @param {Array} [fullCache] - Full array of all playlists for counts
+   */
+  displayTargetPlaylists(playlistsCache, fullCache) {
+    const grid = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.TARGET_PLAYLISTS_GRID);
+    if (!grid) return;
+
+    grid.replaceChildren();
+    this.updatePlaylistCounts(fullCache || playlistsCache);
+
+    playlistsCache.forEach((playlist) => {
+      const card = PlaylistCard.render(playlist);
+      card.addEventListener('click', () => {
+        this.bridge.onTargetPlaylistSelected(playlist);
+      });
+      grid.appendChild(card);
+    });
+  }
+
+  /**
+   * Toggles the visibility of the playlist selection screen vs details screen
+   * @param {boolean} isInitialSelection - Whether the initial selection screen should be visible
+   */
+  setPlaylistScreenVisibility(isInitialSelection) {
     const detailsScreen = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_DETAILS_SCREEN);
-    if (detailsScreen) detailsScreen.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, isVisible);
+    if (detailsScreen) detailsScreen.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, isInitialSelection);
 
     const selectionScreen = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_SELECTION_SCREEN);
-    if (selectionScreen) selectionScreen.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !isVisible);
+    if (selectionScreen) selectionScreen.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !isInitialSelection);
 
-    if (isVisible) {
-      this.updatePopupTitle(CONSTANTS.UI.STRINGS.SELECT_TARGET_TITLE);
+    this.updateFooterVisibility(isInitialSelection);
+  }
+
+  /**
+   * Updates footer elements visibility based on current view
+   * @param {boolean} isSelectionView - Whether we are in playlist selection view
+   */
+  updateFooterVisibility(isSelectionView) {
+    const selectionActions = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_SELECTION_ACTIONS);
+    const playlistCounts = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_COUNTS);
+    const selectionCount = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.SELECTION_COUNT);
+    const progressText = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PROGRESS_TEXT);
+    const searchProgress = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.SEARCH_PROGRESS);
+    const cancelSearchBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.CANCEL_SEARCH);
+
+    if (selectionActions) selectionActions.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !isSelectionView);
+    if (playlistCounts) playlistCounts.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !isSelectionView);
+    if (selectionCount) selectionCount.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, isSelectionView);
+    
+    if (isSelectionView) {
+      if (progressText) progressText.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
+      if (searchProgress) searchProgress.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
+      if (cancelSearchBtn) cancelSearchBtn.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
+    }
+  }
+
+  /**
+   * Toggles search progress for target selection modal
+   */
+  toggleTargetSearchProgress(show) {
+    const indicator = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.TARGET_PLAYLISTS_LOADING);
+    if (indicator) {
+      indicator.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !show);
+    }
+  }
+
+  /**
+   * Updates playlist counts in the footer
+   * @param {Array} playlists - Loaded playlists
+   */
+  updatePlaylistCounts(playlists = []) {
+    const totalCountEl = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.TOTAL_PLAYLIST_COUNT);
+    const editableCountEl = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.EDITABLE_PLAYLIST_COUNT);
+    const countsContainer = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_COUNTS);
+
+    if (totalCountEl && editableCountEl) {
+      const total = playlists.length;
+      const editable = playlists.filter(p => p.isEditable).length;
+
+      totalCountEl.textContent = `${total} total`;
+      editableCountEl.textContent = `${editable} editable`;
+      
+      if (countsContainer) {
+        countsContainer.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+      }
     }
   }
 
@@ -174,6 +275,14 @@ export class BridgeUI {
    */
   setListOnlyMode(isListOnly) {
     document.querySelector(`.${CONSTANTS.UI.CLASSES.ITEMS_GRID_WRAPPER}`)?.classList.toggle(CONSTANTS.UI.CLASSES.LIST_ONLY_MODE, isListOnly);
+    
+    if (isListOnly) {
+      this.updateActionButtonsVisibility({
+        replace: false,
+        add: false,
+        remove: true
+      });
+    }
   }
 
   /**
@@ -302,12 +411,15 @@ export class BridgeUI {
 
   /**
    * Displays playlists in the selection grid
+   * @param {Array} playlistsCache - Array of playlists to display
+   * @param {Array} [fullCache] - Full array of all playlists for counts
    */
-  displayPlaylistsForSelection(playlistsCache) {
+  displayPlaylistsForSelection(playlistsCache, fullCache) {
     const playlistsGrid = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLISTS_GRID);
     if (!playlistsGrid) return;
 
     playlistsGrid.replaceChildren();
+    this.updatePlaylistCounts(fullCache || playlistsCache);
 
     if (playlistsCache.length === 0) {
       const noPlaylistsMessage = UIHelper.createNoPlaylistsMessage();
@@ -326,6 +438,14 @@ export class BridgeUI {
       });
       playlistsGrid.appendChild(card);
     });
+
+    // Ensure footer actions and counts are visible when selection screen is active
+    const selectionScreen = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_SELECTION_SCREEN);
+    const isVisible = selectionScreen && !selectionScreen.classList.contains(CONSTANTS.UI.CLASSES.HIDDEN);
+    if (isVisible) {
+      document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_SELECTION_ACTIONS)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+      document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_COUNTS)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+    }
   }
 
   /**

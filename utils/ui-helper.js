@@ -12,18 +12,18 @@ export class MediaItem {
    * @returns {HTMLElement}
    */
   static render(media = {}, playerHandler = null) {
-    const template = document.getElementById('yt-music-plus-media-item-template');
+    const template = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.MEDIA_ITEM_TEMPLATE);
     if (!template) {
-      throw new Error('Template "yt-music-plus-media-item-template" not found');
+      throw new Error(`Template "${CONSTANTS.UI.ELEMENT_IDS.MEDIA_ITEM_TEMPLATE}" not found`);
     }
 
     const clone = template.content.cloneNode(true);
-    const item = clone.querySelector('.media-item');
-    const thumb = item.querySelector('.media-thumbnail');
-    const title = item.querySelector('.media-title');
-    const artist = item.querySelector('.media-artist');
-    const link = item.querySelector('.media-link');
-    const controls = item.querySelector('.yt-music-plus-controls');
+    const item = clone.querySelector(`.${CONSTANTS.UI.CLASSES.MEDIA_ITEM}`);
+    const thumb = item.querySelector(`.${CONSTANTS.UI.CLASSES.MEDIA_THUMBNAIL}`);
+    const title = item.querySelector(`.${CONSTANTS.UI.CLASSES.MEDIA_TITLE}`);
+    const artist = item.querySelector(`.${CONSTANTS.UI.CLASSES.MEDIA_ARTIST}`);
+    const link = item.querySelector(`.${CONSTANTS.UI.CLASSES.MEDIA_LINK}`);
+    const controls = item.querySelector(`.${CONSTANTS.UI.CLASSES.CONTROLS}`);
 
     if (media.thumbnail) {
       thumb.src = media.thumbnail;
@@ -33,11 +33,11 @@ export class MediaItem {
 
     // Setup player controls if playerHandler and (videoId or localFile) are provided
     if (playerHandler && (media.videoId || media.localFile) && controls) {
-      controls.classList.remove('hidden');
+      controls.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
       
       // Cache control buttons to avoid redundant DOM queries
-      const playBtn = controls.querySelector('.btn-play');
-      const pauseBtn = controls.querySelector('.btn-pause');
+      const playBtn = controls.querySelector(`.${CONSTANTS.UI.CLASSES.BTN_PLAY}`);
+      const pauseBtn = controls.querySelector(`.${CONSTANTS.UI.CLASSES.BTN_PAUSE}`);
 
       const bindControl = (selector, action) => {
         const btn = controls.querySelector(selector);
@@ -68,11 +68,11 @@ export class MediaItem {
           isPlaying = isCurrentTrack && activeStates.includes(playerState);
         }
 
-        if (playBtn) playBtn.classList.toggle('hidden', isPlaying);
-        if (pauseBtn) pauseBtn.classList.toggle('hidden', !isPlaying);
+        if (playBtn) playBtn.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, isPlaying);
+        if (pauseBtn) pauseBtn.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !isPlaying);
       };
 
-      bindControl('.btn-play', () => {
+      bindControl(`.${CONSTANTS.UI.CLASSES.BTN_PLAY}`, () => {
         if (media.localFile) {
           playerHandler.playLocalFile(media.localFile);
         } else {
@@ -80,25 +80,25 @@ export class MediaItem {
         }
         
         // Immediate optimistic update
-        if (playBtn) playBtn.classList.add('hidden');
-        if (pauseBtn) pauseBtn.classList.remove('hidden');
+        if (playBtn) playBtn.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
+        if (pauseBtn) pauseBtn.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
         
         // Verification update after a short delay to account for player state transition
         setTimeout(updateButtonVisibility, CONSTANTS.UI.UI_UPDATE_DELAY_MS);
       });
-      bindControl('.btn-pause', () => {
+      bindControl(`.${CONSTANTS.UI.CLASSES.BTN_PAUSE}`, () => {
         playerHandler.pauseTrack();
         // Immediate optimistic update
-        if (playBtn) playBtn.classList.remove('hidden');
-        if (pauseBtn) pauseBtn.classList.add('hidden');
+        if (playBtn) playBtn.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+        if (pauseBtn) pauseBtn.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
 
         setTimeout(updateButtonVisibility, CONSTANTS.UI.UI_UPDATE_DELAY_MS);
       });
-      bindControl('.btn-seek-back', () => playerHandler.seekBy(-CONSTANTS.PLAYER.SEEK_DURATION_SECONDS));
-      bindControl('.btn-seek-forward', () => playerHandler.seekBy(CONSTANTS.PLAYER.SEEK_DURATION_SECONDS));
+      bindControl(`.${CONSTANTS.UI.CLASSES.BTN_SEEK_BACK}`, () => playerHandler.seekBy(-CONSTANTS.PLAYER.SEEK_DURATION_SECONDS));
+      bindControl(`.${CONSTANTS.UI.CLASSES.BTN_SEEK_FORWARD}`, () => playerHandler.seekBy(CONSTANTS.PLAYER.SEEK_DURATION_SECONDS));
 
       // Handle play/pause button visibility on hover
-      const mediaInfo = item.querySelector('.media-info');
+      const mediaInfo = item.querySelector(`.${CONSTANTS.UI.CLASSES.MEDIA_INFO}`);
       if (mediaInfo) {
         mediaInfo.addEventListener('mouseenter', updateButtonVisibility);
       }
@@ -110,17 +110,29 @@ export class MediaItem {
     }
 
     title.textContent = media.name || 'Unknown Title';
+    title.title = media.name || '';
 
     if (media.artist) {
       artist.textContent = media.artist;
+      artist.title = media.artist;
     } else {
       artist.remove();
     }
 
     if (media.url) {
       link.href = media.url;
+      // Ensure link clicks are not intercepted by column click handlers or other delegation
+      link.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
     } else {
       link.remove();
+    }
+
+    // Add title for hover showing full details if it's truncated
+    const mediaInfo = item.querySelector('.media-info');
+    if (mediaInfo) {
+      mediaInfo.title = `${media.name || 'Unknown Title'} - ${media.artist || 'Unknown Artist'}`;
     }
 
     return item;
@@ -142,13 +154,13 @@ export class MediaGridRow {
    * @returns {HTMLElement}
    */
   static render(originalMedia, replacementMedia, serialNumber = 1, playerHandler = null) {
-    const template = document.getElementById('yt-music-plus-grid-row-template');
+    const template = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.GRID_ROW_TEMPLATE);
     if (!template) {
-      throw new Error('Template "yt-music-plus-grid-row-template" not found');
+      throw new Error(`Template "${CONSTANTS.UI.ELEMENT_IDS.GRID_ROW_TEMPLATE}" not found`);
     }
 
     const clone = template.content.cloneNode(true);
-    const row = clone.querySelector('.grid-row');
+    const row = clone.querySelector(`.${CONSTANTS.UI.CLASSES.GRID_ROW}`);
     
     row.dataset.serialNumber = serialNumber;
     row.dataset.videoId = originalMedia.videoId || '';
@@ -166,10 +178,10 @@ export class MediaGridRow {
     ].filter(Boolean).join(' ').toLowerCase();
     row.dataset.searchString = searchTerms;
 
-    row.querySelector('.grid-col-serial').textContent = serialNumber;
+    row.querySelector(`.${CONSTANTS.UI.CLASSES.GRID_COL_SERIAL}`).textContent = serialNumber;
 
-    const checkbox = row.querySelector('.item-checkbox');
-    const isListOnlyMode = document.querySelector('.items-grid-wrapper')?.classList.contains('list-only-mode');
+    const checkbox = row.querySelector(`.${CONSTANTS.UI.CLASSES.ITEM_CHECKBOX}`);
+    const isListOnlyMode = document.querySelector(`.${CONSTANTS.UI.CLASSES.ITEMS_GRID_WRAPPER}`)?.classList.contains(CONSTANTS.UI.CLASSES.LIST_ONLY_MODE);
     const hasReplacement = replacementMedia && replacementMedia.videoId;
     const isPending = replacementMedia && replacementMedia.isPending;
     const isGoodMatch = replacementMedia ? replacementMedia.isGoodMatch !== false : true;
@@ -181,9 +193,9 @@ export class MediaGridRow {
     if (!isListOnlyMode && !hasReplacement && !isPending) {
       checkbox.disabled = true;
     }
-    const originalCol = row.querySelector('.grid-col-original');
+    const originalCol = row.querySelector(`.${CONSTANTS.UI.CLASSES.GRID_COL_ORIGINAL}`);
     originalCol.addEventListener('click', (e) => {
-      if (e.target.closest('a') || e.target.closest('.yt-music-plus-control-btn')) return;
+      if (e.target.closest('a') || e.target.closest(CONSTANTS.UI.SELECTORS.CONTROL_BTN)) return;
       if (!checkbox.disabled) {
         checkbox.checked = !checkbox.checked;
         checkbox.dataset.userInteracted = 'true';
@@ -192,10 +204,10 @@ export class MediaGridRow {
     });
     originalCol.appendChild(MediaItem.render(originalMedia, playerHandler));
 
-    const replacementCol = row.querySelector('.grid-col-replacement');
+    const replacementCol = row.querySelector(`.${CONSTANTS.UI.CLASSES.GRID_COL_REPLACEMENT}`);
     if (replacementMedia && replacementMedia.isGoodMatch === false) {
-      replacementCol.querySelector('.warning-icon').classList.remove('hidden');
-      replacementCol.classList.add('potential-mismatch');
+      replacementCol.querySelector(`.${CONSTANTS.UI.CLASSES.WARNING_ICON}`).classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+      replacementCol.classList.add(CONSTANTS.UI.CLASSES.POTENTIAL_MISMATCH);
     }
     replacementCol.appendChild(
       MediaItem.render(
@@ -218,16 +230,16 @@ export class PlaylistCard {
    * @returns {HTMLElement}
    */
   static render(playlist = {}) {
-    const template = document.getElementById('yt-music-plus-playlist-card-template');
+    const template = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_CARD_TEMPLATE);
     if (!template) {
-      throw new Error('Template "yt-music-plus-playlist-card-template" not found');
+      throw new Error(`Template "${CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_CARD_TEMPLATE}" not found`);
     }
 
     const clone = template.content.cloneNode(true);
-    const card = clone.querySelector('.playlist-card');
-    const thumb = card.querySelector('.playlist-card-thumbnail');
-    const title = card.querySelector('.playlist-card-title');
-    const meta = card.querySelector('.playlist-card-meta');
+    const card = clone.querySelector(`.${CONSTANTS.UI.CLASSES.PLAYLIST_CARD}`);
+    const thumb = card.querySelector(`.${CONSTANTS.UI.CLASSES.PLAYLIST_CARD_THUMBNAIL}`);
+    const title = card.querySelector(`.${CONSTANTS.UI.CLASSES.PLAYLIST_CARD_TITLE}`);
+    const meta = card.querySelector(`.${CONSTANTS.UI.CLASSES.PLAYLIST_CARD_META}`);
 
     thumb.src = playlist.thumbnail || '';
     thumb.alt = playlist.title || 'Playlist Thumbnail';
@@ -297,11 +309,11 @@ export class UIHelper {
   /**
    * Populate a grid container with rows.
    */
-  static createMediaGridRows(records, containerId = 'yt-music-plus-itemsGridContainer') {
+  static createMediaGridRows(records, containerId = CONSTANTS.UI.ELEMENT_IDS.ITEMS_GRID_CONTAINER) {
     const container = document.getElementById(containerId);
     if (!container) return null;
 
-    container.querySelectorAll('.grid-row').forEach((r) => r.remove());
+    container.querySelectorAll(`.${CONSTANTS.UI.CLASSES.GRID_ROW}`).forEach((r) => r.remove());
 
     records.forEach((record, index) => {
       container.appendChild(
@@ -319,16 +331,16 @@ export class UIHelper {
   /**
    * Remove a row from the grid.
    */
-  static removeMediaGridRow(originalRecord, containerId = 'yt-music-plus-itemsGridContainer') {
+  static removeMediaGridRow(originalRecord, containerId = CONSTANTS.UI.ELEMENT_IDS.ITEMS_GRID_CONTAINER) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
     let row;
     if (originalRecord.videoId) {
-      row = container.querySelector(`.grid-row[data-video-id="${originalRecord.videoId}"]`);
+      row = container.querySelector(`.${CONSTANTS.UI.CLASSES.GRID_ROW}[data-video-id="${originalRecord.videoId}"]`);
     } else {
       // Fallback to name if no videoId (e.g. local files)
-      row = Array.from(container.querySelectorAll('.grid-row')).find(r => r.dataset.name === originalRecord.name);
+      row = Array.from(container.querySelectorAll(`.${CONSTANTS.UI.CLASSES.GRID_ROW}`)).find(r => r.dataset.name === originalRecord.name);
     }
 
     if (row) {
@@ -342,10 +354,10 @@ export class UIHelper {
    */
   static setPlaylistDetails(playlist = {}) {
     const map = [
-      ['yt-music-plus-playlistThumbnail', 'src', playlist.thumbnail],
-      ['yt-music-plus-playlistName', 'textContent', playlist.title],
-      ['yt-music-plus-playlistTrackCount', 'textContent', playlist.subtitle],
-      ['yt-music-plus-playlistDescription', 'textContent', playlist.owner],
+      [CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_THUMBNAIL, 'src', playlist.thumbnail],
+      [CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_NAME, 'textContent', playlist.title],
+      [CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_TRACK_COUNT, 'textContent', playlist.subtitle],
+      [CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_DESCRIPTION, 'textContent', playlist.owner],
     ];
 
     map.forEach(([id, prop, value]) => {
@@ -357,24 +369,24 @@ export class UIHelper {
   /**
    * Shows error in row.
    */
-  static showErrorInGridRow(originalRecord, errorMessage, containerId = 'yt-music-plus-itemsGridContainer') {
+  static showErrorInGridRow(originalRecord, errorMessage, containerId = CONSTANTS.UI.ELEMENT_IDS.ITEMS_GRID_CONTAINER) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
     let row;
     if (originalRecord.videoId) {
-      row = container.querySelector(`.grid-row[data-video-id="${originalRecord.videoId}"]`);
+      row = container.querySelector(`.${CONSTANTS.UI.CLASSES.GRID_ROW}[data-video-id="${originalRecord.videoId}"]`);
     } else {
-      row = Array.from(container.querySelectorAll('.grid-row')).find(r => r.dataset.name === originalRecord.name);
+      row = Array.from(container.querySelectorAll(`.${CONSTANTS.UI.CLASSES.GRID_ROW}`)).find(r => r.dataset.name === originalRecord.name);
     }
 
     if (row) {
-      const replacementCol = row.querySelector('.grid-col-replacement');
-      if (replacementCol && !replacementCol.querySelector('.error-message')) {
-        const template = document.getElementById('yt-music-plus-error-message-template');
-        if (!template) throw new Error('Template "yt-music-plus-error-message-template" not found');
+      const replacementCol = row.querySelector(`.${CONSTANTS.UI.CLASSES.GRID_COL_REPLACEMENT}`);
+      if (replacementCol && !replacementCol.querySelector(`.${CONSTANTS.UI.CLASSES.ERROR_MESSAGE}`)) {
+        const template = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.ERROR_MESSAGE_TEMPLATE);
+        if (!template) throw new Error(`Template "${CONSTANTS.UI.ELEMENT_IDS.ERROR_MESSAGE_TEMPLATE}" not found`);
         
-        const errorDiv = template.content.cloneNode(true).querySelector('.error-message');
+        const errorDiv = template.content.cloneNode(true).querySelector(`.${CONSTANTS.UI.CLASSES.ERROR_MESSAGE}`);
         errorDiv.textContent = `Error: ${errorMessage}`;
         replacementCol.appendChild(errorDiv);
       }
@@ -407,35 +419,39 @@ export class UIHelper {
       return !!replacement.videoId;
     });
 
-    const isListOnlyMode = popupElement.querySelector('.items-grid-wrapper')?.classList.contains('list-only-mode');
-    const searchProgress = document.getElementById('searchProgress');
-    const isSearching = searchProgress && !searchProgress.classList.contains('hidden');
+    const isListOnlyMode = popupElement.querySelector(`.${CONSTANTS.UI.CLASSES.ITEMS_GRID_WRAPPER}`)?.classList.contains(CONSTANTS.UI.CLASSES.LIST_ONLY_MODE);
+    const searchProgress = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.SEARCH_PROGRESS);
+    const isSearching = searchProgress && !searchProgress.classList.contains(CONSTANTS.UI.CLASSES.HIDDEN);
 
-    const removeBtn = popupElement.querySelector('#removeSelectedBtn');
+    const removeBtn = popupElement.querySelector(`#${CONSTANTS.UI.BUTTON_IDS.REMOVE_SELECTED}`);
     if (removeBtn) removeBtn.disabled = isSearching ? true : !anyChecked;
 
-    const addBtn = popupElement.querySelector('#addSelectedBtn');
+    const addBtn = popupElement.querySelector(`#${CONSTANTS.UI.BUTTON_IDS.ADD_SELECTED}`);
     if (addBtn) addBtn.disabled = isSearching || isListOnlyMode ? true : !anyCheckedWithReplacement;
 
-    const replaceBtn = popupElement.querySelector('#replaceSelectedBtn');
+    const replaceBtn = popupElement.querySelector(`#${CONSTANTS.UI.BUTTON_IDS.REPLACE_SELECTED}`);
     if (replaceBtn) replaceBtn.disabled = isSearching || isListOnlyMode ? true : !anyCheckedWithReplacement;
 
-    const footer = popupElement.querySelector('#ytMusicPlusSelectionFooter');
+    const footer = popupElement.querySelector(`#${CONSTANTS.UI.ELEMENT_IDS.SELECTION_FOOTER}`);
     if (footer) {
       const checkedCount = Array.from(allCheckboxes).filter(cb => cb.checked).length;
       const totalCount = allCheckboxes.length;
-      const textContainer = footer.querySelector('.footer-right') || footer;
+      const selectionCountEl = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.SELECTION_COUNT);
       
-      if (totalCount > 0) {
-        textContainer.textContent = `${checkedCount} of ${totalCount} item${totalCount !== 1 ? 's' : ''} selected`;
-        textContainer.classList.remove('hidden');
-      } else {
-        textContainer.classList.add('hidden');
+      const isSelectionView = !document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_SELECTION_SCREEN)?.classList.contains(CONSTANTS.UI.CLASSES.HIDDEN);
+
+      if (selectionCountEl) {
+        if (totalCount > 0 && !isSelectionView) {
+          selectionCountEl.textContent = `${checkedCount} of ${totalCount} item${totalCount !== 1 ? 's' : ''} selected`;
+          selectionCountEl.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+        } else {
+          selectionCountEl.textContent = '';
+          selectionCountEl.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
+        }
       }
 
-      const progressText = document.getElementById('progressText');
-      const hasProgressText = progressText && !progressText.classList.contains('hidden');
-      footer.classList.toggle('hidden', !(totalCount > 0 || isSearching || hasProgressText));
+      // The footer itself should NOT be hidden anymore as it contains common links
+      footer.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
     }
   }
 
@@ -467,29 +483,29 @@ export class UIHelper {
    * Create fallback message for playlists grid.
    */
   static createNoPlaylistsMessage() {
-    const template = document.getElementById('yt-music-plus-no-playlists-template');
-    if (!template) throw new Error('Template "yt-music-plus-no-playlists-template" not found');
-    return template.content.cloneNode(true).querySelector('.no-playlists-message');
+    const template = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.NO_PLAYLISTS_TEMPLATE);
+    if (!template) throw new Error(`Template "${CONSTANTS.UI.ELEMENT_IDS.NO_PLAYLISTS_TEMPLATE}" not found`);
+    return template.content.cloneNode(true).querySelector(`.${CONSTANTS.UI.CLASSES.NO_PLAYLISTS_MESSAGE}`);
   }
 
   /**
    * Toggle grid expansion.
    */
   static toggleGrid(forceExpand) {
-    const infoSection = document.querySelector('.playlist-info-section');
-    const toggleGridBtn = document.getElementById('toggleGridBtn');
-    const gridWrapper = document.querySelector('.items-grid-wrapper');
+    const infoSection = document.querySelector(`.${CONSTANTS.UI.CLASSES.PLAYLIST_INFO_SECTION}`);
+    const toggleGridBtn = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.TOGGLE_GRID_BTN);
+    const gridWrapper = document.querySelector(`.${CONSTANTS.UI.CLASSES.ITEMS_GRID_WRAPPER}`);
 
     if (!infoSection) return;
 
-    const isHidden = infoSection.classList.contains('collapsed');
+    const isHidden = infoSection.classList.contains(CONSTANTS.UI.CLASSES.COLLAPSED);
     const shouldExpand = forceExpand !== undefined ? forceExpand : !isHidden;
 
-    infoSection.classList.toggle('collapsed', shouldExpand);
+    infoSection.classList.toggle(CONSTANTS.UI.CLASSES.COLLAPSED, shouldExpand);
     if (toggleGridBtn) {
       toggleGridBtn.textContent = shouldExpand ? '⤡' : '⤢';
       toggleGridBtn.title = shouldExpand ? 'Collapse grid' : 'Expand grid';
     }
-    if (gridWrapper) gridWrapper.classList.toggle('expanded', shouldExpand);
+    if (gridWrapper) gridWrapper.classList.toggle(CONSTANTS.UI.CLASSES.EXPANDED, shouldExpand);
   }
 }
