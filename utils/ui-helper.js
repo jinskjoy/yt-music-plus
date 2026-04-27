@@ -483,15 +483,15 @@ export class UIHelper {
    * Create fallback message for playlists grid.
    */
   static createNoPlaylistsMessage() {
-    const template = document.getElementById('yt-music-plus-no-playlists-template');
-    if (!template) throw new Error('Template "yt-music-plus-no-playlists-template" not found');
-    return template.content.cloneNode(true).querySelector('.no-playlists-message');
+    const template = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.NO_PLAYLISTS_TEMPLATE);
+    if (!template) throw new Error(`Template "${CONSTANTS.UI.ELEMENT_IDS.NO_PLAYLISTS_TEMPLATE}" not found`);
+    return template.content.cloneNode(true).querySelector(`.${CONSTANTS.UI.CLASSES.NO_PLAYLISTS_MESSAGE}`);
   }
 
   /**
    * Toggle grid expansion.
    */
-  toggleGrid(forceExpand) {
+  static toggleGrid(forceExpand) {
     const infoSection = document.querySelector(`.${CONSTANTS.UI.CLASSES.PLAYLIST_INFO_SECTION}`);
     const toggleGridBtn = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.TOGGLE_GRID_BTN);
     const gridWrapper = document.querySelector(`.${CONSTANTS.UI.CLASSES.ITEMS_GRID_WRAPPER}`);
