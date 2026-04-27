@@ -1,4 +1,5 @@
 import { UIHelper } from './ui-helper.js';
+import { CONSTANTS } from './constants.js';
 
 /**
  * PopupManager - Handles in-page popup injection, styling, and event management
@@ -28,15 +29,15 @@ export class PopupManager {
       const htmlText = await response.text();
 
       const popupContainer = document.createElement('div');
-      popupContainer.className = 'yt-music-extended-popup-container-holder hidden';
-      popupContainer.id = 'yt-music-plus-popup';
+      popupContainer.className = `yt-music-extended-popup-container-holder ${CONSTANTS.UI.CLASSES.HIDDEN}`;
+      popupContainer.id = CONSTANTS.UI.ELEMENT_IDS.POPUP_HOLDER;
       popupContainer.innerHTML = htmlText;
 
       document.body.appendChild(popupContainer);
 
       const warningMessage = popupContainer.querySelector('#yt-music-plus-warningMessage');
       if (warningMessage && this.extSettings.hideWarningMessage) {
-        warningMessage.classList.add('hidden');
+        warningMessage.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
       }
 
       this.setupPopupListeners(popupContainer);
@@ -55,12 +56,12 @@ export class PopupManager {
     if (!popupElement) return;
 
     // Select all checkbox handler
-    const selectAllCheckbox = popupElement.querySelector('#yt-music-plus-selectAllCheckbox');
+    const selectAllCheckbox = popupElement.querySelector(`#${CONSTANTS.UI.ELEMENT_IDS.SELECT_ALL_CHECKBOX_ID}`);
     if (selectAllCheckbox) {
       selectAllCheckbox.addEventListener('change', (e) => {
-        const checkboxes = Array.from(popupElement.querySelectorAll('.item-checkbox:not([disabled])')).filter(cb => {
-          const row = cb.closest('.grid-row');
-          return row && !row.classList.contains('hidden');
+        const checkboxes = Array.from(popupElement.querySelectorAll(`.${CONSTANTS.UI.CLASSES.ITEM_CHECKBOX}:not([disabled])`)).filter(cb => {
+          const row = cb.closest(`.${CONSTANTS.UI.CLASSES.GRID_ROW}`);
+          return row && !row.classList.contains(CONSTANTS.UI.CLASSES.HIDDEN);
         });
         checkboxes.forEach(cb => {
           cb.checked = e.target.checked;
@@ -72,27 +73,27 @@ export class PopupManager {
 
     // Individual checkbox change handler with delegation
     popupElement.addEventListener('change', (e) => {
-      const isRelevantCheckbox = e.target.classList.contains('item-checkbox') ||
+      const isRelevantCheckbox = e.target.classList.contains(CONSTANTS.UI.CLASSES.ITEM_CHECKBOX) ||
                                   e.target.classList.contains('select-all-checkbox') ||
-                                  e.target.id === 'yt-music-plus-selectAllCheckbox';
+                                  e.target.id === CONSTANTS.UI.ELEMENT_IDS.SELECT_ALL_CHECKBOX_ID;
       if (isRelevantCheckbox) {
         UIHelper.updateCheckAllCheckbox();
       }
     });
 
     // Back button handler
-    const backButton = popupElement.querySelector('#backButton');
+    const backButton = popupElement.querySelector(`#${CONSTANTS.UI.BUTTON_IDS.BACK_BUTTON}`);
     if (backButton) {
       backButton.addEventListener('click', () => this.showPlaylistSelection());
     }
 
     // Close warning message handler
-    const closeWarningBtn = popupElement.querySelector('#closeWarningBtn');
+    const closeWarningBtn = popupElement.querySelector(`#${CONSTANTS.UI.ELEMENT_IDS.CLOSE_WARNING_BTN}`);
     if (closeWarningBtn) {
       closeWarningBtn.addEventListener('click', async () => {
-        const warningMessage = popupElement.querySelector('#yt-music-plus-warningMessage');
+        const warningMessage = popupElement.querySelector(`#${CONSTANTS.UI.ELEMENT_IDS.WARNING_MESSAGE}`);
         if (warningMessage) {
-          warningMessage.classList.add('hidden');
+          warningMessage.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
           this.extSettings.hideWarningMessage = true;
           if (this.storageManager) {
             await this.storageManager.set({ hideWarningMessage: true });
@@ -102,7 +103,7 @@ export class PopupManager {
     }
 
     // Toggle grid button handler
-    const toggleGridBtn = popupElement.querySelector('#toggleGridBtn');
+    const toggleGridBtn = popupElement.querySelector(`#${CONSTANTS.UI.ELEMENT_IDS.TOGGLE_GRID_BTN}`);
     if (toggleGridBtn) {
       toggleGridBtn.addEventListener('click', () => UIHelper.toggleGrid());
     }
@@ -112,28 +113,28 @@ export class PopupManager {
    * Shows playlist selection screen in popup
    */
   showPlaylistSelection() {
-    const popupElement = document.getElementById('yt-music-plus-popup');
+    const popupElement = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.POPUP_HOLDER);
     if (!popupElement) return;
 
-    const selectionScreen = popupElement.querySelector('#playlistSelectionScreen');
-    const detailsScreen = popupElement.querySelector('#playlistDetailsScreen');
-    const footer = popupElement.querySelector('#ytMusicPlusSelectionFooter');
+    const selectionScreen = popupElement.querySelector(`#${CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_SELECTION_SCREEN}`);
+    const detailsScreen = popupElement.querySelector(`#${CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_DETAILS_SCREEN}`);
+    const footer = popupElement.querySelector(`#${CONSTANTS.UI.ELEMENT_IDS.SELECTION_FOOTER}`);
     
     if (selectionScreen && detailsScreen) {
-      selectionScreen.classList.remove('hidden');
-      detailsScreen.classList.add('hidden');
+      selectionScreen.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+      detailsScreen.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
     }
 
     if (footer) {
-      footer.querySelector('#playlistSelectionActions')?.classList.remove('hidden');
-      footer.querySelector('#playlistCounts')?.classList.remove('hidden');
-      footer.querySelector('#selectionCount')?.classList.add('hidden');
-      footer.querySelector('#progressText')?.classList.add('hidden');
-      footer.querySelector('#searchProgress')?.classList.add('hidden');
-      footer.querySelector('#cancelSearchBtn')?.classList.add('hidden');
+      footer.querySelector(`#${CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_SELECTION_ACTIONS}`)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+      footer.querySelector(`#${CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_COUNTS}`)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+      footer.querySelector(`#${CONSTANTS.UI.ELEMENT_IDS.SELECTION_COUNT}`)?.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
+      footer.querySelector(`#${CONSTANTS.UI.ELEMENT_IDS.PROGRESS_TEXT}`)?.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
+      footer.querySelector(`#${CONSTANTS.UI.ELEMENT_IDS.SEARCH_PROGRESS}`)?.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
+      footer.querySelector(`#${CONSTANTS.UI.BUTTON_IDS.CANCEL_SEARCH}`)?.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
     }
 
-    const titleElement = popupElement.querySelector('#popupTitle');
+    const titleElement = popupElement.querySelector(`#${CONSTANTS.UI.ELEMENT_IDS.POPUP_TITLE}`);
     if (titleElement) {
       titleElement.textContent = '';
     }
@@ -143,22 +144,22 @@ export class PopupManager {
    * Shows playlist details screen in popup
    */
   showPlaylistDetails() {
-    const popupElement = document.getElementById('yt-music-plus-popup');
+    const popupElement = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.POPUP_HOLDER);
     if (!popupElement) return;
 
-    const selectionScreen = popupElement.querySelector('#playlistSelectionScreen');
-    const detailsScreen = popupElement.querySelector('#playlistDetailsScreen');
-    const footer = popupElement.querySelector('#ytMusicPlusSelectionFooter');
+    const selectionScreen = popupElement.querySelector(`#${CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_SELECTION_SCREEN}`);
+    const detailsScreen = popupElement.querySelector(`#${CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_DETAILS_SCREEN}`);
+    const footer = popupElement.querySelector(`#${CONSTANTS.UI.ELEMENT_IDS.SELECTION_FOOTER}`);
     
     if (selectionScreen && detailsScreen) {
-      selectionScreen.classList.add('hidden');
-      detailsScreen.classList.remove('hidden');
+      selectionScreen.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
+      detailsScreen.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
     }
 
     if (footer) {
-      footer.querySelector('#playlistSelectionActions')?.classList.add('hidden');
-      footer.querySelector('#playlistCounts')?.classList.add('hidden');
-      footer.querySelector('#selectionCount')?.classList.remove('hidden');
+      footer.querySelector(`#${CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_SELECTION_ACTIONS}`)?.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
+      footer.querySelector(`#${CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_COUNTS}`)?.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
+      footer.querySelector(`#${CONSTANTS.UI.ELEMENT_IDS.SELECTION_COUNT}`)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
     }
   }
 
@@ -166,9 +167,9 @@ export class PopupManager {
    * Shows the popup element on the page
    */
   showPopup() {
-    const popupContainer = document.getElementById('yt-music-plus-popup');
+    const popupContainer = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.POPUP_HOLDER);
     if (popupContainer) {
-      popupContainer.classList.remove('hidden');
+      popupContainer.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
     }
   }
 
@@ -176,9 +177,9 @@ export class PopupManager {
    * Hides the popup element on the page
    */
   hidePopup() {
-    const popupContainer = document.getElementById('yt-music-plus-popup');
+    const popupContainer = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.POPUP_HOLDER);
     if (popupContainer) {
-      popupContainer.classList.add('hidden');
+      popupContainer.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
     }
   }
 }

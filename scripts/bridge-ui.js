@@ -219,12 +219,12 @@ export class BridgeUI {
    * @param {boolean} isSelectionView - Whether we are in playlist selection view
    */
   updateFooterVisibility(isSelectionView) {
-    const selectionActions = document.getElementById('playlistSelectionActions');
-    const playlistCounts = document.getElementById('playlistCounts');
-    const selectionCount = document.getElementById('selectionCount');
-    const progressText = document.getElementById('progressText');
-    const searchProgress = document.getElementById('searchProgress');
-    const cancelSearchBtn = document.getElementById('cancelSearchBtn');
+    const selectionActions = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_SELECTION_ACTIONS);
+    const playlistCounts = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_COUNTS);
+    const selectionCount = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.SELECTION_COUNT);
+    const progressText = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PROGRESS_TEXT);
+    const searchProgress = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.SEARCH_PROGRESS);
+    const cancelSearchBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.CANCEL_SEARCH);
 
     if (selectionActions) selectionActions.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !isSelectionView);
     if (playlistCounts) playlistCounts.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !isSelectionView);
@@ -252,9 +252,9 @@ export class BridgeUI {
    * @param {Array} playlists - Loaded playlists
    */
   updatePlaylistCounts(playlists = []) {
-    const totalCountEl = document.getElementById('totalPlaylistCount');
-    const editableCountEl = document.getElementById('editablePlaylistCount');
-    const countsContainer = document.getElementById('playlistCounts');
+    const totalCountEl = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.TOTAL_PLAYLIST_COUNT);
+    const editableCountEl = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.EDITABLE_PLAYLIST_COUNT);
+    const countsContainer = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_COUNTS);
 
     if (totalCountEl && editableCountEl) {
       const total = playlists.length;
@@ -448,8 +448,8 @@ export class BridgeUI {
     const selectionScreen = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_SELECTION_SCREEN);
     const isVisible = selectionScreen && !selectionScreen.classList.contains(CONSTANTS.UI.CLASSES.HIDDEN);
     if (isVisible) {
-      document.getElementById('playlistSelectionActions')?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
-      document.getElementById('playlistCounts')?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+      document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_SELECTION_ACTIONS)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+      document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_COUNTS)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
     }
   }
 
