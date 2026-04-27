@@ -258,7 +258,7 @@ export class BridgeUI {
 
     if (totalCountEl && editableCountEl) {
       const total = playlists.length;
-      const editable = playlists.filter(p => p.isEditable !== false).length;
+      const editable = playlists.filter(p => p.isEditable).length;
 
       totalCountEl.textContent = `${total} total`;
       editableCountEl.textContent = `${editable} editable`;

@@ -32,7 +32,7 @@ export const MESSAGES = {
     ADDING_SELECTED: 'Adding selected items...',
     ADD_COMPLETE: (count, target) => `All additions completed. Added ${count} items to ${target}.`,
     NO_ADDITIONS_MADE: 'No valid items were added.',
-    ERROR_OCCURRED: (action) => `Error occurred while ${action} items.`,
+    ERROR_OCCURRED: (action) => `Error occurred while ${action}.`,
   },
   IMPORT: {
     NO_FILES_SELECTED: 'No files selected for import.',

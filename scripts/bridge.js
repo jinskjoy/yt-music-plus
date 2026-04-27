@@ -670,27 +670,39 @@ import { MESSAGES } from '../utils/ui-messages.js';
             setVideoId: item.originalMedia.playlistSetVideoId
           }));
 
+        let success = true;
         if (videoIdsToAdd.length > 0) {
           try {
             // Bulk add replacements
-            await this.ytMusicAPI.addItemsToPlaylist(playlistId, videoIdsToAdd);
+            const addSuccess = await this.ytMusicAPI.addItemsToPlaylist(playlistId, videoIdsToAdd);
             
-            // Bulk remove originals
-            if (itemsToRemove.length > 0) {
-              await this.ytMusicAPI.removeItemsFromPlaylist(playlistId, itemsToRemove);
-            }
+            if (addSuccess) {
+              // Only remove originals if adding replacements succeeded
+              if (itemsToRemove.length > 0) {
+                const removeSuccess = await this.ytMusicAPI.removeItemsFromPlaylist(playlistId, itemsToRemove);
+                if (!removeSuccess) {
+                  success = false;
+                }
+              }
 
-            // Update UI
-            itemsWithReplacement.forEach(item => {
-              UIHelper.removeMediaGridRow(item.originalMedia);
-            });
+              // Update UI for items that were processed (even if removal failed, addition succeeded)
+              itemsWithReplacement.forEach(item => {
+                UIHelper.removeMediaGridRow(item.originalMedia);
+              });
+            } else {
+              success = false;
+            }
           } catch (error) {
-            this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('replacing'));
+            success = false;
           }
         }
 
-        const countReplaced = videoIdsToAdd.length;
-        this.ui.setProgressText(countReplaced > 0 ? MESSAGES.ACTIONS.REPLACE_COMPLETE(countReplaced) : MESSAGES.ACTIONS.NO_REPLACEMENTS_MADE);
+        if (!success) {
+          this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('replacing'));
+        } else {
+          const countReplaced = videoIdsToAdd.length;
+          this.ui.setProgressText(countReplaced > 0 ? MESSAGES.ACTIONS.REPLACE_COMPLETE(countReplaced) : MESSAGES.ACTIONS.NO_REPLACEMENTS_MADE);
+        }
       } catch (error) {
         this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('replacing'));
       } finally {
@@ -723,21 +735,25 @@ import { MESSAGES } from '../utils/ui-messages.js';
 
         if (videoIdsToAdd.length > 0) {
           try {
-            await this.ytMusicAPI.addItemsToPlaylist(playlistId, videoIdsToAdd);
+            const addSuccess = await this.ytMusicAPI.addItemsToPlaylist(playlistId, videoIdsToAdd);
             
-            // Remove added items from the UI
-            selectedItems.forEach(item => {
-              if (item.replacementMedia?.videoId) {
-                UIHelper.removeMediaGridRow(item.originalMedia);
-              }
-            });
+            if (addSuccess) {
+              // Remove added items from the UI
+              selectedItems.forEach(item => {
+                if (item.replacementMedia?.videoId) {
+                  UIHelper.removeMediaGridRow(item.originalMedia);
+                }
+              });
+              this.ui.setProgressText(MESSAGES.ACTIONS.ADD_COMPLETE(videoIdsToAdd.length, targetTitle));
+            } else {
+              this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('adding'));
+            }
           } catch (error) {
             this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('adding'));
           }
+        } else {
+          this.ui.setProgressText(MESSAGES.ACTIONS.NO_ADDITIONS_MADE);
         }
-
-        const countAdded = videoIdsToAdd.length;
-        this.ui.setProgressText(countAdded > 0 ? MESSAGES.ACTIONS.ADD_COMPLETE(countAdded, targetTitle) : MESSAGES.ACTIONS.NO_ADDITIONS_MADE);
       } catch (error) {
         this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('adding'));
       } finally {
@@ -774,18 +790,23 @@ import { MESSAGES } from '../utils/ui-messages.js';
 
         if (itemsToRemove.length > 0) {
           try {
-            await this.ytMusicAPI.removeItemsFromPlaylist(playlistId, itemsToRemove);
+            const removeSuccess = await this.ytMusicAPI.removeItemsFromPlaylist(playlistId, itemsToRemove);
             
-            // Update UI
-            selectedItems.forEach(item => {
-              UIHelper.removeMediaGridRow(item.originalMedia);
-            });
+            if (removeSuccess) {
+              // Update UI
+              selectedItems.forEach(item => {
+                UIHelper.removeMediaGridRow(item.originalMedia);
+              });
+              this.ui.setProgressText(MESSAGES.ACTIONS.REMOVAL_COMPLETE(itemsToRemove.length));
+            } else {
+              this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('removing'));
+            }
           } catch (error) {
             this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('removing'));
           }
+        } else {
+          this.ui.setProgressText(MESSAGES.ACTIONS.NO_REMOVALS);
         }
-
-        this.ui.setProgressText(itemsToRemove.length > 0 ? MESSAGES.ACTIONS.REMOVAL_COMPLETE(itemsToRemove.length) : MESSAGES.ACTIONS.NO_REMOVALS);
       } catch (error) {
         this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('removing'));
       } finally {
