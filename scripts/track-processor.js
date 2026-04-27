@@ -418,26 +418,32 @@ export class TrackProcessor {
    * @async
    */
   async keepOnlySelected() {
-    const allRows = Array.from(document.querySelectorAll(`.${CONSTANTS.UI.CLASSES.GRID_ROW}.${CONSTANTS.UI.CLASSES.DUPLICATE_GROUP_ROW}`));
-    const itemsToRemove = allRows
-      .filter(row => {
-        const checkbox = row.querySelector(`.${CONSTANTS.UI.CLASSES.ITEM_CHECKBOX}`);
-        return checkbox && !checkbox.checked;
-      })
-      .map(row => {
-        const originalMedia = JSON.parse(row.dataset.originalMedia || '{}');
-        return {
-          videoId: originalMedia.videoId,
-          setVideoId: originalMedia.playlistSetVideoId,
-          originalMedia
-        };
-      })
-      .filter(item => item.videoId && item.setVideoId);
+    const allGroupRows = Array.from(document.querySelectorAll(`.${CONSTANTS.UI.CLASSES.GRID_ROW}.${CONSTANTS.UI.CLASSES.DUPLICATE_GROUP_ROW}`));
+    
+    // Separate into items to keep and items to remove
+    const itemsToRemove = [];
+    const itemsToKeep = [];
+
+    allGroupRows.forEach(row => {
+      const checkbox = row.querySelector(`.${CONSTANTS.UI.CLASSES.ITEM_CHECKBOX}`);
+      const originalMedia = JSON.parse(row.dataset.originalMedia || '{}');
+      
+      const item = {
+        videoId: originalMedia.videoId,
+        setVideoId: originalMedia.playlistSetVideoId,
+        originalMedia
+      };
+
+      if (checkbox && !checkbox.checked && item.videoId && item.setVideoId) {
+        itemsToRemove.push(item);
+      } else if (item.videoId) {
+        itemsToKeep.push(item);
+      }
+    });
 
     if (itemsToRemove.length === 0) return;
 
-    const keepCount = allRows.length - itemsToRemove.length;
-    if (!confirm(MESSAGES.ACTIONS.KEEP_SELECTED_CONFIRM(keepCount, itemsToRemove.length))) {
+    if (!confirm(MESSAGES.ACTIONS.KEEP_SELECTED_CONFIRM(itemsToKeep.length, itemsToRemove.length))) {
       return;
     }
 
@@ -450,13 +456,17 @@ export class TrackProcessor {
 
       if (!playlistId) return;
 
-      const success = await this.ytMusicAPI.removeItemsFromPlaylist(playlistId, itemsToRemove);
+      // Filter out any duplicates within itemsToRemove just in case (should be unique due to setVideoId)
+      const uniqueItemsToRemove = Array.from(new Map(itemsToRemove.map(item => [item.setVideoId, item])).values());
+      const success = await this.ytMusicAPI.removeItemsFromPlaylist(playlistId, uniqueItemsToRemove);
 
       if (success) {
-        itemsToRemove.forEach(item => {
+        // Successfully removed from playlist, now remove from UI
+        uniqueItemsToRemove.forEach(item => {
           UIHelper.removeMediaGridRow(item.originalMedia);
         });
-        this.bridge.ui.setProgressText(MESSAGES.ACTIONS.KEEP_COMPLETE(itemsToRemove.length));
+        
+        this.bridge.ui.setProgressText(MESSAGES.ACTIONS.KEEP_COMPLETE(uniqueItemsToRemove.length));
         
         // Wait a moment for UI cleanup then refresh the duplicate list
         setTimeout(() => {
@@ -466,6 +476,7 @@ export class TrackProcessor {
         this.bridge.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('removing duplicates'));
       }
     } catch (error) {
+      console.error('Error in keepOnlySelected:', error);
       this.bridge.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('removing duplicates'));
     } finally {
       await this.bridge.afterActionsOnSelectedItems(true);
