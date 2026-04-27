@@ -92,7 +92,7 @@ export class PopupManager {
     if (settingsLink) {
       settingsLink.addEventListener('click', (e) => {
         e.preventDefault();
-        chrome.runtime.openOptionsPage();
+        chrome.runtime.sendMessage({ action: 'openOptions' });
       });
     }
 
