@@ -372,6 +372,7 @@ export class BridgeUI {
     const isEditable = playlist?.isEditable !== false;
 
     this.setTargetContainerVisibility(false);
+    this.setDuplicateTrackMode(false);
     document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_LOCAL_REPLACEMENTS)?.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
     document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_UNAVAILABLE)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
     document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_VIDEO_TRACKS)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
@@ -396,6 +397,7 @@ export class BridgeUI {
     const isEditable = playlist?.isEditable !== false;
 
     this.setTargetContainerVisibility(true);
+    this.setDuplicateTrackMode(false);
     document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_LOCAL_REPLACEMENTS)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
     document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_UNAVAILABLE)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
     document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_VIDEO_TRACKS)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
