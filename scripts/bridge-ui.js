@@ -125,7 +125,10 @@ export class BridgeUI {
           replacementCol.appendChild(ignoreBtn);
         }
       }
-      gridRow.classList.add(CONSTANTS.UI.CLASSES.DUPLICATE_GROUP_ROW);
+      
+      const isAltGroup = groupInfo.groupIndex % 2 !== 0;
+      const groupClass = isAltGroup ? CONSTANTS.UI.CLASSES.ALT_DUPLICATE_GROUP_ROW : CONSTANTS.UI.CLASSES.DUPLICATE_GROUP_ROW;
+      gridRow.classList.add(groupClass);
       gridRow.dataset.groupIndex = groupInfo.groupIndex;
     }
 

@@ -844,9 +844,15 @@
     background-color: #f0f7ff;
 }
 
-.duplicate-group-row:hover {
+.alt-duplicate-group-row {
+    background-color: #f9f9f9;
+}
+
+.duplicate-group-row:hover,
+.alt-duplicate-group-row:hover {
     background-color: #e3f2fd;
 }
+
 
 .ignore-group-btn {
     width: 24px;

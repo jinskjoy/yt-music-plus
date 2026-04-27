@@ -141,6 +141,7 @@ export const CONSTANTS = {
       PLAYLIST_INFO_SECTION: 'playlist-info-section',
       DUPLICATE_GROUP_START: 'duplicate-group-start',
       DUPLICATE_GROUP_ROW: 'duplicate-group-row',
+      ALT_DUPLICATE_GROUP_ROW: 'alt-duplicate-group-row',
       IGNORE_GROUP_BTN: 'ignore-group-btn',
     },
     SELECTORS: {
