@@ -252,7 +252,7 @@ async addItemsToPlaylist(playlistId, videoIds) {
       actions: videoIds.map(videoId => ({
         action: 'ACTION_ADD_VIDEO',
         addedVideoId: videoId,
-        dedupeOption: 'DEDUPE_OPTION_CHECK'
+        dedupeOption: 'DEDUPE_OPTION_SKIP'
       })),
       playlistId: playlistId
     });
@@ -276,7 +276,7 @@ async addItemsToPlaylist(playlistId, videoIds) {
           {
             action: 'ACTION_ADD_VIDEO',
             addedVideoId: videoId,
-            dedupeOption: 'DEDUPE_OPTION_CHECK'
+            dedupeOption: 'DEDUPE_OPTION_SKIP'
           }
         ],
         playlistId: playlistId
