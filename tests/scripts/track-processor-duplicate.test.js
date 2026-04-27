@@ -35,7 +35,7 @@ describe('TrackProcessor - Duplicate Track Check', () => {
       getCurrentPlaylistIdFromURL: vi.fn(() => 'PL123')
     };
 
-    const mockAddItem = vi.fn((track, baseUrl, index) => {
+    const mockAddItem = vi.fn((track, baseUrl, index, groupInfo) => {
       const el = document.createElement('div');
       el.className = 'grid-row';
       const cb = document.createElement('input');
@@ -88,6 +88,11 @@ describe('TrackProcessor - Duplicate Track Check', () => {
       expect(mockBridge.ui.setProgressText).toHaveBeenCalledWith(
         MESSAGES.RESULTS.FOUND_DUPLICATE_GROUPS(1, 2)
       );
+      
+      // Verify group index info is passed
+      const calls = mockBridge.ui.addItem.mock.calls;
+      expect(calls[0][3]).toMatchObject({ isStart: true, indexInGroup: 0 });
+      expect(calls[1][3]).toMatchObject({ isStart: false, indexInGroup: 1 });
     });
 
     it('should identify and group tracks with similar titles using strict threshold', async () => {
@@ -116,9 +121,9 @@ describe('TrackProcessor - Duplicate Track Check', () => {
       await processor.findDuplicateTracks();
 
       // Get the returned elements from addItem calls
-      const rows = mockBridge.ui.addItem.mock.results.map(r => r.value);
-      const cb1 = rows[0].querySelector('.' + CONSTANTS.UI.CLASSES.ITEM_CHECKBOX);
-      const cb2 = rows[1].querySelector('.' + CONSTANTS.UI.CLASSES.ITEM_CHECKBOX);
+      const results = mockBridge.ui.addItem.mock.results.map(r => r.value);
+      const cb1 = results[0].querySelector('.' + CONSTANTS.UI.CLASSES.ITEM_CHECKBOX);
+      const cb2 = results[1].querySelector('.' + CONSTANTS.UI.CLASSES.ITEM_CHECKBOX);
 
       expect(cb1.checked).toBe(false); // First track (video)
       expect(cb2.checked).toBe(true);  // Second track (audio)

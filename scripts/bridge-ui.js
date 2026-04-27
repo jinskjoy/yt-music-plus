@@ -101,7 +101,9 @@ export class BridgeUI {
   addItem(item, baseUrl, index, groupInfo = null) {
     const { originalMedia, replacementMedia } = this.bridge._createMediaObjects(item, baseUrl);
 
-    const gridRow = MediaGridRow.render(originalMedia, replacementMedia, index, this.bridge.playerHandler);
+    // Use group-scoped index if available
+    const displayIndex = groupInfo ? groupInfo.indexInGroup + 1 : index;
+    const gridRow = MediaGridRow.render(originalMedia, replacementMedia, displayIndex, this.bridge.playerHandler);
     
     if (groupInfo) {
       if (groupInfo.isStart) {
@@ -111,9 +113,9 @@ export class BridgeUI {
         const replacementCol = gridRow.querySelector(`.${CONSTANTS.UI.CLASSES.GRID_COL_REPLACEMENT}`);
         if (replacementCol) {
           const ignoreBtn = document.createElement('button');
-          ignoreBtn.className = `${CONSTANTS.UI.CLASSES.BTN} ${CONSTANTS.UI.CLASSES.BTN_SECONDARY} ${CONSTANTS.UI.CLASSES.IGNORE_GROUP_BTN}`;
-          ignoreBtn.textContent = 'Ignore Group';
-          ignoreBtn.title = 'Remove this group from the duplicate list without deleting tracks from the playlist.';
+          ignoreBtn.className = `${CONSTANTS.UI.CLASSES.BTN} ${CONSTANTS.UI.CLASSES.BTN_PRIMARY} ${CONSTANTS.UI.CLASSES.IGNORE_GROUP_BTN} btn-icon`;
+          ignoreBtn.innerHTML = '✕';
+          ignoreBtn.title = 'Ignore this group';
           ignoreBtn.type = 'button';
           ignoreBtn.addEventListener('click', () => {
             const allGroupRows = document.querySelectorAll(`.${CONSTANTS.UI.CLASSES.GRID_ROW}[data-group-index="${groupInfo.groupIndex}"]`);

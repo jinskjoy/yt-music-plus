@@ -838,6 +838,18 @@
     background-color: #e3f2fd;
 }
 
+.ignore-group-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    font-size: 14px;
+    padding: 0;
+}
+
+
 
 .chrome-store-link,
 .chrome-store-link:visited,

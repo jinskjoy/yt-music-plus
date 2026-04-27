@@ -308,6 +308,7 @@ export class TrackProcessor {
           // Pass the isChecked state to addItem
           const gridRow = this.bridge.ui.addItem(track, CONSTANTS.API.BASE_URL, i++, {
             isStart: trackIndex === 0,
+            indexInGroup: trackIndex,
             groupIndex
           });
           
