@@ -277,16 +277,11 @@ export class BridgeUI {
     document.querySelector(`.${CONSTANTS.UI.CLASSES.ITEMS_GRID_WRAPPER}`)?.classList.toggle(CONSTANTS.UI.CLASSES.LIST_ONLY_MODE, isListOnly);
     
     if (isListOnly) {
-      // Hide the "List All Tracks" button itself since it's already showing all
-      document.getElementById(CONSTANTS.UI.BUTTON_IDS.LIST_ALL_TRACKS)?.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
-      
       this.updateActionButtonsVisibility({
         replace: false,
         add: false,
         remove: true
       });
-    } else {
-      document.getElementById(CONSTANTS.UI.BUTTON_IDS.LIST_ALL_TRACKS)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
     }
   }
 

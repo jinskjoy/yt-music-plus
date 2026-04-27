@@ -327,7 +327,7 @@ describe('BridgeUI', () => {
       expect(replaceBtn.classList.contains('hidden')).toBe(true);
       expect(addBtn.classList.contains('hidden')).toBe(true);
       expect(removeBtn.classList.contains('hidden')).toBe(false);
-      expect(listAllBtn.classList.contains('hidden')).toBe(true);
+      expect(listAllBtn.classList.contains('hidden')).toBe(false); // Should be visible but active
       expect(findUnavailableBtn.classList.contains('hidden')).toBe(false);
     });
   });
