@@ -581,17 +581,27 @@
 
 /* List Only Mode Adjustments */
 .items-grid-wrapper.list-only-mode .grid-col-replacement,
-.items-grid-wrapper.list-only-mode .items-grid-header .grid-col-replacement,
-.items-grid-wrapper.duplicate-track-mode .grid-col-replacement,
-.items-grid-wrapper.duplicate-track-mode .items-grid-header .grid-col-replacement {
+.items-grid-wrapper.list-only-mode .items-grid-header .grid-col-replacement {
+    display: none;
+}
+
+.items-grid-wrapper.duplicate-track-mode .grid-col-replacement {
+    display: flex;
+    position: relative;
+}
+
+.items-grid-wrapper.duplicate-track-mode .grid-col-replacement .media-item {
     display: none;
 }
 
 .items-grid-wrapper.list-only-mode .items-grid-header,
-.items-grid-wrapper.list-only-mode .grid-row,
+.items-grid-wrapper.list-only-mode .grid-row {
+    grid-template-columns: 35px 1fr 35px;
+}
+
 .items-grid-wrapper.duplicate-track-mode .items-grid-header,
 .items-grid-wrapper.duplicate-track-mode .grid-row {
-    grid-template-columns: 35px 1fr 35px;
+    grid-template-columns: 35px 1fr 80px 35px; /* Leave space for ignore button */
 }
 
 
@@ -839,14 +849,13 @@
 }
 
 .ignore-group-btn {
-    position: absolute;
-    right: 8px;
-    top: 50%;
-    transform: translateY(-50%);
     width: 24px;
     height: 24px;
     font-size: 14px;
     padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 

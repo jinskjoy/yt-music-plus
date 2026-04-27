@@ -115,7 +115,7 @@ export class BridgeUI {
           const ignoreBtn = document.createElement('button');
           ignoreBtn.className = `${CONSTANTS.UI.CLASSES.BTN} ${CONSTANTS.UI.CLASSES.BTN_PRIMARY} ${CONSTANTS.UI.CLASSES.IGNORE_GROUP_BTN} btn-icon`;
           ignoreBtn.textContent = '✕';
-          ignoreBtn.title = 'Ignore this group';
+          ignoreBtn.title = 'Ignore this duplicate group (removes from list, doesn\'t delete tracks)';
           ignoreBtn.type = 'button';
           ignoreBtn.addEventListener('click', () => {
             const allGroupRows = document.querySelectorAll(`.${CONSTANTS.UI.CLASSES.GRID_ROW}[data-group-index="${groupInfo.groupIndex}"]`);
