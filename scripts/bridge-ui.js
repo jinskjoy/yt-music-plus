@@ -333,6 +333,11 @@ export class BridgeUI {
    */
   setDuplicateTrackMode(isDuplicateMode) {
     document.querySelector(`.${CONSTANTS.UI.CLASSES.ITEMS_GRID_WRAPPER}`)?.classList.toggle(CONSTANTS.UI.CLASSES.DUPLICATE_TRACK_MODE, isDuplicateMode);
+    
+    const header = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.GRID_HEADER_REPLACEMENT);
+    if (header) {
+      header.textContent = isDuplicateMode ? 'Ignore Group' : 'Replacement Media';
+    }
   }
 
   /**

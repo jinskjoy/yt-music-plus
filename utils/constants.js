@@ -60,6 +60,7 @@ export const CONSTANTS = {
       PROGRESS_TEXT: 'progressText',
       SELECTION_FOOTER: 'ytMusicPlusSelectionFooter',
       ITEMS_GRID_CONTAINER: 'yt-music-plus-itemsGridContainer',
+      GRID_HEADER_REPLACEMENT: 'gridHeaderReplacement',
       SEARCH_INPUT: 'ytMusicPlusSearchInput',
       CLEAR_SEARCH_BTN: 'ytMusicPlusClearSearchBtn',
       SEARCH_PROGRESS: 'searchProgress',
