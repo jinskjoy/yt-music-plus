@@ -488,9 +488,9 @@ export class TrackProcessor {
    * @private
    */
   #groupTracksByDuplicates(tracks) {
+    const STRICT_THRESHOLD = 0.9;
     const groups = [];
     const processedIndices = new Set();
-    const STRICT_THRESHOLD = 0.9; // Stricter threshold for duplicates
 
     for (let i = 0; i < tracks.length; i++) {
       if (processedIndices.has(i)) continue;
@@ -504,10 +504,13 @@ export class TrackProcessor {
         const t1 = tracks[i];
         const t2 = tracks[j];
 
+        // Exact ID match is fast and conclusive
         const isSameId = t1.videoId && t2.videoId && t1.videoId === t2.videoId;
-        const isSimilarTitle = TextSimilarity.isGoodMatch(t1.name, t2.name, STRICT_THRESHOLD);
 
-        if (isSameId || isSimilarTitle) {
+        // Only perform expensive fuzzy title matching if IDs aren't an exact match
+        const isSimilarTitle = isSameId || TextSimilarity.isGoodMatch(t1.name, t2.name, STRICT_THRESHOLD);
+
+        if (isSimilarTitle) {
           group.push(tracks[j]);
           processedIndices.add(j);
         }
@@ -515,9 +518,7 @@ export class TrackProcessor {
       groups.push(group);
     }
     return groups;
-  }
-
-  /**
+  }  /**
    * Scans a local folder for media files
    * @async
    */
