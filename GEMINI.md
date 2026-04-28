@@ -35,3 +35,4 @@ Follow the coding style guidelines below when modifying or adding to the codebas
 
 ## Testing & Validation
 - **Run Tests Before Commit:** Always run all automated tests (e.g., `npm test`) before making a commit to ensure no regressions are introduced.
+- **Coverage Requirement:** Aim to maintain an overall project test coverage of 90% or higher. All new features and significant bug fixes should include corresponding unit tests to maintain this threshold.
