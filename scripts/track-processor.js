@@ -315,26 +315,28 @@ export class TrackProcessor {
     const itemsGrid = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.ITEMS_GRID_CONTAINER);
     if (!itemsGrid || itemsGrid.children.length === 0) return;
 
-    // We need access to the current items list.
-    // In processPlaylistItems and findVideoTracks, items are passed.
-    // We might need to store them in the processor or bridge.
-    // For now, let's look at what we have in the UI.
     const rows = Array.from(itemsGrid.querySelectorAll(`.${CONSTANTS.UI.CLASSES.GRID_ROW}`));
     if (rows.length === 0) return;
 
     this.bridge.ui.toggleSearchProgress(true, false);
-    this.bridge.ui.setProgressText('Rechecking duplicates in target playlist...');
+    this.bridge.ui.setProgressText(MESSAGES.SEARCH.RECHECKING_TARGET);
 
     await this.fetchTargetPlaylistItems();
 
-    rows.forEach(row => {
-      const serialNumber = parseInt(row.dataset.serialNumber);
-      const originalMedia = JSON.parse(row.dataset.originalMedia || '{}');
-      const replacementMedia = JSON.parse(row.dataset.replacementMedia || '{}');
+    let duplicateCount = 0;
 
+    rows.forEach(row => {
+      const replacementMediaStr = row.dataset.replacementMedia;
+      if (!replacementMediaStr) return;
+
+      const replacementMedia = JSON.parse(replacementMediaStr);
       if (replacementMedia && replacementMedia.videoId) {
         const isDuplicate = this.targetPlaylistItems.has(replacementMedia.videoId);
+        if (isDuplicate) duplicateCount++;
         
+        const originalMedia = JSON.parse(row.dataset.originalMedia || '{}');
+        const serialNumber = parseInt(row.dataset.serialNumber);
+
         // Create a temporary track-like object to update the row
         const tempTrack = {
           ...originalMedia,
@@ -348,22 +350,11 @@ export class TrackProcessor {
       }
     });
 
-    // Update progress text with new duplicate count
-    const replacementRows = rows.filter(row => {
-      const repl = JSON.parse(row.dataset.replacementMedia || '{}');
-      return repl && repl.videoId;
-    });
-    
-    const duplicateCount = replacementRows.filter(row => {
-      const repl = JSON.parse(row.dataset.replacementMedia || '{}');
-      return repl && repl.videoId && this.targetPlaylistItems.has(repl.videoId);
-    }).length;
+    const statusMessage = duplicateCount > 0 
+      ? MESSAGES.RESULTS.TARGET_DUPLICATES_FOUND(duplicateCount)
+      : MESSAGES.RESULTS.NO_TARGET_DUPLICATES_FOUND;
 
-    if (duplicateCount > 0) {
-      this.bridge.ui.setProgressText(`Found ${duplicateCount} duplicates in the new target playlist.`);
-    } else {
-      this.bridge.ui.setProgressText('No duplicates found in the new target playlist.');
-    }
+    this.bridge.ui.setProgressText(statusMessage);
 
     this.bridge.ui.toggleSearchProgress(false);
     UIHelper.updateCheckAllCheckbox();

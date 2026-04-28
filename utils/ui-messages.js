@@ -8,6 +8,7 @@ export const MESSAGES = {
     FINDING_VIDEO_TRACKS: 'Finding video tracks...',
     FINDING_DUPLICATES: 'Finding duplicate tracks...',
     FINDING_REPLACEMENTS: 'Finding replacements...',
+    RECHECKING_TARGET: 'Rechecking duplicates in target playlist...',
     CANCELLING: 'Cancelling search... Please wait.',
   },
   RESULTS: {
@@ -19,6 +20,8 @@ export const MESSAGES = {
     NO_DUPLICATES_FOUND: 'No duplicate tracks found.',
     REPLACEMENTS_FOUND: (count) => `Found ${count} potential replacements.`,
     DUPLICATE_IN_TARGET: (count) => ` ${count} of these are already in the target playlist and have been unchecked.`,
+    TARGET_DUPLICATES_FOUND: (count) => `Found ${count} duplicates in the new target playlist.`,
+    NO_TARGET_DUPLICATES_FOUND: 'No duplicates found in the new target playlist.',
     NO_REPLACEMENTS_FOUND: 'No replacements found.',
     MATCH_QUALITY_WARNING: (quality) => ` Match quality: ${quality}. Please review replacements.`,
   },

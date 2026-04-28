@@ -5,6 +5,11 @@ Follow the coding style guidelines below when modifying or adding to the codebas
 ## Versioning
 - **Sync Versions:** Always keep the `version` field in `package.json` and `manifest.json` in sync. When updating one, update the other to match.
 
+## CSS and UI Namespacing
+- **Prefix Everything:** All CSS classes, IDs, and custom attributes used in the extension's UI must be prefixed with `yt-music-plus-` (e.g., `.yt-music-plus-button`, `#yt-music-plus-main-container`).
+- **Isolation:** This prefixing is mandatory to ensure the extension's styles and scripts do not conflict with YouTube Music's native elements or other extensions.
+- **SCSS Usage:** Prefer SCSS for better organization and nesting of these prefixed styles.
+
 ## JavaScript (JS)
 - **Structured Functions:** Write modular, properly structured functions with a single responsibility. Use clear naming conventions and include JSDoc comments where appropriate.
 - **DOM Manipulation:** Avoid creating complex elements purely through JavaScript (e.g., long chains of `document.createElement`). If a structure can be defined in an HTML file or template, do so and inject it.
