@@ -1,6 +1,6 @@
 {
   "name": "yt-music-plus",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "Chrome extension for YouTube Music with utilities to remove unavailable tracks, find replacements, and more.",
   "type": "module",
   "scripts": {
