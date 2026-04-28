@@ -42,17 +42,17 @@ describe('BridgeUI', () => {
       bridgeUI.setProgressText('Loading items...');
       
       expect(progressText.textContent).toBe('Loading items...');
-      expect(progressText.classList.contains('hidden')).toBe(false);
-      expect(footer.classList.contains('hidden')).toBe(false);
+      expect(progressText.classList.contains('yt-music-plus-hidden')).toBe(false);
+      expect(footer.classList.contains('yt-music-plus-hidden')).toBe(false);
     });
 
     it('should hide progress text when text is empty', () => {
       const progressText = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PROGRESS_TEXT);
-      progressText.classList.remove('hidden');
+      progressText.classList.remove('yt-music-plus-hidden');
       
       bridgeUI.setProgressText('');
       
-      expect(progressText.classList.contains('hidden')).toBe(true);
+      expect(progressText.classList.contains('yt-music-plus-hidden')).toBe(true);
     });
   });
 
@@ -72,20 +72,20 @@ describe('BridgeUI', () => {
 
   describe('clearActiveButtons', () => {
     it('should remove active class from all buttons', () => {
-      const container = document.querySelector('.playlist-action-buttons');
+      const container = document.querySelector('.yt-music-plus-playlist-action-buttons');
       const btn = document.createElement('button');
       btn.className = 'btn active';
       container.appendChild(btn);
       
       bridgeUI.clearActiveButtons();
       
-      expect(btn.classList.contains('active')).toBe(false);
+      expect(btn.classList.contains('yt-music-plus-active')).toBe(false);
     });
   });
 
   describe('setActiveButton', () => {
     it('should set the active class on the specified button and clear others', () => {
-      const container = document.querySelector('.playlist-action-buttons');
+      const container = document.querySelector('.yt-music-plus-playlist-action-buttons');
       
       const btn1 = document.createElement('button');
       btn1.id = 'btn1';
@@ -93,19 +93,19 @@ describe('BridgeUI', () => {
       
       const btn2 = document.createElement('button');
       btn2.id = 'btn2';
-      btn2.className = 'btn';
+      btn2.className = 'yt-music-plus-btn';
       
       container.appendChild(btn1);
       container.appendChild(btn2);
       
       bridgeUI.setActiveButton('btn2');
       
-      expect(btn1.classList.contains('active')).toBe(false);
-      expect(btn2.classList.contains('active')).toBe(true);
+      expect(btn1.classList.contains('yt-music-plus-active')).toBe(false);
+      expect(btn2.classList.contains('yt-music-plus-active')).toBe(true);
     });
 
     it('should do nothing if buttonId does not exist', () => {
-      const container = document.querySelector('.playlist-action-buttons');
+      const container = document.querySelector('.yt-music-plus-playlist-action-buttons');
       const btn1 = document.createElement('button');
       btn1.className = 'btn active';
       container.appendChild(btn1);
@@ -113,7 +113,7 @@ describe('BridgeUI', () => {
       bridgeUI.setActiveButton('nonExistent');
       
       // Should clear existing active buttons anyway
-      expect(btn1.classList.contains('active')).toBe(false);
+      expect(btn1.classList.contains('yt-music-plus-active')).toBe(false);
     });
   });
 
@@ -135,11 +135,11 @@ describe('BridgeUI', () => {
       const btn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_UNAVAILABLE);
       
       bridgeUI.toggleSearchProgress(true);
-      expect(overlay.classList.contains('hidden')).toBe(false);
+      expect(overlay.classList.contains('yt-music-plus-hidden')).toBe(false);
       expect(btn.disabled).toBe(true);
       
       bridgeUI.toggleSearchProgress(false);
-      expect(overlay.classList.contains('hidden')).toBe(true);
+      expect(overlay.classList.contains('yt-music-plus-hidden')).toBe(true);
       expect(btn.disabled).toBe(false);
     });
   });
@@ -162,7 +162,7 @@ describe('BridgeUI', () => {
       
       bridgeUI.displayPlaylistsForSelection([]);
       
-      expect(grid.querySelector('.no-playlists-message')).not.toBeNull();
+      expect(grid.querySelector('.yt-music-plus-no-playlists-message')).not.toBeNull();
     });
   });
 
@@ -171,11 +171,11 @@ describe('BridgeUI', () => {
       const container = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.ITEMS_GRID_CONTAINER);
       
       const row1 = document.createElement('div');
-      row1.className = 'grid-row';
+      row1.className = 'yt-music-plus-grid-row';
       row1.dataset.searchString = 'apple pie';
       
       const row2 = document.createElement('div');
-      row2.className = 'grid-row';
+      row2.className = 'yt-music-plus-grid-row';
       row2.dataset.searchString = 'banana cake';
       
       container.appendChild(row1);
@@ -183,12 +183,12 @@ describe('BridgeUI', () => {
       
       bridgeUI.filterGridItems('apple');
       
-      expect(row1.classList.contains('hidden')).toBe(false);
-      expect(row2.classList.contains('hidden')).toBe(true);
+      expect(row1.classList.contains('yt-music-plus-hidden')).toBe(false);
+      expect(row2.classList.contains('yt-music-plus-hidden')).toBe(true);
       
       bridgeUI.filterGridItems('');
-      expect(row1.classList.contains('hidden')).toBe(false);
-      expect(row2.classList.contains('hidden')).toBe(false);
+      expect(row1.classList.contains('yt-music-plus-hidden')).toBe(false);
+      expect(row2.classList.contains('yt-music-plus-hidden')).toBe(false);
     });
   });
 
@@ -198,16 +198,16 @@ describe('BridgeUI', () => {
       const item = { name: 'Initial', videoId: 'v1' };
       
       const oldRow = bridgeUI.addItem(item, 'base/', 1);
-      const checkbox = oldRow.querySelector('.item-checkbox');
+      const checkbox = oldRow.querySelector('.yt-music-plus-item-checkbox');
       checkbox.checked = true;
       checkbox.dataset.userInteracted = 'true';
       
       const updatedItem = { name: 'Updated', videoId: 'v1' };
       bridgeUI.updateItemRow(updatedItem, 'base/', 1);
       
-      const newRow = container.querySelector('.grid-row');
-      expect(newRow.querySelector('.media-title').textContent).toBe('Updated');
-      expect(newRow.querySelector('.item-checkbox').checked).toBe(true);
+      const newRow = container.querySelector('.yt-music-plus-grid-row');
+      expect(newRow.querySelector('.yt-music-plus-media-title').textContent).toBe('Updated');
+      expect(newRow.querySelector('.yt-music-plus-item-checkbox').checked).toBe(true);
     });
 
     it('should respect current search filter when updating a row', () => {
@@ -220,8 +220,8 @@ describe('BridgeUI', () => {
       bridgeUI.addItem(item, 'base/', 1);
       bridgeUI.updateItemRow(item, 'base/', 1);
       
-      const row = container.querySelector('.grid-row');
-      expect(row.classList.contains('hidden')).toBe(true);
+      const row = container.querySelector('.yt-music-plus-grid-row');
+      expect(row.classList.contains('yt-music-plus-hidden')).toBe(true);
     });
   });
 
@@ -235,11 +235,11 @@ describe('BridgeUI', () => {
       
       input.value = 'test';
       input.dispatchEvent(new Event('input'));
-      expect(clearBtn.classList.contains('hidden')).toBe(false);
+      expect(clearBtn.classList.contains('yt-music-plus-hidden')).toBe(false);
       
       clearBtn.click();
       expect(input.value).toBe('');
-      expect(clearBtn.classList.contains('hidden')).toBe(true);
+      expect(clearBtn.classList.contains('yt-music-plus-hidden')).toBe(true);
     });
   });
 
@@ -250,10 +250,10 @@ describe('BridgeUI', () => {
       
       bridgeUI.updateViewMode(CONSTANTS.UI.VIEW_MODES.DEFAULT, playlist);
       
-      expect(document.getElementById(BUTTON_IDS.REPLACE_SELECTED).classList.contains('hidden')).toBe(true);
-      expect(document.getElementById(BUTTON_IDS.ADD_SELECTED).classList.contains('hidden')).toBe(true);
-      expect(document.getElementById(BUTTON_IDS.REMOVE_SELECTED).classList.contains('hidden')).toBe(true);
-      expect(document.getElementById(BUTTON_IDS.KEEP_ONLY_SELECTED).classList.contains('hidden')).toBe(true);
+      expect(document.getElementById(BUTTON_IDS.REPLACE_SELECTED).classList.contains('yt-music-plus-hidden')).toBe(true);
+      expect(document.getElementById(BUTTON_IDS.ADD_SELECTED).classList.contains('yt-music-plus-hidden')).toBe(true);
+      expect(document.getElementById(BUTTON_IDS.REMOVE_SELECTED).classList.contains('yt-music-plus-hidden')).toBe(true);
+      expect(document.getElementById(BUTTON_IDS.KEEP_ONLY_SELECTED).classList.contains('yt-music-plus-hidden')).toBe(true);
     });
 
     it('should set SEARCH_RESULTS mode correctly for editable playlist', () => {
@@ -262,9 +262,9 @@ describe('BridgeUI', () => {
       
       bridgeUI.updateViewMode(CONSTANTS.UI.VIEW_MODES.SEARCH_RESULTS, playlist);
       
-      expect(document.getElementById(BUTTON_IDS.REPLACE_SELECTED).classList.contains('hidden')).toBe(false);
-      expect(document.getElementById(BUTTON_IDS.ADD_SELECTED).classList.contains('hidden')).toBe(false);
-      expect(document.getElementById(BUTTON_IDS.REMOVE_SELECTED).classList.contains('hidden')).toBe(false);
+      expect(document.getElementById(BUTTON_IDS.REPLACE_SELECTED).classList.contains('yt-music-plus-hidden')).toBe(false);
+      expect(document.getElementById(BUTTON_IDS.ADD_SELECTED).classList.contains('yt-music-plus-hidden')).toBe(false);
+      expect(document.getElementById(BUTTON_IDS.REMOVE_SELECTED).classList.contains('yt-music-plus-hidden')).toBe(false);
     });
 
     it('should set DUPLICATES mode correctly', () => {
@@ -273,8 +273,8 @@ describe('BridgeUI', () => {
       
       bridgeUI.updateViewMode(CONSTANTS.UI.VIEW_MODES.DUPLICATES, playlist);
       
-      expect(document.getElementById(BUTTON_IDS.KEEP_ONLY_SELECTED).classList.contains('hidden')).toBe(false);
-      expect(document.getElementById(BUTTON_IDS.REPLACE_SELECTED).classList.contains('hidden')).toBe(true);
+      expect(document.getElementById(BUTTON_IDS.KEEP_ONLY_SELECTED).classList.contains('yt-music-plus-hidden')).toBe(false);
+      expect(document.getElementById(BUTTON_IDS.REPLACE_SELECTED).classList.contains('yt-music-plus-hidden')).toBe(true);
     });
 
     it('should set IMPORT mode correctly', () => {
@@ -284,11 +284,11 @@ describe('BridgeUI', () => {
       
       bridgeUI.updateViewMode(CONSTANTS.UI.VIEW_MODES.IMPORT, playlist);
       
-      expect(document.getElementById(BUTTON_IDS.ADD_SELECTED).classList.contains('hidden')).toBe(false);
-      expect(document.getElementById(BUTTON_IDS.FIND_LOCAL_REPLACEMENTS).classList.contains('hidden')).toBe(false);
+      expect(document.getElementById(BUTTON_IDS.ADD_SELECTED).classList.contains('yt-music-plus-hidden')).toBe(false);
+      expect(document.getElementById(BUTTON_IDS.FIND_LOCAL_REPLACEMENTS).classList.contains('yt-music-plus-hidden')).toBe(false);
       
       const targetContainer = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.TARGET_PLAYLIST_CONTAINER);
-      expect(targetContainer.classList.contains('hidden')).toBe(false);
+      expect(targetContainer.classList.contains('yt-music-plus-hidden')).toBe(false);
     });
   });
 
@@ -299,12 +299,12 @@ describe('BridgeUI', () => {
       const replaceBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.REPLACE_SELECTED);
       
       bridgeUI.setListOnlyMode(true);
-      expect(gridWrapper.classList.contains('list-only-mode')).toBe(true);
-      expect(removeBtn.classList.contains('hidden')).toBe(false);
-      expect(replaceBtn.classList.contains('hidden')).toBe(true);
+      expect(gridWrapper.classList.contains('yt-music-plus-list-only-mode')).toBe(true);
+      expect(removeBtn.classList.contains('yt-music-plus-hidden')).toBe(false);
+      expect(replaceBtn.classList.contains('yt-music-plus-hidden')).toBe(true);
       
       bridgeUI.setListOnlyMode(false);
-      expect(gridWrapper.classList.contains('list-only-mode')).toBe(false);
+      expect(gridWrapper.classList.contains('yt-music-plus-list-only-mode')).toBe(false);
     });
   });
 
@@ -313,17 +313,17 @@ describe('BridgeUI', () => {
       const gridWrapper = document.querySelector(`.${CONSTANTS.UI.CLASSES.ITEMS_GRID_WRAPPER}`);
       
       bridgeUI.setDuplicateTrackMode(true);
-      expect(gridWrapper.classList.contains('duplicate-track-mode')).toBe(true);
+      expect(gridWrapper.classList.contains('yt-music-plus-duplicate-track-mode')).toBe(true);
       
       bridgeUI.setDuplicateTrackMode(false);
-      expect(gridWrapper.classList.contains('duplicate-track-mode')).toBe(false);
+      expect(gridWrapper.classList.contains('yt-music-plus-duplicate-track-mode')).toBe(false);
     });
   });
 
   describe('updateTargetPlaylistDisplay', () => {
     it('should set name when playlist is provided', () => {
       const playlist = { title: 'My Target Playlist' };
-      const nameEl = document.getElementById('targetPlaylistName');
+      const nameEl = document.getElementById('yt-music-plus-targetPlaylistName');
       
       bridgeUI.updateTargetPlaylistDisplay(playlist);
       
@@ -331,13 +331,13 @@ describe('BridgeUI', () => {
     });
 
     it('should not change visibility when playlist is null', () => {
-      const container = document.getElementById('targetPlaylistContainer');
-      container.classList.remove('hidden');
+      const container = document.getElementById('yt-music-plus-targetPlaylistContainer');
+      container.classList.remove('yt-music-plus-hidden');
       
       bridgeUI.updateTargetPlaylistDisplay(null);
       
       // Should remain visible (visibility is handled by updateViewMode)
-      expect(container.classList.contains('hidden')).toBe(false);
+      expect(container.classList.contains('yt-music-plus-hidden')).toBe(false);
     });
   });
 });

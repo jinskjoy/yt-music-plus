@@ -17,10 +17,10 @@ describe('In-Site Popup HTML Templates', () => {
     expect(template).not.toBeNull();
     
     const content = template.content;
-    expect(content.querySelector('.playlist-card')).not.toBeNull();
-    expect(content.querySelector('.playlist-card-thumbnail')).not.toBeNull();
-    expect(content.querySelector('.playlist-card-title')).not.toBeNull();
-    expect(content.querySelector('.playlist-card-meta')).not.toBeNull();
+    expect(content.querySelector('.yt-music-plus-playlist-card')).not.toBeNull();
+    expect(content.querySelector('.yt-music-plus-playlist-card-thumbnail')).not.toBeNull();
+    expect(content.querySelector('.yt-music-plus-playlist-card-title')).not.toBeNull();
+    expect(content.querySelector('.yt-music-plus-playlist-card-meta')).not.toBeNull();
   });
 
   it('should have the media item template with required structure', () => {
@@ -28,11 +28,11 @@ describe('In-Site Popup HTML Templates', () => {
     expect(template).not.toBeNull();
     
     const content = template.content;
-    expect(content.querySelector('.media-item')).not.toBeNull();
-    expect(content.querySelector('.media-thumbnail')).not.toBeNull();
-    expect(content.querySelector('.media-title')).not.toBeNull();
-    expect(content.querySelector('.media-artist')).not.toBeNull();
-    expect(content.querySelector('.media-link')).not.toBeNull();
+    expect(content.querySelector('.yt-music-plus-media-item')).not.toBeNull();
+    expect(content.querySelector('.yt-music-plus-media-thumbnail')).not.toBeNull();
+    expect(content.querySelector('.yt-music-plus-media-title')).not.toBeNull();
+    expect(content.querySelector('.yt-music-plus-media-artist')).not.toBeNull();
+    expect(content.querySelector('.yt-music-plus-media-link')).not.toBeNull();
   });
 
   it('should have the grid row template with required structure', () => {
@@ -40,13 +40,15 @@ describe('In-Site Popup HTML Templates', () => {
     expect(template).not.toBeNull();
     
     const content = template.content;
-    expect(content.querySelector('.grid-row')).not.toBeNull();
-    expect(content.querySelector('.grid-col-serial')).not.toBeNull();
-    expect(content.querySelector('.grid-col-original')).not.toBeNull();
-    expect(content.querySelector('.grid-col-replacement')).not.toBeNull();
-    expect(content.querySelector('.grid-col-checkbox')).not.toBeNull();
-    expect(content.querySelector('.item-checkbox')).not.toBeNull();
-    expect(content.querySelector('.warning-icon')).not.toBeNull();
+    expect(content.querySelector('.yt-music-plus-grid-row')).not.toBeNull();
+    expect(content.querySelector('.yt-music-plus-grid-col-serial')).not.toBeNull();
+    expect(content.querySelector('.yt-music-plus-grid-col-original')).not.toBeNull();
+    expect(content.querySelector('.yt-music-plus-grid-col-replacement')).not.toBeNull();
+    expect(content.querySelector('.yt-music-plus-grid-col-checkbox')).not.toBeNull();
+    expect(content.querySelector('.yt-music-plus-item-checkbox')).not.toBeNull();
+    expect(content.querySelector('.yt-music-plus-warning-container')).not.toBeNull();
+    expect(content.querySelector('.yt-music-plus-warning-icon')).not.toBeNull();
+    expect(content.querySelector('.yt-music-plus-warning-message-text')).not.toBeNull();
   });
 
   it('should have the action buttons template with required structure', () => {
@@ -55,12 +57,12 @@ describe('In-Site Popup HTML Templates', () => {
     
     const content = template.content;
     expect(content.querySelector('#yt-music-plus-action-buttons')).not.toBeNull();
-    expect(content.querySelector('.content-wrapper')).not.toBeNull();
-    expect(content.querySelector('.icon')).not.toBeNull();
+    expect(content.querySelector('.yt-music-plus-content-wrapper')).not.toBeNull();
+    expect(content.querySelector('.yt-music-plus-icon')).not.toBeNull();
   });
 
   it('should have the minimize button in the popup header', () => {
-    const minimizeBtn = document.getElementById('minimizePopupBtn');
+    const minimizeBtn = document.getElementById('yt-music-plus-minimizePopupBtn');
     expect(minimizeBtn).not.toBeNull();
     expect(minimizeBtn.getAttribute('aria-label')).toBe('Minimize popup');
   });

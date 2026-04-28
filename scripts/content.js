@@ -5,7 +5,7 @@ import { PopupManager } from '../utils/popup-manager.js';
 import { CONSTANTS } from '../utils/constants.js';
 import bridgeUrl from './bridge.js?script&module';
 import popupHtmlUrl from '../html/in-site-popup.html?url';
-import popupCssUrl from '../styles/in-site-popup.css?url';
+import '../styles/in-site-popup.scss';
 
 /**
  * ContentScriptController - Manages content script operations
@@ -33,7 +33,6 @@ class ContentScriptController {
     this.popupManager = new PopupManager({
       storageManager: this.storageManager,
       popupHtmlUrl: chrome.runtime.getURL(popupHtmlUrl),
-      popupCssUrl: chrome.runtime.getURL(popupCssUrl),
       extSettings: this.extSettings
     });
 
@@ -67,7 +66,7 @@ class ContentScriptController {
 
     const button = document.createElement('div');
     button.id = 'yt-music-plus-nav-btn';
-    button.className = 'nav-bar-btn hidden';
+    button.className = `${CONSTANTS.UI.CLASSES.NAV_BAR_BTN || 'yt-music-plus-nav-bar-btn'} ${CONSTANTS.UI.CLASSES.HIDDEN}`;
     button.textContent = 'YouTube Music +';
     navBarRightSide.appendChild(button);
   }

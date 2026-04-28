@@ -72,10 +72,10 @@ describe('UIHelper', () => {
       };
 
       const el = MediaItem.render(media);
-      expect(el.querySelector('.media-title').textContent).toBe('Test Song');
-      expect(el.querySelector('.media-artist').textContent).toBe('Test Artist');
-      expect(el.querySelector('.media-link').href).toBe('https://youtube.com/watch?v=123');
-      expect(el.querySelector('.media-thumbnail').src).toBe('https://img.com/123.jpg');
+      expect(el.querySelector('.yt-music-plus-media-title').textContent).toBe('Test Song');
+      expect(el.querySelector('.yt-music-plus-media-artist').textContent).toBe('Test Artist');
+      expect(el.querySelector('.yt-music-plus-media-link').href).toBe('https://youtube.com/watch?v=123');
+      expect(el.querySelector('.yt-music-plus-media-thumbnail').src).toBe('https://img.com/123.jpg');
     });
 
     it('should show/hide play and pause buttons on hover based on player state', () => {
@@ -89,43 +89,43 @@ describe('UIHelper', () => {
       };
 
       const el = MediaItem.render(media, playerHandler);
-      const mediaInfo = el.querySelector('.media-info');
-      const playBtn = el.querySelector('.btn-play');
-      const pauseBtn = el.querySelector('.btn-pause');
+      const mediaInfo = el.querySelector('.yt-music-plus-media-info');
+      const playBtn = el.querySelector('.yt-music-plus-btn-play');
+      const pauseBtn = el.querySelector('.yt-music-plus-btn-pause');
 
       // Case 1: Playing the current track
       playerHandler.getVideoData.mockReturnValue({ video_id: 'vid123' });
       playerHandler.getPlayerState.mockReturnValue(CONSTANTS.PLAYER.STATE.PLAYING); // Playing
       
       mediaInfo.dispatchEvent(new MouseEvent('mouseenter'));
-      expect(playBtn.classList.contains('hidden')).toBe(true);
-      expect(pauseBtn.classList.contains('hidden')).toBe(false);
+      expect(playBtn.classList.contains('yt-music-plus-hidden')).toBe(true);
+      expect(pauseBtn.classList.contains('yt-music-plus-hidden')).toBe(false);
 
       // Case 2: Paused on the current track
       playerHandler.getPlayerState.mockReturnValue(CONSTANTS.PLAYER.STATE.PAUSED); // Paused
       mediaInfo.dispatchEvent(new MouseEvent('mouseenter'));
-      expect(playBtn.classList.contains('hidden')).toBe(false);
-      expect(pauseBtn.classList.contains('hidden')).toBe(true);
+      expect(playBtn.classList.contains('yt-music-plus-hidden')).toBe(false);
+      expect(pauseBtn.classList.contains('yt-music-plus-hidden')).toBe(true);
 
       // Case 3: Different track playing
       playerHandler.getVideoData.mockReturnValue({ video_id: 'different' });
       playerHandler.getPlayerState.mockReturnValue(CONSTANTS.PLAYER.STATE.PLAYING); // Playing
       mediaInfo.dispatchEvent(new MouseEvent('mouseenter'));
-      expect(playBtn.classList.contains('hidden')).toBe(false);
-      expect(pauseBtn.classList.contains('hidden')).toBe(true);
+      expect(playBtn.classList.contains('yt-music-plus-hidden')).toBe(false);
+      expect(pauseBtn.classList.contains('yt-music-plus-hidden')).toBe(true);
     });
   });
 
   describe('updateCheckAllCheckbox', () => {
     it('should update select-all checkbox and button states', () => {
       const selectAll = document.getElementById('yt-music-plus-selectAllCheckbox');
-      const replaceBtn = document.getElementById('replaceSelectedBtn');
+      const replaceBtn = document.getElementById('yt-music-plus-replaceSelectedBtn');
       const container = document.getElementById('yt-music-plus-itemsGridContainer');
 
       // Add a row with a replacement
       const row = MediaGridRow.render({ name: 'O' }, { name: 'R', videoId: 'v1' });
       container.appendChild(row);
-      const checkbox = row.querySelector('.item-checkbox');
+      const checkbox = row.querySelector('.yt-music-plus-item-checkbox');
 
       UIHelper.updateCheckAllCheckbox();
       expect(selectAll.checked).toBe(true);
@@ -140,33 +140,33 @@ describe('UIHelper', () => {
 
     it('should disable Add and Replace buttons in list-only-mode', () => {
       const container = document.getElementById('yt-music-plus-itemsGridContainer');
-      const gridWrapper = document.querySelector('.items-grid-wrapper');
-      gridWrapper.classList.add('list-only-mode');
+      const gridWrapper = document.querySelector('.yt-music-plus-items-grid-wrapper');
+      gridWrapper.classList.add('yt-music-plus-list-only-mode');
 
       // Add a row with a replacement
       const row = MediaGridRow.render({ name: 'O' }, { name: 'R', videoId: 'v1' });
       container.appendChild(row);
-      row.querySelector('.item-checkbox').checked = true;
+      row.querySelector('.yt-music-plus-item-checkbox').checked = true;
 
       UIHelper.updateCheckAllCheckbox();
 
-      expect(document.getElementById('replaceSelectedBtn').disabled).toBe(true);
-      expect(document.getElementById('addSelectedBtn').disabled).toBe(true);
-      expect(document.getElementById('removeSelectedBtn').disabled).toBe(false);
+      expect(document.getElementById('yt-music-plus-replaceSelectedBtn').disabled).toBe(true);
+      expect(document.getElementById('yt-music-plus-addSelectedBtn').disabled).toBe(true);
+      expect(document.getElementById('yt-music-plus-removeSelectedBtn').disabled).toBe(false);
     });
   });
 
   describe('toggleGrid', () => {
     it('should toggle collapsed class and button text', () => {
-      const infoSection = document.querySelector('.playlist-info-section');
-      const toggleBtn = document.getElementById('toggleGridBtn');
+      const infoSection = document.querySelector('.yt-music-plus-playlist-info-section');
+      const toggleBtn = document.getElementById('yt-music-plus-toggleGridBtn');
       
       UIHelper.toggleGrid(true);
-      expect(infoSection.classList.contains('collapsed')).toBe(true);
+      expect(infoSection.classList.contains('yt-music-plus-collapsed')).toBe(true);
       expect(toggleBtn.textContent).toBe('⤡');
 
       UIHelper.toggleGrid(false);
-      expect(infoSection.classList.contains('collapsed')).toBe(false);
+      expect(infoSection.classList.contains('yt-music-plus-collapsed')).toBe(false);
       expect(toggleBtn.textContent).toBe('⤢');
     });
   });

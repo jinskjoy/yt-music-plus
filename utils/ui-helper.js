@@ -130,7 +130,7 @@ export class MediaItem {
     }
 
     // Add title for hover showing full details if it's truncated
-    const mediaInfo = item.querySelector('.media-info');
+    const mediaInfo = item.querySelector(`.${CONSTANTS.UI.CLASSES.MEDIA_INFO}`);
     if (mediaInfo) {
       mediaInfo.title = `${media.name || 'Unknown Title'} - ${media.artist || 'Unknown Artist'}`;
     }
@@ -208,7 +208,7 @@ export class MediaGridRow {
 
     const replacementCol = row.querySelector(`.${CONSTANTS.UI.CLASSES.GRID_COL_REPLACEMENT}`);
     if (replacementMedia && (replacementMedia.isGoodMatch === false || replacementMedia.isDuplicate)) {
-      replacementCol.querySelector('.warning-container')?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+      replacementCol.querySelector(`.${CONSTANTS.UI.CLASSES.WARNING_CONTAINER}`)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
       replacementCol.querySelector(`.${CONSTANTS.UI.CLASSES.WARNING_ICON}`).classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
       
       if (replacementMedia.isDuplicate) {
@@ -410,15 +410,15 @@ export class UIHelper {
    * Updates check-all checkbox and button states.
    */
   static updateCheckAllCheckbox() {
-    const popupElement = document.querySelector('.yt-music-extended-popup-container');
+    const popupElement = document.querySelector(`.${CONSTANTS.UI.CLASSES.POPUP_CONTAINER}`);
     if (!popupElement) return;
 
-    const selectAllCheckbox = popupElement.querySelector('#yt-music-plus-selectAllCheckbox');
-    const checkboxes = Array.from(popupElement.querySelectorAll('.item-checkbox:not([disabled])')).filter(cb => {
-      const row = cb.closest('.grid-row');
-      return row && !row.classList.contains('hidden');
+    const selectAllCheckbox = popupElement.querySelector(`#${CONSTANTS.UI.ELEMENT_IDS.SELECT_ALL_CHECKBOX}`);
+    const checkboxes = Array.from(popupElement.querySelectorAll(`.${CONSTANTS.UI.CLASSES.ITEM_CHECKBOX}:not([disabled])`)).filter(cb => {
+      const row = cb.closest(`.${CONSTANTS.UI.CLASSES.GRID_ROW}`);
+      return row && !row.classList.contains(CONSTANTS.UI.CLASSES.HIDDEN);
     });
-    const allCheckboxes = popupElement.querySelectorAll('.item-checkbox');
+    const allCheckboxes = popupElement.querySelectorAll(`.${CONSTANTS.UI.CLASSES.ITEM_CHECKBOX}`);
     
     if (selectAllCheckbox) {
       selectAllCheckbox.checked = checkboxes.length > 0 && Array.from(checkboxes).every(cb => cb.checked);
@@ -427,7 +427,7 @@ export class UIHelper {
     const anyChecked = Array.from(allCheckboxes).some(cb => cb.checked);
     const anyCheckedWithReplacement = Array.from(allCheckboxes).some(cb => {
       if (!cb.checked) return false;
-      const row = cb.closest('.grid-row');
+      const row = cb.closest(`.${CONSTANTS.UI.CLASSES.GRID_ROW}`);
       const replacement = JSON.parse(row?.dataset.replacementMedia || '{}');
       return !!replacement.videoId;
     });
@@ -476,10 +476,10 @@ export class UIHelper {
    * Get selected items from grid.
    */
   static getSelectedMediaItems() {
-    return Array.from(document.querySelectorAll('.item-checkbox'))
+    return Array.from(document.querySelectorAll(`.${CONSTANTS.UI.CLASSES.ITEM_CHECKBOX}`))
       .filter((checkbox) => checkbox.checked)
       .map((checkbox) => {
-        const row = checkbox.closest('.grid-row');
+        const row = checkbox.closest(`.${CONSTANTS.UI.CLASSES.GRID_ROW}`);
         return {
           originalMedia: JSON.parse(row.dataset.originalMedia || '{}'),
           replacementMedia: JSON.parse(row.dataset.replacementMedia || '{}'),

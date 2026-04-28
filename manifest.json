@@ -41,9 +41,7 @@
     {
       "resources": [
         "html/in-site-popup.html",
-        "styles/in-site-popup.css",
-        "scripts/bridge.js",
-        "scripts/bridge-ui.js",
+        "scripts/bridge.js",        "scripts/bridge-ui.js",
         "scripts/track-processor.js",
         "scripts/player-handler.js",
         "scripts/yt-music-api.js",
