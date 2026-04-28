@@ -41,12 +41,39 @@ describe('StorageManager', () => {
     expect(chrome.storage.local.clear).toHaveBeenCalled();
   });
 
-  it('should reject on chrome.runtime.lastError', async () => {
+  it('should reject on chrome.runtime.lastError when getting items', async () => {
     const error = { message: 'Storage error' };
     chrome.runtime.lastError = error;
     chrome.storage.local.get.mockImplementation((keys, callback) => callback({}));
 
     await expect(storageManager.get('key1')).rejects.toEqual(error);
+    chrome.runtime.lastError = null;
+  });
+
+  it('should reject on chrome.runtime.lastError when setting items', async () => {
+    const error = { message: 'Storage error' };
+    chrome.runtime.lastError = error;
+    chrome.storage.local.set.mockImplementation((items, callback) => callback());
+
+    await expect(storageManager.set({ key: 'value' })).rejects.toEqual(error);
+    chrome.runtime.lastError = null;
+  });
+
+  it('should reject on chrome.runtime.lastError when removing items', async () => {
+    const error = { message: 'Storage error' };
+    chrome.runtime.lastError = error;
+    chrome.storage.local.remove.mockImplementation((keys, callback) => callback());
+
+    await expect(storageManager.remove('key1')).rejects.toEqual(error);
+    chrome.runtime.lastError = null;
+  });
+
+  it('should reject on chrome.runtime.lastError when clearing storage', async () => {
+    const error = { message: 'Storage error' };
+    chrome.runtime.lastError = error;
+    chrome.storage.local.clear.mockImplementation((callback) => callback());
+
+    await expect(storageManager.clear()).rejects.toEqual(error);
     chrome.runtime.lastError = null;
   });
 });
