@@ -11,6 +11,43 @@ export class TrackProcessor {
   constructor(bridge) {
     this.bridge = bridge;
     this.ytMusicAPI = bridge.ytMusicAPI;
+    this.targetPlaylistItems = new Map(); // Cache for target playlist video IDs
+  }
+
+  /**
+   * Fetches and caches items for the target playlist
+   * @async
+   */
+  async fetchTargetPlaylistItems() {
+    const targetPlaylistId = this.bridge.targetPlaylist?.id || 
+                             this.bridge.currentSelectedPlaylist?.id ||
+                             this.ytMusicAPI.getCurrentPlaylistIdFromURL();
+    
+    if (!targetPlaylistId) return;
+
+    try {
+      const items = await this.ytMusicAPI.getPlaylistItems(targetPlaylistId);
+      this.targetPlaylistItems.clear();
+      items.forEach(item => {
+        if (item.videoId) {
+          this.targetPlaylistItems.set(item.videoId, true);
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching target playlist items:', error);
+    }
+  }
+
+  /**
+   * Checks if a track's replacement is already in the target playlist
+   * @param {Track} item 
+   */
+  checkForDuplicate(item) {
+    if (item.replacement && item.replacement.videoId) {
+      item.isDuplicate = this.targetPlaylistItems.has(item.replacement.videoId);
+    } else {
+      item.isDuplicate = false;
+    }
   }
 
   /**
@@ -23,6 +60,9 @@ export class TrackProcessor {
     const itemsToProcess = items;
     this.bridge.ui.clearPlaylistItemsContainer();
 
+    // Pre-fetch target playlist items to check for duplicates
+    await this.fetchTargetPlaylistItems();
+
     let i = 1;
     for (const item of itemsToProcess) {
       if (!item.isLocal) {
@@ -30,6 +70,7 @@ export class TrackProcessor {
       }
       item.searchCancelled = false;
       item.replacement = null;
+      item.isDuplicate = false;
       this.bridge.ui.addItem(item, CONSTANTS.API.BASE_URL, i++);
     }
 
@@ -52,8 +93,10 @@ export class TrackProcessor {
         const searchResult = await this.ytMusicAPI.searchMusic(item);
         const bestSearchResult = this.ytMusicAPI.getBestSearchResult(searchResult, item);
         item.replacement = bestSearchResult;
+        this.checkForDuplicate(item);
       } catch (error) {
         item.replacement = null;
+        item.isDuplicate = false;
       }
       
       item.isSearching = false;
@@ -97,6 +140,11 @@ export class TrackProcessor {
       foundCountText = `Found ${searchedItems.length} unavailable tracks and their replacements.`;
     }
 
+    const duplicateCount = searchedItems.filter(item => item.isDuplicate).length;
+    if (duplicateCount > 0) {
+      foundCountText += MESSAGES.RESULTS.DUPLICATE_IN_TARGET(duplicateCount);
+    }
+
     let progressText = this.bridge.session.isCancelled ? `Search cancelled. ${foundCountText}` : `Processing complete. ${foundCountText}`;
     
     progressText += this.#getMatchQualityWarning(searchedItems);
@@ -135,8 +183,7 @@ export class TrackProcessor {
   async findUnavailableTracks() {
     this.bridge.session.isCancelled = false;
     this.bridge.ui.clearPlaylistItemsContainer();
-    this.bridge.ui.resetActionButtonsForPlaylist(this.bridge.currentSelectedPlaylist);
-    this.bridge.ui.setTargetContainerVisibility(false);
+    this.bridge.ui.updateViewMode(CONSTANTS.UI.VIEW_MODES.SEARCH_RESULTS, this.bridge.currentSelectedPlaylist);
     this.bridge.ui.toggleSearchProgress(true, true);
     this.bridge.ui.setProgressText(MESSAGES.SEARCH.FINDING_UNAVAILABLE);
 
@@ -177,8 +224,7 @@ export class TrackProcessor {
   async findVideoTracks() {
      this.bridge.session.isCancelled = false;
      this.bridge.ui.clearPlaylistItemsContainer();
-     this.bridge.ui.resetActionButtonsForPlaylist(this.bridge.currentSelectedPlaylist);
-     this.bridge.ui.setTargetContainerVisibility(false);
+     this.bridge.ui.updateViewMode(CONSTANTS.UI.VIEW_MODES.SEARCH_RESULTS, this.bridge.currentSelectedPlaylist);
      this.bridge.ui.toggleSearchProgress(true, true);
      this.bridge.ui.setProgressText(MESSAGES.SEARCH.FINDING_VIDEO_TRACKS);
 
@@ -205,11 +251,15 @@ export class TrackProcessor {
 
        this.bridge.ui.setProgressText(MESSAGES.RESULTS.FOUND_TRACKS(videoTracks.length));
 
+       // Pre-fetch target playlist items to check for duplicates
+       await this.fetchTargetPlaylistItems();
+
        let i = 1;
        for (const track of videoTracks) {
          track.isSearching = true;
          track.searchCancelled = false;
          track.replacement = null;
+         track.isDuplicate = false;
          this.bridge.ui.addItem(track, CONSTANTS.API.BASE_URL, i++);
        }
 
@@ -226,8 +276,10 @@ export class TrackProcessor {
            const searchResult = await this.ytMusicAPI.searchMusic(track);
            const replacement = this.ytMusicAPI.getBestSearchResult(searchResult, track);
            track.replacement = replacement;
+           this.checkForDuplicate(track);
          } catch (error) {
            track.replacement = null;
+           track.isDuplicate = false;
          }
          
          track.isSearching = false;
@@ -255,15 +307,67 @@ export class TrackProcessor {
    }
 
   /**
+   * Rechecks for duplicates in the current target playlist
+   * @async
+   */
+  async recheckDuplicates() {
+    // If no items are displayed, nothing to do
+    const itemsGrid = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.ITEMS_GRID_CONTAINER);
+    if (!itemsGrid || itemsGrid.children.length === 0) return;
+
+    const rows = Array.from(itemsGrid.querySelectorAll(`.${CONSTANTS.UI.CLASSES.GRID_ROW}`));
+    if (rows.length === 0) return;
+
+    this.bridge.ui.toggleSearchProgress(true, false);
+    this.bridge.ui.setProgressText(MESSAGES.SEARCH.RECHECKING_TARGET);
+
+    await this.fetchTargetPlaylistItems();
+
+    let duplicateCount = 0;
+
+    rows.forEach(row => {
+      const replacementMediaStr = row.dataset.replacementMedia;
+      if (!replacementMediaStr) return;
+
+      const replacementMedia = JSON.parse(replacementMediaStr);
+      if (replacementMedia && replacementMedia.videoId) {
+        const isDuplicate = this.targetPlaylistItems.has(replacementMedia.videoId);
+        if (isDuplicate) duplicateCount++;
+        
+        const originalMedia = JSON.parse(row.dataset.originalMedia || '{}');
+        const serialNumber = parseInt(row.dataset.serialNumber);
+
+        // Create a temporary track-like object to update the row
+        const tempTrack = {
+          ...originalMedia,
+          replacement: replacementMedia,
+          isDuplicate: isDuplicate,
+          isSearching: false,
+          searchCancelled: false
+        };
+
+        this.bridge.ui.updateItemRow(tempTrack, CONSTANTS.API.BASE_URL, serialNumber);
+      }
+    });
+
+    const statusMessage = duplicateCount > 0 
+      ? MESSAGES.RESULTS.TARGET_DUPLICATES_FOUND(duplicateCount)
+      : MESSAGES.RESULTS.NO_TARGET_DUPLICATES_FOUND;
+
+    this.bridge.ui.setProgressText(statusMessage);
+
+    this.bridge.ui.toggleSearchProgress(false);
+    UIHelper.updateCheckAllCheckbox();
+  }
+
+  /**
    * Finds and groups duplicate tracks in the playlist
    * @async
    */
   async findDuplicateTracks() {
     this.bridge.session.isCancelled = false;
     this.bridge.ui.clearPlaylistItemsContainer();
-    this.bridge.ui.resetActionButtonsForPlaylist(this.bridge.currentSelectedPlaylist);
-    this.bridge.ui.setTargetContainerVisibility(false);
-    this.bridge.ui.setDuplicateTrackMode(true);
+    this.bridge.ui.updateViewMode(CONSTANTS.UI.VIEW_MODES.DUPLICATES, this.bridge.currentSelectedPlaylist);
     this.bridge.ui.toggleSearchProgress(true, true);
     this.bridge.ui.setProgressText(MESSAGES.SEARCH.FINDING_DUPLICATES);
 
@@ -320,13 +424,6 @@ export class TrackProcessor {
         });
       });
 
-      this.bridge.ui.updateActionButtonsVisibility({
-        replace: false,
-        add: false,
-        remove: false,
-        keep: true
-      });
-
       UIHelper.updateCheckAllCheckbox();
     } catch (error) {
       console.error('Duplicate check error:', error);
@@ -365,8 +462,7 @@ export class TrackProcessor {
   async listAllTracks() {
     this.bridge.session.isCancelled = false;
     this.bridge.ui.clearPlaylistItemsContainer();
-    this.bridge.ui.setTargetContainerVisibility(false);
-    this.bridge.ui.setListOnlyMode(true);
+    this.bridge.ui.updateViewMode(CONSTANTS.UI.VIEW_MODES.LIST_ALL, this.bridge.currentSelectedPlaylist);
     this.bridge.ui.toggleSearchProgress(true, true);
     this.bridge.ui.setProgressText(MESSAGES.SEARCH.FETCHING_ALL_TRACKS);
 
@@ -398,12 +494,6 @@ export class TrackProcessor {
         track.replacement = null;
         this.bridge.ui.addItem(track, CONSTANTS.API.BASE_URL, i++);
       }
-
-      this.bridge.ui.updateActionButtonsVisibility({
-        replace: false,
-        add: false,
-        remove: true
-      });
 
       UIHelper.updateCheckAllCheckbox();
     } catch (error) {
@@ -567,7 +657,7 @@ export class TrackProcessor {
         if (genericCount > 0) progressMsg += ` (${genericCount} generic names ignored).`;
         progressMsg += ` Click "Start Search" to search for the checked tracks on YouTube Music.`;
         this.bridge.ui.setProgressText(progressMsg);
-        this.bridge.ui.updateImportButtonVisibility(this.bridge.currentSelectedPlaylist);
+        this.bridge.ui.updateViewMode(CONSTANTS.UI.VIEW_MODES.IMPORT, this.bridge.currentSelectedPlaylist);
         UIHelper.updateCheckAllCheckbox();
       } else {
         this.bridge.ui.setProgressText('No media files found in the selected folder.');
@@ -625,7 +715,7 @@ export class TrackProcessor {
         if (genericCount > 0) progressMsg += ` (${genericCount} generic names ignored).`;
         progressMsg += ` Click "Start Search" to search for the checked tracks on YouTube Music.`;
         this.bridge.ui.setProgressText(progressMsg);
-        this.bridge.ui.updateImportButtonVisibility(this.bridge.currentSelectedPlaylist);
+        this.bridge.ui.updateViewMode(CONSTANTS.UI.VIEW_MODES.IMPORT, this.bridge.currentSelectedPlaylist);
         UIHelper.updateCheckAllCheckbox();
       } else {
         this.bridge.ui.setProgressText('No valid tracks found in the file.');

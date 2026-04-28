@@ -41,7 +41,6 @@
     {
       "resources": [
         "html/in-site-popup.html",
-        "styles/in-site-popup.css",
         "scripts/bridge.js",
         "scripts/bridge-ui.js",
         "scripts/track-processor.js",

@@ -42,7 +42,7 @@ describe('TrackProcessor - Duplicate Track Check', () => {
 
     const mockAddItem = vi.fn((track, baseUrl, index, groupInfo) => {
       const el = document.createElement('div');
-      el.className = 'grid-row';
+      el.className = 'yt-music-plus-grid-row';
       const cb = document.createElement('input');
       cb.type = 'checkbox';
       cb.className = CONSTANTS.UI.CLASSES.ITEM_CHECKBOX;
@@ -60,7 +60,7 @@ describe('TrackProcessor - Duplicate Track Check', () => {
       },
       ui: {
         clearPlaylistItemsContainer: vi.fn(),
-        resetActionButtonsForPlaylist: vi.fn(),
+        updateViewMode: vi.fn(),
         setTargetContainerVisibility: vi.fn(),
         setDuplicateTrackMode: vi.fn(),
         toggleSearchProgress: vi.fn(),

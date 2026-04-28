@@ -8,28 +8,21 @@ export class PopupManager {
   constructor(options = {}) {
     this.storageManager = options.storageManager;
     this.popupHtmlUrl = options.popupHtmlUrl;
-    this.popupCssUrl = options.popupCssUrl;
     this.extSettings = options.extSettings || {};
   }
 
   /**
-   * Injects popup HTML and CSS into the page
+   * Injects popup HTML into the page
    * @async
    */
   async injectPopup() {
     try {
-      // Inject popup styles
-      const cssLink = document.createElement('link');
-      cssLink.rel = 'stylesheet';
-      cssLink.href = this.popupCssUrl;
-      document.head.appendChild(cssLink);
-
       // Fetch and inject popup HTML
       const response = await fetch(this.popupHtmlUrl);
       const htmlText = await response.text();
 
       const popupContainer = document.createElement('div');
-      popupContainer.className = `yt-music-extended-popup-container-holder ${CONSTANTS.UI.CLASSES.HIDDEN}`;
+      popupContainer.className = `${CONSTANTS.UI.CLASSES.POPUP_CONTAINER_HOLDER} ${CONSTANTS.UI.CLASSES.HIDDEN} yt-music-plus-root`;
       popupContainer.id = CONSTANTS.UI.ELEMENT_IDS.POPUP_HOLDER;
       popupContainer.innerHTML = htmlText;
 
@@ -74,7 +67,7 @@ export class PopupManager {
     // Individual checkbox change handler with delegation
     popupElement.addEventListener('change', (e) => {
       const isRelevantCheckbox = e.target.classList.contains(CONSTANTS.UI.CLASSES.ITEM_CHECKBOX) ||
-                                  e.target.classList.contains('select-all-checkbox') ||
+                                  e.target.classList.contains(CONSTANTS.UI.CLASSES.SELECT_ALL_CHECKBOX) ||
                                   e.target.id === CONSTANTS.UI.ELEMENT_IDS.SELECT_ALL_CHECKBOX_ID;
       if (isRelevantCheckbox) {
         UIHelper.updateCheckAllCheckbox();

@@ -1,171 +1,171 @@
-<div class="yt-music-extended-popup-container" role="dialog" aria-modal="true" aria-labelledby="popupTitle">
-    <div class="yt-music-extended-popup-content">
-        <div class="popup-header">
-            <p class="extension-branding-title">
-                <a href="https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc" target="_blank" rel="noopener noreferrer" class="chrome-store-link">YouTube Music +</a>
+<div class="yt-music-plus-popup-container" role="dialog" aria-modal="true" aria-labelledby="yt-music-plus-popupTitle">
+    <div class="yt-music-plus-popup-content">
+        <div class="yt-music-plus-popup-header">
+            <p class="yt-music-plus-extension-branding-title">
+                <a href="https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc" target="_blank" rel="noopener noreferrer" class="yt-music-plus-chrome-store-link">YouTube Music +</a>
             </p>
-            <h2 id="popupTitle"></h2>
-            <div class="header-actions-wrapper">
-                <a href="https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc/support" target="_blank" rel="noopener noreferrer" class="report-issue-link">Report a problem</a>
-                <button id="minimizePopupBtn" class="minimize-btn" aria-label="Minimize popup">−</button>
-                <button id="closePopupBtn" class="close-btn" aria-label="Close popup">×</button>
+            <h2 id="yt-music-plus-popupTitle"></h2>
+            <div class="yt-music-plus-header-actions-wrapper">
+                <a href="https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc/support" target="_blank" rel="noopener noreferrer" class="yt-music-plus-report-issue-link">Report a problem</a>
+                <button id="yt-music-plus-minimizePopupBtn" class="yt-music-plus-minimize-btn" aria-label="Minimize popup">−</button>
+                <button id="yt-music-plus-closePopupBtn" class="yt-music-plus-close-btn" aria-label="Close popup">×</button>
             </div>
         </div>
 
         <!-- Playlist Selection Screen -->
-        <div id="playlistSelectionScreen" class="playlist-selection-screen">
+        <div id="yt-music-plus-playlistSelectionScreen" class="yt-music-plus-playlist-selection-screen">
             <!-- Playlist items will be dynamically inserted here -->
-            <div id="playlistsLoadingIndicator" class="search-progress">
-                <div class="spinner"></div>
+            <div id="yt-music-plus-playlistsLoadingIndicator" class="yt-music-plus-search-progress">
+                <div class="yt-music-plus-spinner"></div>
             </div>
-            <div class="playlists-grid-container">
-                <div id="playlistsGrid" class="playlists-grid">
+            <div class="yt-music-plus-playlists-grid-container">
+                <div id="yt-music-plus-playlistsGrid" class="yt-music-plus-playlists-grid">
                 </div>
             </div>
-            <div class="playlist-controls-wrapper hidden">
-                <button id="cancelTargetSelectionBtn" class="btn btn-secondary hidden" aria-label="Cancel target selection" type="button">Cancel</button>
+            <div class="yt-music-plus-playlist-controls-wrapper yt-music-plus-hidden">
+                <button id="yt-music-plus-cancelTargetSelectionBtn" class="yt-music-plus-btn yt-music-plus-btn-secondary yt-music-plus-hidden" aria-label="Cancel target selection" type="button">Cancel</button>
             </div>
         </div>
 
         <!-- Playlist Details Screen -->
-        <div id="playlistDetailsScreen" class="playlist-details-screen hidden">
-            <div class="details-header">
-                <button id="backButton" class="btn btn-primary back-button" aria-label="Back to playlists">← Back</button>
+        <div id="yt-music-plus-playlistDetailsScreen" class="yt-music-plus-playlist-details-screen yt-music-plus-hidden">
+            <div class="yt-music-plus-details-header">
+                <button id="yt-music-plus-backButton" class="yt-music-plus-btn yt-music-plus-btn-primary yt-music-plus-back-button" aria-label="Back to playlists">← Back</button>
             </div>
 
             <!-- Playlist Info Section -->
-            <div class="playlist-info-section">
-                <img id="yt-music-plus-playlistThumbnail" class="playlist-thumbnail" src="" alt="Playlist thumbnail" />
-                <div class="playlist-details">
+            <div class="yt-music-plus-playlist-info-section">
+                <img id="yt-music-plus-playlistThumbnail" class="yt-music-plus-playlist-thumbnail" src="" alt="Playlist thumbnail" />
+                <div class="yt-music-plus-playlist-details">
                     <h3 id="yt-music-plus-playlistName">Playlist Name</h3>
-                    <div class="playlist-meta">
+                    <div class="yt-music-plus-playlist-meta">
                         <span id="yt-music-plus-playlistTrackCount">0 tracks</span>
                     </div>
-                    <p id="yt-music-plus-playlistDescription" class="playlist-description"></p>
+                    <p id="yt-music-plus-playlistDescription" class="yt-music-plus-playlist-description"></p>
                 </div><!-- Playlist Action Buttons -->
-                <div class="playlist-action-buttons">
-                    <div class="action-row">
-                        <button id="listAllTracksBtn" class="btn btn-primary" type="button" title="View all tracks in this playlist to easily select and remove multiple items at once.">List All Tracks</button>
-                        <button id="findUnavailableBtn" class="btn btn-primary" type="button" title="Scan this playlist for greyed-out (unavailable) tracks and find working replacements.">Find Unavailable Tracks</button>
-                        <button id="findVideoTracksBtn" class="btn btn-primary" type="button" title="Scan this playlist for music videos and find their official audio replacements.">Find Video Tracks</button>
+                <div class="yt-music-plus-playlist-action-buttons">
+                    <div class="yt-music-plus-action-row">
+                        <button id="yt-music-plus-listAllTracksBtn" class="yt-music-plus-btn yt-music-plus-btn-primary" type="button" title="View all tracks in this playlist to easily select and remove multiple items at once.">List All Tracks</button>
+                        <button id="yt-music-plus-findUnavailableBtn" class="yt-music-plus-btn yt-music-plus-btn-primary" type="button" title="Scan this playlist for greyed-out (unavailable) tracks and find working replacements.">Find Unavailable Tracks</button>
+                        <button id="yt-music-plus-findVideoTracksBtn" class="yt-music-plus-btn yt-music-plus-btn-primary" type="button" title="Scan this playlist for music videos and find their official audio replacements.">Find Video Tracks</button>
                     </div>
-                    <div class="action-row">
-                        <button id="importFromFolderBtn" class="btn btn-primary" type="button" title="Scan a local folder on your computer for audio files to search and add to this playlist.">Import from Folder</button>
-                        <button id="findDuplicateTracksBtn" class="btn btn-primary" type="button" title="Scan this playlist for duplicate tracks based on title and video ID.">Find Duplicate Tracks</button>
-                        <button id="importFromFileBtn" class="btn btn-primary" type="button" title="Import a text file containing a list of song titles to search and add to this playlist. The file should contain one song title per line.">Import from File</button>
-                        <input type="file" id="importFileInput" class="hidden" accept=".txt" />
+                    <div class="yt-music-plus-action-row">
+                        <button id="yt-music-plus-importFromFolderBtn" class="yt-music-plus-btn yt-music-plus-btn-primary" type="button" title="Scan a local folder on your computer for audio files to search and add to this playlist.">Import from Folder</button>
+                        <button id="yt-music-plus-findDuplicateTracksBtn" class="yt-music-plus-btn yt-music-plus-btn-primary" type="button" title="Scan this playlist for duplicate tracks based on title and video ID.">Find Duplicate Tracks</button>
+                        <button id="yt-music-plus-importFromFileBtn" class="yt-music-plus-btn yt-music-plus-btn-primary" type="button" title="Import a text file containing a list of song titles to search and add to this playlist. The file should contain one song title per line.">Import from File</button>
+                        <input type="file" id="yt-music-plus-importFileInput" class="yt-music-plus-hidden" accept=".txt" />
                     </div>
                 </div>
             </div>
 
             <form id="yt-music-plus-form">
 
-                <div class="warning-message" id="yt-music-plus-warningMessage">
+                <div class="yt-music-plus-warning-message" id="yt-music-plus-warningMessage">
                     <span>⚠️ If a popup is shown asking whether to stay in the current page or reload, please click "Stay on this page" or "Cancel". YouTube Music may show this popup when performing operations that require reloading the page.</span>
-                    <button type="button" id="closeWarningBtn" class="close-warning-btn" aria-label="Close warning">×</button>
+                    <button type="button" id="yt-music-plus-closeWarningBtn" class="yt-music-plus-close-warning-btn" aria-label="Close warning">×</button>
                 </div>
                 
                 <!-- Action Buttons Section -->
-                <div class="action-buttons-container">
-                    <button id="toggleGridBtn" class="btn btn-primary btn-icon" type="button" aria-label="Expand grid" title="Expand grid">⤢</button>
-                    <button id="replaceSelectedBtn" class="btn btn-primary" type="button" disabled
+                <div class="yt-music-plus-action-buttons-container">
+                    <button id="yt-music-plus-toggleGridBtn" class="yt-music-plus-btn yt-music-plus-btn-primary yt-music-plus-btn-icon" type="button" aria-label="Expand grid" title="Expand grid">⤢</button>
+                    <button id="yt-music-plus-replaceSelectedBtn" class="yt-music-plus-btn yt-music-plus-btn-primary" type="button" disabled
                         title="This action will remove the unavailable item and replace it with best match.">Replace
                         Selected</button>
-                    <button id="addSelectedBtn" class="btn btn-primary" type="button" disabled
+                    <button id="yt-music-plus-addSelectedBtn" class="yt-music-plus-btn yt-music-plus-btn-primary" type="button" disabled
                         title="This action will add the replacements to the playlist, but will not remove the unavailable ones.">Add
                         Selected</button>
-                    <button id="removeSelectedBtn" class="btn btn-danger" type="button" disabled
+                    <button id="yt-music-plus-removeSelectedBtn" class="yt-music-plus-btn yt-music-plus-btn-danger" type="button" disabled
                         title="This action will remove the selected items from the playlist. It will not add replacements.">Remove
                         Selected</button>
-                    <button id="keepOnlySelectedBtn" class="btn btn-danger hidden" type="button" disabled
+                    <button id="yt-music-plus-keepOnlySelectedBtn" class="yt-music-plus-btn yt-music-plus-btn-danger yt-music-plus-hidden" type="button" disabled
                         title="Remove all other duplicates in the group and keep only the selected one.">Keep Only Selected</button>
-                    <button id="findLocalReplacementsBtn" class="btn btn-primary hidden" type="button">Start Search</button>
+                    <button id="yt-music-plus-findLocalReplacementsBtn" class="yt-music-plus-btn yt-music-plus-btn-primary yt-music-plus-hidden" type="button">Start Search</button>
 
-                    <div id="targetPlaylistContainer" class="target-playlist-container hidden">
-                        <span class="target-label">Target:</span>
-                        <span id="targetPlaylistName" class="target-name">Playlist Name</span>
-                        <button id="selectTargetPlaylistBtn" class="btn btn-primary btn-small" type="button" title="Select a different playlist to add tracks to.">Change</button>
+                    <div id="yt-music-plus-targetPlaylistContainer" class="yt-music-plus-target-playlist-container yt-music-plus-hidden">
+                        <span class="yt-music-plus-target-label">Target:</span>
+                        <span id="yt-music-plus-targetPlaylistName" class="yt-music-plus-target-name">Playlist Name</span>
+                        <button id="yt-music-plus-selectTargetPlaylistBtn" class="yt-music-plus-btn yt-music-plus-btn-primary yt-music-plus-btn-small" type="button" title="Select a different playlist to add tracks to.">Change</button>
                     </div>
 
                     <!-- Search Container -->
-                    <div class="search-container">
-                        <input type="text" id="ytMusicPlusSearchInput" class="search-input" placeholder="Search title, artist, or album..." aria-label="Search" autocomplete="off" />
-                        <button type="button" id="ytMusicPlusClearSearchBtn" class="clear-search-btn hidden" aria-label="Clear search">✕</button>
+                    <div class="yt-music-plus-search-container">
+                        <input type="text" id="yt-music-plus-searchInput" class="yt-music-plus-search-input" placeholder="Search title, artist, or album..." aria-label="Search" autocomplete="off" />
+                        <button type="button" id="yt-music-plus-clearSearchBtn" class="yt-music-plus-clear-search-btn yt-music-plus-hidden" aria-label="Clear search">✕</button>
                     </div>
                 </div>
 
                 <!-- Scrollable Grid Section -->
-                <div class="items-grid-wrapper">
-                    <div class="items-grid-header">
-                        <div class="grid-col grid-col-serial">#</div>
-                        <div class="grid-col grid-col-original">Original Media</div>
-                        <div id="gridHeaderReplacement" class="grid-col grid-col-replacement">Replacement Media</div>
-                        <div class="grid-col grid-col-checkbox">
-                            <input type="checkbox" id="yt-music-plus-selectAllCheckbox" class="select-all-checkbox" />
+                <div class="yt-music-plus-items-grid-wrapper">
+                    <div class="yt-music-plus-items-grid-header">
+                        <div class="yt-music-plus-grid-col yt-music-plus-grid-col-serial">#</div>
+                        <div class="yt-music-plus-grid-col yt-music-plus-grid-col-original">Original Media</div>
+                        <div id="yt-music-plus-gridHeaderReplacement" class="yt-music-plus-grid-col yt-music-plus-grid-col-replacement">Replacement Media</div>
+                        <div class="yt-music-plus-grid-col yt-music-plus-grid-col-checkbox">
+                            <input type="checkbox" id="yt-music-plus-selectAllCheckbox" class="yt-music-plus-select-all-checkbox" />
                         </div>
                     </div>
 
-                    <div class="items-grid-container" id="yt-music-plus-itemsGridContainer">
+                    <div class="yt-music-plus-items-grid-container" id="yt-music-plus-itemsGridContainer">
 
                     </div>
                 </div>
             </form>
             </div>
 
-            <div id="ytMusicPlusSelectionFooter">
-            <div class="footer-left">
-                <div class="footer-links">
-                    <a href="https://github.com/jinskjoy/yt-music-plus" target="_blank" rel="noopener noreferrer" class="footer-icon-link" title="GitHub Repository">
+            <div id="yt-music-plus-selectionFooter">
+            <div class="yt-music-plus-footer-left">
+                <div class="yt-music-plus-footer-links">
+                    <a href="https://github.com/jinskjoy/yt-music-plus" target="_blank" rel="noopener noreferrer" class="yt-music-plus-footer-icon-link" title="GitHub Repository">
                         <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
                     </a>
-                    <a href="https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc/reviews" target="_blank" rel="noopener noreferrer" class="footer-icon-link" title="Leave a Review">
+                    <a href="https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc/reviews" target="_blank" rel="noopener noreferrer" class="yt-music-plus-footer-icon-link" title="Leave a Review">
                         <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
                     </a>
-                    <a href="#" id="openSettingsLink" class="footer-icon-link" title="Settings">
+                    <a href="#" id="yt-music-plus-openSettingsLink" class="yt-music-plus-footer-icon-link" title="Settings">
                         <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
                     </a>
                 </div>
-                <div class="progress-actions">
-                    <div id="searchProgress" class="search-progress hidden">
-                        <div class="spinner"></div>
+                <div class="yt-music-plus-progress-actions">
+                    <div id="yt-music-plus-searchProgress" class="yt-music-plus-search-progress yt-music-plus-hidden">
+                        <div class="yt-music-plus-spinner"></div>
                     </div>
                 </div>
                 <!-- progress indicator shown when searches are running -->
-                <div id="progressText" class="search-progress-text hidden"></div>
-                <button id="cancelSearchBtn" class="btn btn-primary hidden" type="button">Cancel</button>
+                <div id="yt-music-plus-progressText" class="yt-music-plus-search-progress-text yt-music-plus-hidden"></div>
+                <button id="yt-music-plus-cancelSearchBtn" class="yt-music-plus-btn yt-music-plus-btn-primary yt-music-plus-hidden" type="button">Cancel</button>
             </div>
-            <div id="playlistSelectionActions" class="footer-middle hidden">
-                <button id="refreshPlaylistsBtn" class="btn btn-primary btn-small" type="button" title="Load only your editable playlists">Load Editable Playlists</button>
-                <button id="loadAllPlaylistsBtn" class="btn btn-primary btn-small" type="button" title="Load all playlists from your library, including those you cannot edit">Load All Playlists</button>
+            <div id="yt-music-plus-playlistSelectionActions" class="yt-music-plus-footer-middle yt-music-plus-hidden">
+                <button id="yt-music-plus-refreshPlaylistsBtn" class="yt-music-plus-btn yt-music-plus-btn-primary yt-music-plus-btn-small" type="button" title="Load only your editable playlists">Load Editable Playlists</button>
+                <button id="yt-music-plus-loadAllPlaylistsBtn" class="yt-music-plus-btn yt-music-plus-btn-primary yt-music-plus-btn-small" type="button" title="Load all playlists from your library, including those you cannot edit">Load All Playlists</button>
             </div>
-            <div class="footer-right">
-                <div id="playlistCounts" class="playlist-counts hidden">
-                    <span id="totalPlaylistCount">0 total</span> | <span id="editablePlaylistCount">0 editable</span>
+            <div class="yt-music-plus-footer-right">
+                <div id="yt-music-plus-playlistCounts" class="yt-music-plus-playlist-counts yt-music-plus-hidden">
+                    <span id="yt-music-plus-totalPlaylistCount">0 total</span> | <span id="yt-music-plus-editablePlaylistCount">0 editable</span>
                 </div>
-                <div id="selectionCount" class="selection-count"></div>
+                <div id="yt-music-plus-selectionCount" class="yt-music-plus-selection-count"></div>
             </div>
             </div>
 
             <!-- Target Playlist Selection Modal (Popup in Popup) -->
-            <div id="targetPlaylistModal" class="modal-overlay hidden">
-                <div class="modal-content">
-                    <div class="modal-header">
+            <div id="yt-music-plus-targetPlaylistModal" class="yt-music-plus-modal-overlay yt-music-plus-hidden">
+                <div class="yt-music-plus-modal-content">
+                    <div class="yt-music-plus-modal-header">
                         <h3>Select Target Playlist</h3>
-                        <button id="closeTargetModalBtn" class="close-btn" type="button" aria-label="Close modal">&times;</button>
+                        <button id="yt-music-plus-closeTargetModalBtn" class="yt-music-plus-close-btn" type="button" aria-label="Close modal">&times;</button>
                     </div>
-                    <div class="modal-body">
-                        <div id="targetPlaylistsLoadingIndicator" class="search-progress hidden">
-                            <div class="spinner"></div>
+                    <div class="yt-music-plus-modal-body">
+                        <div id="yt-music-plus-targetPlaylistsLoadingIndicator" class="yt-music-plus-search-progress yt-music-plus-hidden">
+                            <div class="yt-music-plus-spinner"></div>
                         </div>
-                        <div class="playlists-grid-container">
-                            <div id="targetPlaylistsGrid" class="playlists-grid">
+                        <div class="yt-music-plus-playlists-grid-container">
+                            <div id="yt-music-plus-targetPlaylistsGrid" class="yt-music-plus-playlists-grid">
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button id="refreshTargetPlaylistsBtn" class="btn btn-primary btn-small" type="button">Load Editable</button>
-                        <button id="loadAllTargetPlaylistsBtn" class="btn btn-primary btn-small" type="button">Load All</button>
-                        <button id="cancelTargetModalBtn" class="btn btn-secondary btn-small" type="button">Cancel</button>
+                    <div class="yt-music-plus-modal-footer">
+                        <button id="yt-music-plus-refreshTargetPlaylistsBtn" class="yt-music-plus-btn yt-music-plus-btn-primary yt-music-plus-btn-small" type="button">Load Editable</button>
+                        <button id="yt-music-plus-loadAllTargetPlaylistsBtn" class="yt-music-plus-btn yt-music-plus-btn-primary yt-music-plus-btn-small" type="button">Load All</button>
+                        <button id="yt-music-plus-cancelTargetModalBtn" class="yt-music-plus-btn yt-music-plus-btn-secondary yt-music-plus-btn-small" type="button">Cancel</button>
                     </div>
                 </div>
             </div>
@@ -173,66 +173,69 @@
 
     <!-- Templates for Dynamic Elements -->
     <template id="yt-music-plus-playlist-card-template">
-        <div class="playlist-card">
-            <img class="playlist-card-thumbnail" src="" alt="Playlist Thumbnail" />
-            <div class="playlist-card-title"></div>
-            <div class="playlist-card-meta"></div>
+        <div class="yt-music-plus-playlist-card">
+            <img class="yt-music-plus-playlist-card-thumbnail" src="" alt="Playlist Thumbnail" />
+            <div class="yt-music-plus-playlist-card-title"></div>
+            <div class="yt-music-plus-playlist-card-meta"></div>
         </div>
     </template>
 
     <template id="yt-music-plus-media-item-template">
-        <div class="media-item">
-            <img class="media-thumbnail" src="" alt="thumbnail" />
-            <div class="media-info">
-                <div class="media-title"></div>
-                <div class="media-artist"></div>
-                <a class="media-link" target="_blank" rel="noopener noreferrer">
-                    <span class="link-icon">🔗 Link</span>
+        <div class="yt-music-plus-media-item">
+            <img class="yt-music-plus-media-thumbnail" src="" alt="thumbnail" />
+            <div class="yt-music-plus-media-info">
+                <div class="yt-music-plus-media-title"></div>
+                <div class="yt-music-plus-media-artist"></div>
+                <a class="yt-music-plus-media-link" target="_blank" rel="noopener noreferrer">
+                    <span class="yt-music-plus-link-icon">🔗 Link</span>
                 </a>
-                <div class="yt-music-plus-controls hidden">
-                    <button class="yt-music-plus-control-btn btn-seek-back" title="Skip back 10s">«</button>
-                    <button class="yt-music-plus-control-btn btn-play" title="Play">▶</button>
-                    <button class="yt-music-plus-control-btn btn-pause" title="Pause">⏸</button>
-                    <button class="yt-music-plus-control-btn btn-seek-forward" title="Skip forward 10s">»</button>
+                <div class="yt-music-plus-controls yt-music-plus-hidden">
+                    <button class="yt-music-plus-control-btn yt-music-plus-btn-seek-back" title="Skip back 10s">«</button>
+                    <button class="yt-music-plus-control-btn yt-music-plus-btn-play" title="Play">▶</button>
+                    <button class="yt-music-plus-control-btn yt-music-plus-btn-pause" title="Pause">⏸</button>
+                    <button class="yt-music-plus-control-btn yt-music-plus-btn-seek-forward" title="Skip forward 10s">»</button>
                 </div>
             </div>
         </div>
     </template>
 
     <template id="yt-music-plus-grid-row-template">
-        <div class="grid-row">
-            <div class="grid-col grid-col-serial"></div>
-            <div class="grid-col grid-col-original clickable-column"></div>
-            <div class="grid-col grid-col-replacement">
-                <span class="warning-icon hidden">⚠️</span>
+        <div class="yt-music-plus-grid-row">
+            <div class="yt-music-plus-grid-col yt-music-plus-grid-col-serial"></div>
+            <div class="yt-music-plus-grid-col yt-music-plus-grid-col-original yt-music-plus-clickable-column"></div>
+            <div class="yt-music-plus-grid-col yt-music-plus-grid-col-replacement">
+                <div class="yt-music-plus-warning-container yt-music-plus-hidden">
+                    <span class="yt-music-plus-warning-icon yt-music-plus-hidden">⚠️</span>
+                    <span class="yt-music-plus-warning-message-text yt-music-plus-hidden"></span>
+                </div>
             </div>
-            <div class="grid-col grid-col-checkbox">
-                <input type="checkbox" class="item-checkbox" />
+            <div class="yt-music-plus-grid-col yt-music-plus-grid-col-checkbox">
+                <input type="checkbox" class="yt-music-plus-item-checkbox" />
             </div>
         </div>
     </template>
 
     <template id="yt-music-plus-error-message-template">
-        <div class="error-message"></div>
+        <div class="yt-music-plus-error-message"></div>
     </template>
 
     <template id="yt-music-plus-action-buttons-template">
-        <div id="yt-music-plus-action-buttons" class="action-buttons style-scope ytmusic-responsive-header-renderer hidden">
+        <div id="yt-music-plus-action-buttons" class="yt-music-plus-action-buttons style-scope ytmusic-responsive-header-renderer yt-music-plus-hidden">
             <div class="style-scope" role="button" tabindex="0">
-                <div class="content-wrapper style-scope ytmusic-play-button-renderer">
-                    <span class="icon style-scope">YouTube Music +</span>
+                <div class="yt-music-plus-content-wrapper style-scope ytmusic-play-button-renderer">
+                    <span class="yt-music-plus-icon style-scope">YouTube Music +</span>
                 </div>
             </div>
         </div>
     </template>
 
     <template id="yt-music-plus-no-playlists-template">
-        <div class="no-playlists-message">
-            <span>No editable playlists found. Try refreshing the page. Google changes their API frequently, if you think it's broken, please <a class="report-issue-link" href="https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc/support" target="_blank" rel="noopener noreferrer">report an issue on the Chrome Web Store</a>.</span>
+        <div class="yt-music-plus-no-playlists-message">
+            <span>No editable playlists found. Try refreshing the page. Google changes their API frequently, if you think it's broken, please <a class="yt-music-plus-report-issue-link" href="https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc/support" target="_blank" rel="noopener noreferrer">report an issue on the Chrome Web Store</a>.</span>
         </div>
     </template>
 
     <template id="yt-music-plus-ignore-group-btn-template">
-        <button class="btn btn-primary ignore-group-btn btn-icon" type="button" title="Ignore this duplicate group (removes from list, doesn't delete tracks)">✕</button>
+        <button class="yt-music-plus-btn yt-music-plus-btn-primary yt-music-plus-ignore-group-btn yt-music-plus-btn-icon" type="button" title="Ignore this duplicate group (removes from list, doesn't delete tracks)">✕</button>
     </template>
 </div>

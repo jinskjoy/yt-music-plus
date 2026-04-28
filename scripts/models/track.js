@@ -39,6 +39,7 @@ export class Track {
     isSearching = false,
     searchCancelled = false,
     isSkipped = false,
+    isDuplicate = false,
     localFile = null,
     replacement = null
   }) {
@@ -56,6 +57,7 @@ export class Track {
     this.isSearching = isSearching;
     this.searchCancelled = searchCancelled;
     this.isSkipped = isSkipped;
+    this.isDuplicate = isDuplicate;
     this.localFile = localFile;
     
     this.replacement = null;

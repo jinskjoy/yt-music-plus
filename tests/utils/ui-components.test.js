@@ -23,19 +23,19 @@ describe('UI Components', () => {
       };
       const el = MediaItem.render(media);
       
-      expect(el.querySelector('.media-title').textContent).toBe('Song');
-      expect(el.querySelector('.media-artist').textContent).toBe('Artist');
-      expect(el.querySelector('.media-link').href).toBe('https://youtube.com/watch?v=123');
-      expect(el.querySelector('.media-thumbnail').src).toBe('https://img.com/123.jpg');
+      expect(el.querySelector('.yt-music-plus-media-title').textContent).toBe('Song');
+      expect(el.querySelector('.yt-music-plus-media-artist').textContent).toBe('Artist');
+      expect(el.querySelector('.yt-music-plus-media-link').href).toBe('https://youtube.com/watch?v=123');
+      expect(el.querySelector('.yt-music-plus-media-thumbnail').src).toBe('https://img.com/123.jpg');
     });
 
     it('should remove elements for missing fields', () => {
       const media = { name: 'Only Name' };
       const el = MediaItem.render(media);
       
-      expect(el.querySelector('.media-artist')).toBeNull();
-      expect(el.querySelector('.media-link')).toBeNull();
-      expect(el.querySelector('.media-thumbnail')).toBeNull();
+      expect(el.querySelector('.yt-music-plus-media-artist')).toBeNull();
+      expect(el.querySelector('.yt-music-plus-media-link')).toBeNull();
+      expect(el.querySelector('.yt-music-plus-media-thumbnail')).toBeNull();
     });
 
     it('should handle player controls interaction', () => {
@@ -50,22 +50,22 @@ describe('UI Components', () => {
 
       const el = MediaItem.render(media, playerHandler);
       const controls = el.querySelector('.yt-music-plus-controls');
-      expect(controls.classList.contains('hidden')).toBe(false);
+      expect(controls.classList.contains('yt-music-plus-hidden')).toBe(false);
 
-      const playBtn = controls.querySelector('.btn-play');
-      const pauseBtn = controls.querySelector('.btn-pause');
+      const playBtn = controls.querySelector('.yt-music-plus-btn-play');
+      const pauseBtn = controls.querySelector('.yt-music-plus-btn-pause');
 
       // Play click
       playBtn.dispatchEvent(new MouseEvent('click'));
       expect(playerHandler.playTrack).toHaveBeenCalledWith('v123');
-      expect(playBtn.classList.contains('hidden')).toBe(true);
-      expect(pauseBtn.classList.contains('hidden')).toBe(false);
+      expect(playBtn.classList.contains('yt-music-plus-hidden')).toBe(true);
+      expect(pauseBtn.classList.contains('yt-music-plus-hidden')).toBe(false);
 
       // Pause click
       pauseBtn.dispatchEvent(new MouseEvent('click'));
       expect(playerHandler.pauseTrack).toHaveBeenCalled();
-      expect(playBtn.classList.contains('hidden')).toBe(false);
-      expect(pauseBtn.classList.contains('hidden')).toBe(true);
+      expect(playBtn.classList.contains('yt-music-plus-hidden')).toBe(false);
+      expect(pauseBtn.classList.contains('yt-music-plus-hidden')).toBe(true);
     });
   });
 
@@ -77,11 +77,11 @@ describe('UI Components', () => {
       const row = MediaGridRow.render(original, replacement, 5);
       
       expect(row.dataset.serialNumber).toBe('5');
-      expect(row.querySelector('.grid-col-serial').textContent).toBe('5');
-      expect(row.querySelector('.grid-col-original').textContent).toContain('Orig');
-      expect(row.querySelector('.grid-col-replacement').textContent).toContain('Repl');
+      expect(row.querySelector('.yt-music-plus-grid-col-serial').textContent).toBe('5');
+      expect(row.querySelector('.yt-music-plus-grid-col-original').textContent).toContain('Orig');
+      expect(row.querySelector('.yt-music-plus-grid-col-replacement').textContent).toContain('Repl');
       
-      const checkbox = row.querySelector('.item-checkbox');
+      const checkbox = row.querySelector('.yt-music-plus-item-checkbox');
       expect(checkbox.checked).toBe(true);
     });
 
@@ -90,18 +90,34 @@ describe('UI Components', () => {
       const replacement = { name: 'Repl', videoId: 'r1', isGoodMatch: false };
       
       const row = MediaGridRow.render(original, replacement);
-      const replacementCol = row.querySelector('.grid-col-replacement');
+      const replacementCol = row.querySelector('.yt-music-plus-grid-col-replacement');
       
-      expect(replacementCol.classList.contains('potential-mismatch')).toBe(true);
-      expect(replacementCol.querySelector('.warning-icon').classList.contains('hidden')).toBe(false);
+      expect(replacementCol.classList.contains('yt-music-plus-potential-mismatch')).toBe(true);
+      expect(replacementCol.querySelector('.yt-music-plus-warning-icon').classList.contains('yt-music-plus-hidden')).toBe(false);
+    });
+
+    it('should handle duplicate track warning', () => {
+      const original = { name: 'Orig' };
+      const replacement = { name: 'Repl', videoId: 'r1', isDuplicate: true };
+      
+      const row = MediaGridRow.render(original, replacement);
+      const replacementCol = row.querySelector('.yt-music-plus-grid-col-replacement');
+      const warningContainer = replacementCol.querySelector('.yt-music-plus-warning-container');
+      const warningIcon = replacementCol.querySelector('.yt-music-plus-warning-icon');
+      const warningText = replacementCol.querySelector('.yt-music-plus-warning-message-text');
+      
+      expect(warningContainer.classList.contains('yt-music-plus-hidden')).toBe(false);
+      expect(warningIcon.classList.contains('yt-music-plus-hidden')).toBe(false);
+      expect(warningText.classList.contains('yt-music-plus-hidden')).toBe(false);
+      expect(warningText.textContent).toBe('Existing');
     });
 
     it('should toggle checkbox on original column click', () => {
       const original = { name: 'Orig' };
       const replacement = { name: 'Repl', videoId: 'r1' };
       const row = MediaGridRow.render(original, replacement);
-      const checkbox = row.querySelector('.item-checkbox');
-      const originalCol = row.querySelector('.grid-col-original');
+      const checkbox = row.querySelector('.yt-music-plus-item-checkbox');
+      const originalCol = row.querySelector('.yt-music-plus-grid-col-original');
 
       checkbox.checked = false;
       originalCol.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -113,18 +129,18 @@ describe('UI Components', () => {
     it('should disable checkbox if no replacement and not in list-only mode', () => {
       const original = { name: 'Orig' };
       const row = MediaGridRow.render(original, null);
-      const checkbox = row.querySelector('.item-checkbox');
+      const checkbox = row.querySelector('.yt-music-plus-item-checkbox');
       
       expect(checkbox.disabled).toBe(true);
     });
 
     it('should NOT disable checkbox if no replacement but in list-only mode', () => {
-      const gridWrapper = document.querySelector('.items-grid-wrapper');
-      gridWrapper.classList.add('list-only-mode');
+      const gridWrapper = document.querySelector('.yt-music-plus-items-grid-wrapper');
+      gridWrapper.classList.add('yt-music-plus-list-only-mode');
 
       const original = { name: 'Orig' };
       const row = MediaGridRow.render(original, null);
-      const checkbox = row.querySelector('.item-checkbox');
+      const checkbox = row.querySelector('.yt-music-plus-item-checkbox');
       
       expect(checkbox.disabled).toBe(false);
     });
@@ -133,7 +149,7 @@ describe('UI Components', () => {
       const original = { name: 'Orig' };
       const replacement = { name: 'Repl', videoId: 'r1' };
       const row = MediaGridRow.render(original, replacement);
-      const checkbox = row.querySelector('.item-checkbox');
+      const checkbox = row.querySelector('.yt-music-plus-item-checkbox');
       
       expect(checkbox.disabled).toBe(false);
     });
@@ -148,9 +164,9 @@ describe('UI Components', () => {
       };
       
       const card = PlaylistCard.render(playlist);
-      expect(card.querySelector('.playlist-card-title').textContent).toBe('My Playlist');
-      expect(card.querySelector('.playlist-card-thumbnail').src).toContain('thumb.jpg');
-      expect(card.querySelector('.playlist-card-meta').textContent).toBe('10 tracks');
+      expect(card.querySelector('.yt-music-plus-playlist-card-title').textContent).toBe('My Playlist');
+      expect(card.querySelector('.yt-music-plus-playlist-card-thumbnail').src).toContain('thumb.jpg');
+      expect(card.querySelector('.yt-music-plus-playlist-card-meta').textContent).toBe('10 tracks');
     });
   });
 });
