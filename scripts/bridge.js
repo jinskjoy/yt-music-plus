@@ -99,7 +99,7 @@ import { MESSAGES } from '../utils/ui-messages.js';
   class DisplayTrack {
     constructor(item, baseUrl, isReplacement = false) {
       this.name = item.name;
-      this.artist = item.artistsString || (Array.isArray(item.artists) ? item.artists.join(', ') : '');
+      this.artist = item.artist || item.artistsString || (Array.isArray(item.artists) ? item.artists.join(', ') : '');
       this.album = item.album || '';
       this.thumbnail = item.thumbnail;
       this.url = item.videoId ? baseUrl + item.videoId : null;
@@ -107,6 +107,7 @@ import { MESSAGES } from '../utils/ui-messages.js';
       this.localFile = item.localFile;
       this.playlistSetVideoId = item.playlistSetVideoId;
       this.isGoodMatch = item.isGoodMatch;
+      this.isDuplicate = item.isDuplicate;
       this.isPending = false;
       this.isCancelled = false;
       this.isChecked = item.isChecked;
@@ -128,7 +129,9 @@ import { MESSAGES } from '../utils/ui-messages.js';
         return { name: 'Search cancelled', isCancelled: true };
       }
       if (item.replacement) {
-        return new DisplayTrack(item.replacement, baseUrl, true);
+        const replacement = new DisplayTrack(item.replacement, baseUrl, true);
+        replacement.isDuplicate = item.isDuplicate;
+        return replacement;
       }
       return null;
     }
@@ -541,6 +544,7 @@ import { MESSAGES } from '../utils/ui-messages.js';
         this.ui.clearPlaylistItemsContainer();
         this.currentSelectedPlaylist = playlist;
         this.targetPlaylist = playlist; // Default target is the selected playlist
+        this.processor.targetPlaylistItems.clear();
         this.ui.setProgressText('');
         this.localTracks = [];
         UIHelper.toggleGrid(false);
@@ -550,7 +554,7 @@ import { MESSAGES } from '../utils/ui-messages.js';
       this.ui.updatePopupTitle(`Playlist: ${playlist.title}`);
       
       if (isNewPlaylist) {
-        this.ui.resetActionButtonsForPlaylist(playlist);
+        this.ui.updateViewMode(CONSTANTS.UI.VIEW_MODES.DEFAULT, playlist);
         this.ui.updateTargetPlaylistDisplay(this.targetPlaylist);
         
         this.ui.initSearchBox();
@@ -583,8 +587,14 @@ import { MESSAGES } from '../utils/ui-messages.js';
      * Handles target playlist selection
      */
     onTargetPlaylistSelected(playlist) {
+      const oldTarget = this.targetPlaylist;
       this.targetPlaylist = playlist;
       this.finishTargetSelection();
+      
+      // If target changed, recheck for duplicates in search results
+      if (!oldTarget || oldTarget.id !== playlist.id) {
+        this.processor.recheckDuplicates();
+      }
     }
 
     /**

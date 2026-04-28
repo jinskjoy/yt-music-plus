@@ -479,6 +479,15 @@
     overflow: hidden;
 }
 
+.warning-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
 .grid-col-toggle {
     justify-content: center;
 }
@@ -904,23 +913,23 @@
 }
 
 .warning-icon {
-    margin-right: 8px;
     font-size: 16px;
-    cursor: help;
+    cursor: pointer;
     display: inline-block;
 }
-.warning-icon:hover::after {
-    content: "Potential mismatch";
-    position: absolute;
-    background: #333;
-    color: #fff;
-    padding: 4px 8px;
-    border-radius: 4px;
+
+.warning-message-text {
     font-size: 11px;
+    color: #856404;
+    font-style: italic;
+    margin-top: 2px;
     white-space: nowrap;
-    z-index: 100;
-    margin-left: 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
 }
+
+
 
 .warning-message {
     background-color: #fff3cd;

@@ -357,15 +357,50 @@ export class BridgeUI {
   }
 
   /**
-   * Updates the visibility of the target playlist container
-   * @param {boolean} isVisible 
+   * Updates the UI based on the specified view mode
+   * @param {string} mode - One of CONSTANTS.UI.VIEW_MODES
+   * @param {Object} playlist - The currently selected playlist
    */
-  setTargetContainerVisibility(isVisible) {
-    document.getElementById(CONSTANTS.UI.ELEMENT_IDS.TARGET_PLAYLIST_CONTAINER)?.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !isVisible);
+  updateViewMode(mode, playlist) {
+    const isEditable = playlist?.isEditable !== false;
+    const { VIEW_MODES, BUTTON_IDS, ELEMENT_IDS, CLASSES } = CONSTANTS.UI;
+
+    // 1. Reset specific UI states
+    this.setListOnlyMode(mode === VIEW_MODES.LIST_ALL);
+    this.setDuplicateTrackMode(mode === VIEW_MODES.DUPLICATES);
+
+    // 2. Define visibility mapping for buttons and other UI elements
+    const visibilityMap = {
+      [BUTTON_IDS.REPLACE_SELECTED]: mode === VIEW_MODES.SEARCH_RESULTS && isEditable,
+      [BUTTON_IDS.ADD_SELECTED]: (mode === VIEW_MODES.SEARCH_RESULTS || mode === VIEW_MODES.IMPORT) && isEditable,
+      [BUTTON_IDS.REMOVE_SELECTED]: (mode === VIEW_MODES.SEARCH_RESULTS || mode === VIEW_MODES.LIST_ALL) && isEditable,
+      [BUTTON_IDS.KEEP_ONLY_SELECTED]: mode === VIEW_MODES.DUPLICATES && isEditable,
+      [BUTTON_IDS.FIND_LOCAL_REPLACEMENTS]: mode === VIEW_MODES.IMPORT,
+      [ELEMENT_IDS.TARGET_PLAYLIST_CONTAINER]: mode === VIEW_MODES.IMPORT,
+      // Scanning buttons are usually always visible in the details screen
+      [BUTTON_IDS.FIND_UNAVAILABLE]: true,
+      [BUTTON_IDS.FIND_VIDEO_TRACKS]: true,
+      [BUTTON_IDS.FIND_DUPLICATE_TRACKS]: true,
+      [BUTTON_IDS.IMPORT_FROM_FOLDER]: true,
+      [BUTTON_IDS.IMPORT_FROM_FILE]: true,
+      [BUTTON_IDS.LIST_ALL_TRACKS]: true
+    };
+
+    // 3. Apply visibility
+    Object.entries(visibilityMap).forEach(([id, isVisible]) => {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle(CLASSES.HIDDEN, !isVisible);
+    });
+
+    // 4. Special cases
+    if (mode === VIEW_MODES.IMPORT) {
+      this.updateTargetPlaylistDisplay(this.bridge.targetPlaylist);
+    }
   }
 
   /**
    * Updates visibility of bulk action buttons
+   * @deprecated Use updateViewMode instead
    * @param {Object} options - { replace, add, remove, keep } visibility flags
    */
   updateActionButtonsVisibility(options = {}) {
@@ -378,54 +413,6 @@ export class BridgeUI {
     if (removeBtn && options.remove !== undefined) removeBtn.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !options.remove);
     if (addBtn && options.add !== undefined) addBtn.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !options.add);
     if (keepBtn && options.keep !== undefined) keepBtn.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !options.keep);
-  }
-
-  /**
-   * Resets action buttons visibility for a newly selected playlist
-   * @param {Object} playlist - The selected playlist object
-   */
-  resetActionButtonsForPlaylist(playlist) {
-    const isEditable = playlist?.isEditable !== false;
-
-    this.setTargetContainerVisibility(false);
-    this.setDuplicateTrackMode(false);
-    document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_LOCAL_REPLACEMENTS)?.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
-    document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_UNAVAILABLE)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
-    document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_VIDEO_TRACKS)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
-    document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_DUPLICATE_TRACKS)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
-    document.getElementById(CONSTANTS.UI.BUTTON_IDS.IMPORT_FROM_FOLDER)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
-    document.getElementById(CONSTANTS.UI.BUTTON_IDS.IMPORT_FROM_FILE)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
-    document.getElementById(CONSTANTS.UI.BUTTON_IDS.LIST_ALL_TRACKS)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
-    
-    this.updateActionButtonsVisibility({
-      replace: isEditable,
-      remove: isEditable,
-      add: isEditable,
-      keep: false
-    });
-  }
-
-  /**
-   * Updates visibility of buttons for local import feature
-   * @param {Object} playlist - The selected playlist object
-   */
-  updateImportButtonVisibility(playlist) {
-    const isEditable = playlist?.isEditable !== false;
-
-    this.setTargetContainerVisibility(true);
-    this.setDuplicateTrackMode(false);
-    document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_LOCAL_REPLACEMENTS)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
-    document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_UNAVAILABLE)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
-    document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_VIDEO_TRACKS)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
-    document.getElementById(CONSTANTS.UI.BUTTON_IDS.IMPORT_FROM_FOLDER)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
-    document.getElementById(CONSTANTS.UI.BUTTON_IDS.IMPORT_FROM_FILE)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
-    document.getElementById(CONSTANTS.UI.BUTTON_IDS.LIST_ALL_TRACKS)?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
-    
-    this.updateActionButtonsVisibility({
-      replace: false,
-      remove: false,
-      add: isEditable
-    });
   }
 
   /**
@@ -530,16 +517,9 @@ export class BridgeUI {
    * @param {Object} playlist - The target playlist
    */
   updateTargetPlaylistDisplay(playlist) {
-    const container = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.TARGET_PLAYLIST_CONTAINER);
     const nameElement = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.TARGET_PLAYLIST_NAME);
-    
-    if (container && nameElement) {
-      if (playlist) {
-        nameElement.textContent = playlist.title;
-        container.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
-      } else {
-        container.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
-      }
+    if (nameElement && playlist) {
+      nameElement.textContent = playlist.title;
     }
   }
 

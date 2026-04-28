@@ -25,6 +25,13 @@ export const CONSTANTS = {
     DEBOUNCE_DELAY_MS: 300,
     THROTTLE_LIMIT_MS: 300,
     UI_UPDATE_DELAY_MS: 500,
+    VIEW_MODES: {
+      DEFAULT: 'DEFAULT',
+      LIST_ALL: 'LIST_ALL',
+      DUPLICATES: 'DUPLICATES',
+      IMPORT: 'IMPORT',
+      SEARCH_RESULTS: 'SEARCH_RESULTS'
+    },
     ISSUE_URL: 'https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc/support',
     BUTTON_IDS: {
       FIND_UNAVAILABLE: 'findUnavailableBtn',
@@ -133,6 +140,7 @@ export const CONSTANTS = {
       GRID_COL_REPLACEMENT: 'grid-col-replacement',
       POTENTIAL_MISMATCH: 'potential-mismatch',
       WARNING_ICON: 'warning-icon',
+      WARNING_MESSAGE_TEXT: 'warning-message-text',
       ERROR_MESSAGE: 'error-message',
       PLAYLIST_CARD: 'playlist-card',
       PLAYLIST_CARD_THUMBNAIL: 'playlist-card-thumbnail',
@@ -156,6 +164,8 @@ export const CONSTANTS = {
     STRINGS: {
       SELECT_TARGET_TITLE: 'Select Target Playlist',
       PLAYLIST_FALLBACK: 'playlist',
+      ALREADY_IN_PLAYLIST: 'Existing',
+      POTENTIAL_MISMATCH: 'Mismatch',
       IMPORT_ADD_PROGRESS_PREFIX: 'Adding track',
       IMPORT_ADD_COMPLETED: 'All additions completed.',
     }

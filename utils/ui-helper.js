@@ -186,10 +186,11 @@ export class MediaGridRow {
     const hasReplacement = replacementMedia && replacementMedia.videoId;
     const isPending = replacementMedia && replacementMedia.isPending;
     const isGoodMatch = replacementMedia ? replacementMedia.isGoodMatch !== false : true;
+    const isDuplicate = replacementMedia && replacementMedia.isDuplicate;
 
     checkbox.checked = replacementMedia && replacementMedia.isChecked !== undefined 
       ? replacementMedia.isChecked 
-      : (!!hasReplacement && isGoodMatch);
+      : (!!hasReplacement && isGoodMatch && !isDuplicate);
 
     if (!isListOnlyMode && !isDuplicateMode && !hasReplacement && !isPending) {
       checkbox.disabled = true;
@@ -206,8 +207,19 @@ export class MediaGridRow {
     originalCol.appendChild(MediaItem.render(originalMedia, playerHandler));
 
     const replacementCol = row.querySelector(`.${CONSTANTS.UI.CLASSES.GRID_COL_REPLACEMENT}`);
-    if (replacementMedia && replacementMedia.isGoodMatch === false) {
+    if (replacementMedia && (replacementMedia.isGoodMatch === false || replacementMedia.isDuplicate)) {
+      replacementCol.querySelector('.warning-container')?.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
       replacementCol.querySelector(`.${CONSTANTS.UI.CLASSES.WARNING_ICON}`).classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+      
+      if (replacementMedia.isDuplicate) {
+        const warningMsg = replacementCol.querySelector(`.${CONSTANTS.UI.CLASSES.WARNING_MESSAGE_TEXT}`);
+        if (warningMsg) {
+          warningMsg.textContent = CONSTANTS.UI.STRINGS.ALREADY_IN_PLAYLIST;
+          warningMsg.title = 'This track is already in the target playlist';
+          warningMsg.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+        }
+      }
+      
       replacementCol.classList.add(CONSTANTS.UI.CLASSES.POTENTIAL_MISMATCH);
     }
     replacementCol.appendChild(

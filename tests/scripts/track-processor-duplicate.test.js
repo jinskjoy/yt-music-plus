@@ -60,7 +60,7 @@ describe('TrackProcessor - Duplicate Track Check', () => {
       },
       ui: {
         clearPlaylistItemsContainer: vi.fn(),
-        resetActionButtonsForPlaylist: vi.fn(),
+        updateViewMode: vi.fn(),
         setTargetContainerVisibility: vi.fn(),
         setDuplicateTrackMode: vi.fn(),
         toggleSearchProgress: vi.fn(),

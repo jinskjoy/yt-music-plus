@@ -18,6 +18,7 @@ export const MESSAGES = {
     NO_VIDEO_TRACKS_FOUND: 'No video tracks found.',
     NO_DUPLICATES_FOUND: 'No duplicate tracks found.',
     REPLACEMENTS_FOUND: (count) => `Found ${count} potential replacements.`,
+    DUPLICATE_IN_TARGET: (count) => ` ${count} of these are already in the target playlist and have been unchecked.`,
     NO_REPLACEMENTS_FOUND: 'No replacements found.',
     MATCH_QUALITY_WARNING: (quality) => ` Match quality: ${quality}. Please review replacements.`,
   },
