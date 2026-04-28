@@ -19,7 +19,7 @@ describe('BridgeUI Coverage', () => {
     if (!document.getElementById(CONSTANTS.UI.ELEMENT_IDS.IGNORE_GROUP_BTN_TEMPLATE)) {
       const template = document.createElement('template');
       template.id = CONSTANTS.UI.ELEMENT_IDS.IGNORE_GROUP_BTN_TEMPLATE;
-      template.innerHTML = '<button class="ignore-group-btn">Ignore</button>';
+      template.innerHTML = `<button class="${CONSTANTS.UI.CLASSES.IGNORE_GROUP_BTN}">Ignore</button>`;
       document.body.appendChild(template);
     }
 

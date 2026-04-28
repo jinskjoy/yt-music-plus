@@ -202,7 +202,7 @@ describe('TrackProcessor Coverage', () => {
     });
 
     it('should process files from folder', async () => {
-      const mockFile = { name: 'test.mp3', lastIndexOf: () => 4, substring: (a, b) => 'test' };
+      const mockFile = { name: 'test.mp3' };
       const mockEntry = {
         kind: 'file',
         getFile: vi.fn().mockResolvedValue(mockFile)
