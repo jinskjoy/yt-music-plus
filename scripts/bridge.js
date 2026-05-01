@@ -867,6 +867,10 @@ import { MESSAGES } from '../utils/ui-messages.js';
     try {
       if (event.data?.type === 'EXT_SETTINGS') {
         window.bridgeInstance.extSettings = event.data.settings;
+        if (event.data.version) {
+          window.bridgeInstance.version = event.data.version;
+          window.bridgeInstance.ui.setVersion(event.data.version);
+        }
       }
     } catch (error) {
       // Handle message errors silently

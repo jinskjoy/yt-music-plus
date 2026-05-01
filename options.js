@@ -14,6 +14,18 @@ class OptionsPage {
     
     this.initializeEventListeners();
     this.loadSettings();
+    this.displayVersion();
+  }
+
+  /**
+   * Displays the extension version from manifest
+   */
+  displayVersion() {
+    const versionElement = document.getElementById('versionNumber');
+    if (versionElement) {
+      const manifest = chrome.runtime.getManifest();
+      versionElement.textContent = `v${manifest.version}`;
+    }
   }
 
   /**
