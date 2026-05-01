@@ -98,7 +98,7 @@ class ContentScriptController {
         // Send current settings to bridge
         try {
           window.postMessage({ 
-            type: 'EXT_SETTINGS', 
+            type: CONSTANTS.MESSAGE_TYPES.EXT_SETTINGS, 
             settings: this.extSettings,
             version: chrome.runtime.getManifest().version
           }, '*');
@@ -157,7 +157,7 @@ class ContentScriptController {
           }
           // Update bridge context
           window.postMessage({ 
-            type: 'EXT_SETTINGS', 
+            type: CONSTANTS.MESSAGE_TYPES.EXT_SETTINGS, 
             settings: this.extSettings 
           }, '*');
           sendResponse({ success: true });
