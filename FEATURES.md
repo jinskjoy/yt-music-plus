@@ -49,7 +49,8 @@ This document provides a comprehensive list of features for the YouTube Music + 
     - **Load All Playlists**: Fetches all playlists found in the user's library, including liked playlists and albums added as playlists.
 - **Auto-Listing**: By default, selecting a playlist from the grid will automatically fetch and display all its tracks if no other button is active. This behavior can be toggled in Settings.
 - **Default Behavior**: Defaults to editable playlists unless "Always load all playlists" is enabled in settings.
-- **Testable Case**: Click "Load Editable Playlists" and verify only owned/editable playlists appear; click "Load All Playlists" and verify a broader set of playlists is loaded.
+- **Playlist Editability**: All loaded playlists are treated as editable, allowing all operations (Replace, Add, Remove, etc.) on any selected playlist. The "editable" count in the UI serves as an indicator of YouTube Music's reported status, but does not restrict extension functionality.
+- **Testable Case**: Click "Load Editable Playlists" and verify only owned/editable playlists appear; click "Load All Playlists" and verify a broader set of playlists is loaded. Ensure action buttons (e.g., "Remove Selected") are visible and functional even for playlists marked as non-editable.
 
 ### 2.2 Find Unavailable Tracks
 - **Feature**: Scans the selected playlist for "greyed-out" (unavailable) tracks.

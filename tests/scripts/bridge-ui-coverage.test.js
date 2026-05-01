@@ -214,9 +214,9 @@ describe('BridgeUI Coverage', () => {
       expect(document.getElementById(CONSTANTS.UI.ELEMENT_IDS.GRID_HEADER_REPLACEMENT).textContent).toBe('Ignore Group');
     });
 
-    it('should hide editable actions if playlist is not editable', () => {
+    it('should show editable actions even if playlist is not editable', () => {
       bridgeUI.updateViewMode(CONSTANTS.UI.VIEW_MODES.SEARCH_RESULTS, { isEditable: false });
-      expect(document.getElementById(CONSTANTS.UI.BUTTON_IDS.REPLACE_SELECTED).classList.contains(CONSTANTS.UI.CLASSES.HIDDEN)).toBe(true);
+      expect(document.getElementById(CONSTANTS.UI.BUTTON_IDS.REPLACE_SELECTED).classList.contains(CONSTANTS.UI.CLASSES.HIDDEN)).toBe(false);
     });
   });
 
