@@ -362,7 +362,8 @@ export class BridgeUI {
    * @param {Object} playlist - The currently selected playlist
    */
   updateViewMode(mode, playlist) {
-    const isEditable = playlist?.isEditable !== false;
+    // Always allow operations as if editable, even if YouTube Music reports otherwise
+    const isEditable = true;
     const { VIEW_MODES, BUTTON_IDS, ELEMENT_IDS, CLASSES } = CONSTANTS.UI;
 
     // 1. Reset specific UI states

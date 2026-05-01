@@ -42,7 +42,7 @@ The core functionality is cleaning up playlists. Here's how it works:
 2.  **Open the Extension:** Click on the "YouTube Music +" button that appears in the header or in the navigation bar. It may take a couple of seconds for the buttons to show up as the extension initializes.
 
     ![Screenshot of opening the extension](/images/1.%20Extension%20buttons.png)
-3. **Select a playlist:** From the list of playlists that you have access to edit, choose one. If you are already on a playlist page, it will be auto-selected.
+3. **Select a playlist:** Choose one from your library. The extension fetches your editable playlists by default, but you can also load all playlists (including albums and liked playlists) using the buttons in the footer or by changing the extension settings. **All loaded playlists can be managed using the extension's tools, even if they are marked as non-editable.**
     ![Screenshot of selecting a playlist](/images/2.%20Editable%20playlists.png)
 
 
