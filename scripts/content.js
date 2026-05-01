@@ -99,7 +99,8 @@ class ContentScriptController {
         try {
           window.postMessage({ 
             type: 'EXT_SETTINGS', 
-            settings: this.extSettings 
+            settings: this.extSettings,
+            version: chrome.runtime.getManifest().version
           }, '*');
         } catch (error) {
           // Message posting may fail in certain contexts

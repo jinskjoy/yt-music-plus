@@ -10,6 +10,21 @@ export class BridgeUI {
     this.bridge = bridge;
     this.rowMap = new Map();
     this.initTargetModalButtons();
+    this.setVersion();
+  }
+
+  /**
+   * Sets the version number in the UI
+   * @param {string} version - Version string
+   */
+  setVersion(version) {
+    const versionEl = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.VERSION);
+    if (versionEl) {
+      const ver = version || this.bridge.version || CONSTANTS.VERSION;
+      if (ver) {
+        versionEl.textContent = `v${ver}`;
+      }
+    }
   }
 
   /**

@@ -107,6 +107,7 @@ export const CONSTANTS = {
       SELECT_ALL_CHECKBOX_ID: 'yt-music-plus-selectAllCheckbox',
       CLOSE_WARNING_BTN: 'yt-music-plus-closeWarningBtn',
       TOGGLE_GRID_BTN: 'yt-music-plus-toggleGridBtn',
+      VERSION: 'yt-music-plus-version',
     },
     CLASSES: {
       ACTIVE: 'yt-music-plus-active',

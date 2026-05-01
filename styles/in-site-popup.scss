@@ -1,3 +1,8 @@
+/* Global Utilities */
+.yt-music-plus-hidden {
+    display: none !important;
+}
+
 /* Trigger Buttons - Styles for elements injected into the host page */
 #yt-music-plus-nav-btn {
     height: 100%;
@@ -10,16 +15,29 @@
     cursor: pointer;
 }
 
-#yt-music-plus-action-buttons .yt-music-plus-content-wrapper {
-    background: white;
-    height: 64px;
-    width: 64px;
-    border-radius: 50%;
-    color: black;
-    word-wrap: break-word;
-    text-align: center;
-    font-weight: bold;
-    border: 1px solid;
+#yt-music-plus-action-buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
+    cursor: pointer;
+
+    .yt-music-plus-content-wrapper {
+        background: white;
+        height: 64px;
+        width: 64px;
+        border-radius: 50%;
+        color: black;
+        word-wrap: break-word;
+        text-align: center;
+        font-weight: bold;
+        border: 1px solid;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 5px;
+        box-sizing: border-box;
+    }
 }
 
 
@@ -297,11 +315,6 @@
     @keyframes spin {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
-    }
-
-    /* utility hidden class for toggling elements */
-    .yt-music-plus-hidden {
-        display: none !important;
     }
 
     /* Button Styles */
@@ -919,6 +932,12 @@
         flex: 1;
         min-width: 0;
 
+        .yt-music-plus-footer-links {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
         .yt-music-plus-search-progress {
             width: 18px;
             height: 18px;
@@ -930,24 +949,25 @@
         }
     }
 
-    .yt-music-plus-footer-links {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-        margin-right: 8px;
-    }
-
     .yt-music-plus-footer-icon-link {
         color: #666;
         display: flex;
         align-items: center;
         justify-content: center;
         transition: color 0.2s ease, transform 0.2s ease;
+        text-decoration: none;
+        gap: 4px;
 
         &:hover {
             color: #000;
             transform: translateY(-1px);
         }
+    }
+
+    .yt-music-plus-version-tag {
+        font-size: 10px;
+        font-weight: 600;
+        opacity: 0.8;
     }
 
     .yt-music-plus-footer-right {
