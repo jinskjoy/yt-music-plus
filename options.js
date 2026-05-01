@@ -9,8 +9,8 @@ class OptionsPage {
   constructor() {
     this.defaultSettings = CONSTANTS.SETTINGS.DEFAULT;
     this.storageManager = new StorageManager();
-    this.form = document.getElementById('settingsForm');
-    this.statusMessage = document.getElementById('statusMessage');
+    this.form = document.getElementById('yt-music-plus-settingsForm');
+    this.statusMessage = document.getElementById('yt-music-plus-statusMessage');
     
     this.initializeEventListeners();
     this.loadSettings();
@@ -21,7 +21,7 @@ class OptionsPage {
    * Displays the extension version from manifest
    */
   displayVersion() {
-    const versionElement = document.getElementById('versionNumber');
+    const versionElement = document.getElementById('yt-music-plus-versionNumber');
     if (versionElement) {
       const manifest = chrome.runtime.getManifest();
       versionElement.textContent = `v${manifest.version}`;
@@ -147,7 +147,7 @@ class OptionsPage {
    */
   showStatus(message, type = 'success') {
     this.statusMessage.textContent = message;
-    this.statusMessage.className = `status-message show ${type}`;
+    this.statusMessage.className = `yt-music-plus-status-message show ${type}`;
 
     setTimeout(() => {
       this.statusMessage.classList.remove('show');

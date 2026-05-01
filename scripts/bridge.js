@@ -865,7 +865,7 @@ import { MESSAGES } from '../utils/ui-messages.js';
     if (event.source !== window) return;
 
     try {
-      if (event.data?.type === 'EXT_SETTINGS') {
+      if (event.data?.type === CONSTANTS.MESSAGE_TYPES.EXT_SETTINGS) {
         window.bridgeInstance.extSettings = event.data.settings;
         if (event.data.version) {
           window.bridgeInstance.version = event.data.version;

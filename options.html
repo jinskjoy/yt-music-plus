@@ -19,7 +19,7 @@
       padding: 20px;
     }
 
-    .container {
+    .yt-music-plus-container {
       max-width: 600px;
       margin: 0 auto;
       background: #1a1a1a;
@@ -49,18 +49,18 @@
       padding: 32px;
     }
 
-    .section {
+    .yt-music-plus-section {
       margin-bottom: 32px;
     }
 
-    .section h2 {
+    .yt-music-plus-section h2 {
       font-size: 16px;
       color: #ffffff;
       margin-bottom: 16px;
       font-weight: 600;
     }
 
-    .setting-group {
+    .yt-music-plus-setting-group {
       margin-bottom: 20px;
     }
 
@@ -97,24 +97,24 @@
       cursor: text;
     }
 
-    .input-group {
+    .yt-music-plus-input-group {
       display: flex;
       gap: 12px;
       align-items: center;
     }
 
-    .input-group input {
+    .yt-music-plus-input-group input {
       flex: 1;
     }
 
-    .info-text {
+    .yt-music-plus-info-text {
       font-size: 12px;
       color: #999;
       margin-top: 6px;
       margin-left: 30px;
     }
 
-    .button-group {
+    .yt-music-plus-button-group {
       display: flex;
       gap: 12px;
       margin-top: 32px;
@@ -130,65 +130,67 @@
       transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
     }
 
-    .btn-save {
+    .yt-music-plus-btn-save {
       background: #ffffff;
       color: #000000;
       flex: 1;
       font-weight: 600;
     }
 
-    .btn-save:hover {
+    .yt-music-plus-btn-save:hover {
       transform: translateY(-2px);
       box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
       background: #f0f0f0;
     }
 
-    .btn-reset {
+    .yt-music-plus-btn-reset {
       background: #333333;
       color: #ffffff;
       flex: 1;
       border: 1px solid #555555;
     }
 
-    .btn-reset:hover {
+    .yt-music-plus-btn-reset:hover {
       background: #444444;
       transform: translateY(-1px);
     }
 
-    .status-message {
+    .yt-music-plus-status-message {
       padding: 12px;
       border-radius: 6px;
       margin-bottom: 20px;
       display: none;
     }
 
-    .status-message.show {
+    .yt-music-plus-status-message.show {
       display: block;
     }
 
-    .status-message.success {
+    .yt-music-plus-status-message.success {
       background: #1a4d1a;
       color: #90ee90;
       border: 1px solid #2d5a2d;
     }
 
-    .status-message.error {
+    .yt-music-plus-status-message.error {
       background: #4d1a1a;
       color: #ff6b6b;
       border: 1px solid #5a2d2d;
     }
-    .status-message.info {
+
+    .yt-music-plus-status-message.info {
         background: #1a1a4d;
         color: #6b6bff;
         border: 1px solid #2d2d5a;
     }
-    .logo{
+
+    .yt-music-plus-logo{
       display: flex;
       justify-content: center;
       align-items: center
     }
 
-    .options-footer {
+    .yt-music-plus-options-footer {
       padding: 24px;
       background: #111111;
       border-top: 1px solid #333333;
@@ -198,14 +200,14 @@
       gap: 16px;
     }
 
-    .footer-links {
+    .yt-music-plus-footer-links {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
       gap: 20px;
     }
 
-    .footer-link {
+    .yt-music-plus-footer-link {
       color: #999999;
       text-decoration: none;
       font-size: 13px;
@@ -215,90 +217,89 @@
       transition: color 0.2s ease;
     }
 
-    .footer-link:hover {
+    .yt-music-plus-footer-link:hover {
       color: #ffffff;
     }
 
-    .footer-link svg {
+    .yt-music-plus-footer-link svg {
       opacity: 0.8;
     }
 
-    .version-text {
+    .yt-music-plus-version-text {
       font-size: 11px;
       color: #666666;
     }
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="yt-music-plus-container">
     <header>
-      <h1 class="logo"><img src="images/yt-music-plus-logo-circle.png" alt="" height="40px">&nbsp;YouTube Music + Settings</h1>
-      <p class="logo">Customize your extension behavior</p>
+      <h1 class="yt-music-plus-logo"><img src="images/yt-music-plus-logo-circle.png" alt="" height="40px">&nbsp;YouTube Music + Settings</h1>
+      <p class="yt-music-plus-logo">Customize your extension behavior</p>
     </header>
 
     <main>
-
-      <form id="settingsForm">
-        <section class="section">
+      <form id="yt-music-plus-settingsForm">
+        <section class="yt-music-plus-section">
           <h2>Buttons</h2>
 
-          <div class="setting-group">
+          <div class="yt-music-plus-setting-group">
             <label>
               <input type="checkbox" id="showNavButton" name="showNavButton">
               Show YouTube Music + button in navigation bar
             </label>
-            <p class="info-text">Adds a trigger in the main navigation bar</p>
+            <p class="yt-music-plus-info-text">Adds a trigger in the main navigation bar</p>
           </div>
 
-          <div class="setting-group">
+          <div class="yt-music-plus-setting-group">
             <label>
               <input type="checkbox" id="showPlaylistButton" name="showPlaylistButton">
               Show YouTube Music + button in playlist page
             </label>
-            <p class="info-text">Adds action button on playlist pages</p>
+            <p class="yt-music-plus-info-text">Adds action button on playlist pages</p>
           </div>
 
-          <div class="setting-group">
+          <div class="yt-music-plus-setting-group">
             <label>
               <input type="checkbox" id="loadAllPlaylists" name="loadAllPlaylists">
               Always load all playlists
             </label>
-            <p class="info-text">When enabled, the extension will fetch all playlists from your library by default (including non-editable ones). Default is editable playlists only.</p>
+            <p class="yt-music-plus-info-text">When enabled, the extension will fetch all playlists from your library by default (including non-editable ones). Default is editable playlists only.</p>
           </div>
 
-          <div class="setting-group">
+          <div class="yt-music-plus-setting-group">
             <label>
               <input type="checkbox" id="autoListAllTracks" name="autoListAllTracks">
               Automatically list all tracks on playlist selection
             </label>
-            <p class="info-text">When enabled, the extension will automatically display all tracks when you select a playlist if no other actions are active.</p>
+            <p class="yt-music-plus-info-text">When enabled, the extension will automatically display all tracks when you select a playlist if no other actions are active.</p>
           </div>
         </section>
 
-        <div id="statusMessage" class="status-message"></div>
-        <div class="button-group">
-          <button type="submit" class="btn-save">Save Settings</button>
-          <button type="reset" class="btn-reset">Reset to Defaults</button>
+        <div id="yt-music-plus-statusMessage" class="yt-music-plus-status-message"></div>
+        <div class="yt-music-plus-button-group">
+          <button type="submit" class="yt-music-plus-btn-save">Save Settings</button>
+          <button type="reset" class="yt-music-plus-btn-reset">Reset to Defaults</button>
         </div>
       </form>
     </main>
 
-    <footer class="options-footer">
-      <div class="footer-links">
-        <a href="https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc/reviews" target="_blank" rel="noopener noreferrer" class="footer-link">
+    <footer class="yt-music-plus-options-footer">
+      <div class="yt-music-plus-footer-links">
+        <a href="https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc/reviews" target="_blank" rel="noopener noreferrer" class="yt-music-plus-footer-link">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
           Leave Feedback
         </a>
-        <a href="https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc/support" target="_blank" rel="noopener noreferrer" class="footer-link">
+        <a href="https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc/support" target="_blank" rel="noopener noreferrer" class="yt-music-plus-footer-link">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
           Report a Problem
         </a>
-        <a href="https://github.com/jinskjoy/yt-music-plus" target="_blank" rel="noopener noreferrer" class="footer-link">
+        <a href="https://github.com/jinskjoy/yt-music-plus" target="_blank" rel="noopener noreferrer" class="yt-music-plus-footer-link">
           <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
           GitHub
         </a>
       </div>
-      <div id="versionNumber" class="version-text"></div>
+      <div id="yt-music-plus-versionNumber" class="yt-music-plus-version-text"></div>
     </footer>
   </div>
 
