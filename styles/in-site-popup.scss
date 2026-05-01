@@ -1,3 +1,8 @@
+/* Global Utilities */
+.yt-music-plus-hidden {
+    display: none !important;
+}
+
 /* Trigger Buttons - Styles for elements injected into the host page */
 #yt-music-plus-nav-btn {
     height: 100%;
@@ -10,16 +15,28 @@
     cursor: pointer;
 }
 
-#yt-music-plus-action-buttons .yt-music-plus-content-wrapper {
-    background: white;
-    height: 64px;
-    width: 64px;
-    border-radius: 50%;
-    color: black;
-    word-wrap: break-word;
-    text-align: center;
-    font-weight: bold;
-    border: 1px solid;
+#yt-music-plus-action-buttons {
+    display: flex;
+    align-items: center;
+    margin-left: 10px;
+    cursor: pointer;
+
+    .yt-music-plus-content-wrapper {
+        background: white;
+        height: 64px;
+        width: 64px;
+        border-radius: 50%;
+        color: black;
+        word-wrap: break-word;
+        text-align: center;
+        font-weight: bold;
+        border: 1px solid;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 5px;
+        box-sizing: border-box;
+    }
 }
 
 
@@ -297,11 +314,6 @@
     @keyframes spin {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
-    }
-
-    /* utility hidden class for toggling elements */
-    .yt-music-plus-hidden {
-        display: none !important;
     }
 
     /* Button Styles */
