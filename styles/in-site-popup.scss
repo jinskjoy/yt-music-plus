@@ -927,9 +927,8 @@
 
     .yt-music-plus-footer-left {
         display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 4px;
+        align-items: center;
+        gap: 12px;
         flex: 1;
         min-width: 0;
 
@@ -956,11 +955,19 @@
         align-items: center;
         justify-content: center;
         transition: color 0.2s ease, transform 0.2s ease;
+        text-decoration: none;
+        gap: 4px;
 
         &:hover {
             color: #000;
             transform: translateY(-1px);
         }
+    }
+
+    .yt-music-plus-version-tag {
+        font-size: 10px;
+        font-weight: 600;
+        opacity: 0.8;
     }
 
     .yt-music-plus-footer-right {
@@ -975,12 +982,6 @@
         flex-direction: column;
         align-items: flex-end;
         gap: 2px;
-    }
-
-    .yt-music-plus-version {
-        font-size: 10px;
-        color: #999;
-        margin-top: 2px;
     }
 
     .yt-music-plus-footer-middle {
