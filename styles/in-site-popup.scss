@@ -289,6 +289,10 @@
     #yt-music-plus-playlistsLoadingIndicator,
     #yt-music-plus-targetPlaylistsLoadingIndicator {
         margin: auto;
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     /* Progress indicator that appears when searching unavailable/video tracks */
@@ -299,6 +303,8 @@
         width: 24px;
         height: 24px;
         flex-shrink: 0;
+        line-height: 0;
+        font-size: 0;
     }
 
     /* simple spinner animation */
@@ -309,10 +315,13 @@
         border-radius: 50%;
         width: 20px;
         height: 20px;
-        animation: spin 1s linear infinite;
+        animation: yt-music-plus-spin 1s linear infinite;
+        display: block;
+        margin: 0;
+        flex-shrink: 0;
     }
 
-    @keyframes spin {
+    @keyframes yt-music-plus-spin {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
     }
@@ -939,12 +948,18 @@
         }
 
         .yt-music-plus-search-progress {
-            width: 18px;
-            height: 18px;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 0;
+            font-size: 0;
 
             .yt-music-plus-spinner {
                 width: 18px;
                 height: 18px;
+                margin: 0;
             }
         }
     }
