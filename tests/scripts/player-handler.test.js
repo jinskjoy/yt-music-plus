@@ -251,5 +251,58 @@ describe('PlayerHandler', () => {
       handler.seekBy(5);
       expect(handler.localPlayer.currentTime).toBe(15);
     });
+
+    it('should get and set volume for local player', () => {
+      handler.activeSource = CONSTANTS.PLAYER.SOURCE.LOCAL;
+      handler.localPlayer = new Audio();
+      
+      handler.setVolume(50);
+      expect(handler.localPlayer.volume).toBe(0.5);
+      expect(handler.getVolume()).toBe(50);
+    });
+
+    it('should handle muting for local player', () => {
+      handler.activeSource = CONSTANTS.PLAYER.SOURCE.LOCAL;
+      handler.localPlayer = new Audio();
+      
+      handler.mute();
+      expect(handler.localPlayer.muted).toBe(true);
+      expect(handler.isMuted()).toBe(true);
+      
+      handler.unMute();
+      expect(handler.localPlayer.muted).toBe(false);
+      expect(handler.isMuted()).toBe(false);
+    });
+
+    it('should get current time and duration for local player', () => {
+      handler.activeSource = CONSTANTS.PLAYER.SOURCE.LOCAL;
+      handler.localPlayer = new Audio();
+      handler.localPlayer.currentTime = 42;
+      vi.spyOn(handler.localPlayer, 'duration', 'get').mockReturnValue(100);
+      
+      expect(handler.getCurrentTime()).toBe(42);
+      expect(handler.getDuration()).toBe(100);
+    });
+
+    it('should return correct player state for local player', () => {
+      handler.activeSource = CONSTANTS.PLAYER.SOURCE.LOCAL;
+      handler.localPlayer = new Audio();
+      
+      vi.spyOn(handler.localPlayer, 'ended', 'get').mockReturnValue(true);
+      expect(handler.getPlayerState()).toBe(CONSTANTS.PLAYER.STATE.ENDED);
+      
+      vi.spyOn(handler.localPlayer, 'ended', 'get').mockReturnValue(false);
+      vi.spyOn(handler.localPlayer, 'paused', 'get').mockReturnValue(true);
+      expect(handler.getPlayerState()).toBe(CONSTANTS.PLAYER.STATE.PAUSED);
+      
+      vi.spyOn(handler.localPlayer, 'paused', 'get').mockReturnValue(false);
+      expect(handler.getPlayerState()).toBe(CONSTANTS.PLAYER.STATE.PLAYING);
+    });
+
+    it('should return UNSTARTED if local player is not available', () => {
+      handler.activeSource = CONSTANTS.PLAYER.SOURCE.LOCAL;
+      handler.localPlayer = null;
+      expect(handler.getPlayerState()).toBe(CONSTANTS.PLAYER.STATE.UNSTARTED);
+    });
   });
 });

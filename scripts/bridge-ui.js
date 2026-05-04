@@ -9,6 +9,7 @@ export class BridgeUI {
   constructor(bridge) {
     this.bridge = bridge;
     this.rowMap = new Map();
+    this.renderVersion = 0;
     this.initTargetModalButtons();
     this.setVersion();
   }
@@ -66,6 +67,7 @@ export class BridgeUI {
    * Clears the playlist items container
    */
   clearPlaylistItemsContainer() {
+    this.renderVersion++;
     this.rowMap.clear();
     const container = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.ITEMS_GRID_CONTAINER);
     if (container) {
@@ -167,11 +169,18 @@ export class BridgeUI {
    * Adds multiple items to the display in chunks for better performance
    * @async
    */
-  async addItems(items, baseUrl, startIndex = 1, chunkSize = 50) {
+  async addItems(items, baseUrl, startIndex = 1, chunkSize = CONSTANTS.UI.GRID_CHUNK_SIZE) {
     const container = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.ITEMS_GRID_CONTAINER);
     if (!container) return;
 
+    const currentVersion = this.renderVersion;
+
     for (let i = 0; i < items.length; i += chunkSize) {
+      // Check if a new render task has started
+      if (this.renderVersion !== currentVersion) {
+        return;
+      }
+
       const chunk = items.slice(i, i + chunkSize);
       const fragment = document.createDocumentFragment();
       
@@ -190,7 +199,10 @@ export class BridgeUI {
       }
     }
     
-    UIHelper.updateCheckAllCheckbox();
+    // Final check before finishing
+    if (this.renderVersion === currentVersion) {
+      UIHelper.updateCheckAllCheckbox();
+    }
   }
 
   /**
