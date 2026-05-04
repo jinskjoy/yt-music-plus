@@ -3,14 +3,7 @@ import { TrackProcessor } from '../../scripts/track-processor.js';
 import { Track } from '../../scripts/models/track.js';
 import { CONSTANTS } from '../../utils/constants.js';
 import { MESSAGES } from '../../utils/ui-messages.js';
-
-// Mock UIHelper
-vi.mock('../../utils/ui-helper.js', () => ({
-  UIHelper: {
-    updateCheckAllCheckbox: vi.fn(),
-    removeMediaGridRow: vi.fn()
-  }
-}));
+import { UIHelper } from '../../utils/ui-helper.js';
 
 describe('TrackProcessor - Target Duplicate Check', () => {
   let processor;
@@ -18,6 +11,10 @@ describe('TrackProcessor - Target Duplicate Check', () => {
   let mockYTMusicAPI;
 
   beforeEach(() => {
+    vi.clearAllMocks();
+    vi.spyOn(UIHelper, 'updateCheckAllCheckbox').mockImplementation(() => {});
+    vi.spyOn(UIHelper, 'removeMediaGridRow').mockImplementation(() => {});
+
     mockYTMusicAPI = {
       getPlaylistItems: vi.fn(),
       searchMusic: vi.fn(),

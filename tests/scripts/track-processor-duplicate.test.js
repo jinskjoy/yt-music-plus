@@ -3,14 +3,7 @@ import { TrackProcessor } from '../../scripts/track-processor.js';
 import { Track } from '../../scripts/models/track.js';
 import { CONSTANTS } from '../../utils/constants.js';
 import { MESSAGES } from '../../utils/ui-messages.js';
-
-// Mock UIHelper
-vi.mock('../../utils/ui-helper.js', () => ({
-  UIHelper: {
-    updateCheckAllCheckbox: vi.fn(),
-    removeMediaGridRow: vi.fn()
-  }
-}));
+import { UIHelper } from '../../utils/ui-helper.js';
 
 // Mock TextSimilarity for title matching tests
 vi.mock('../../utils/utils.js', () => ({
@@ -29,6 +22,12 @@ describe('TrackProcessor - Duplicate Track Check', () => {
   let mockYTMusicAPI;
 
   beforeEach(() => {
+    vi.clearAllMocks();
+    
+    // Spy on UIHelper methods
+    vi.spyOn(UIHelper, 'updateCheckAllCheckbox').mockImplementation(() => {});
+    vi.spyOn(UIHelper, 'removeMediaGridRow').mockImplementation(() => {});
+
     // Ensure window.confirm is defined for spying
     if (typeof window.confirm === 'undefined') {
       window.confirm = () => true;

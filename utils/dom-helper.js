@@ -148,7 +148,9 @@ export class DOMHelper {
    * @param {Object} attributes - Attribute key-value pairs
    */
   static setAttributes(element, attributes) {
+    if (!element) return;
     Object.entries(attributes).forEach(([key, value]) => {
+
       if (value === null) {
         element.removeAttribute(key);
       } else {
@@ -163,9 +165,9 @@ export class DOMHelper {
    * @param {Object} styles - Style key-value pairs
    */
   static setStyles(element, styles) {
+    if (!element) return;
     Object.assign(element.style, styles);
   }
-
   /**
    * Remove multiple elements
    * @param {string|Element[]} selector - CSS selector or element array
@@ -186,6 +188,7 @@ export class DOMHelper {
    * @param {Element} referenceElement - Reference element
    */
   static insertAfter(newElement, referenceElement) {
+    if (!referenceElement || !referenceElement.parentNode) return;
     referenceElement.parentNode.insertBefore(newElement, referenceElement.nextSibling);
   }
 
@@ -195,15 +198,16 @@ export class DOMHelper {
    * @param {Element} referenceElement - Reference element
    */
   static insertBefore(newElement, referenceElement) {
+    if (!referenceElement || !referenceElement.parentNode) return;
     referenceElement.parentNode.insertBefore(newElement, referenceElement);
   }
-
   /**
    * Check if element is visible
    * @param {Element} element - Target element
    * @returns {boolean} Visibility status
    */
   static isVisible(element) {
+    if (!element) return false;
     return !!(element.offsetWidth || element.offsetHeight || element.getClientRects().length);
   }
 }

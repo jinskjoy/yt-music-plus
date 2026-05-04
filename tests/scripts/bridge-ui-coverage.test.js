@@ -357,5 +357,33 @@ describe('BridgeUI Coverage', () => {
       loadAllBtn.click();
       expect(mockBridge.initPlaylistFetching).toHaveBeenCalledWith(true, false);
     });
+
+    it('should handle refresh button click', async () => {
+      const refreshBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.REFRESH_PLAYLISTS);
+      bridgeUI.initRefreshButton();
+      
+      // Click and wait for async
+      await refreshBtn.click();
+      
+      expect(mockBridge.initPlaylistFetching).toHaveBeenCalledWith(true, true);
+      expect(refreshBtn.disabled).toBe(false);
+    });
+
+    it('should not re-initialize if already initialized', () => {
+      const refreshBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.REFRESH_PLAYLISTS);
+      refreshBtn.dataset.initialized = 'true';
+      const addEventListenerSpy = vi.spyOn(refreshBtn, 'addEventListener');
+      
+      bridgeUI.initRefreshButton();
+      expect(addEventListenerSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('hidePlaylistLoadingIndicator', () => {
+    it('should handle missing indicator gracefully', () => {
+      document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLISTS_LOADING_INDICATOR).remove();
+      // Should not throw
+      bridgeUI.hidePlaylistLoadingIndicator();
+    });
   });
 });
