@@ -180,6 +180,93 @@ describe('YTMusicAPI Extended', () => {
       expect(api.makePostRequest).toHaveBeenCalledTimes(1);
     });
 
+    it('should handle continuation token found before the final record', async () => {
+      const firstResponse = {
+        contents: {
+          twoColumnBrowseResultsRenderer: {
+            secondaryContents: {
+              sectionListRenderer: {
+                contents: [{
+                  musicPlaylistShelfRenderer: {
+                    contents: [
+                      { musicResponsiveListItemRenderer: { id: 't1' } },
+                      { continuationItemRenderer: { continuationEndpoint: { continuationCommand: { token: 'token1' } } } } ,
+                      { musicResponsiveListItemRenderer: { id: 't2' } }
+                    ]
+                  }
+                }]
+              }
+            }
+          }
+        }
+      };
+
+      const continuationResponse = {
+        onResponseReceivedActions: [{
+          appendContinuationItemsAction: {
+            continuationItems: [
+              { musicResponsiveListItemRenderer: { id: 't3' } }
+            ]
+          }
+        }]
+      };
+
+      vi.spyOn(api, 'makePostRequest')
+        .mockResolvedValueOnce(firstResponse)
+        .mockResolvedValueOnce(continuationResponse);
+
+      const spyParse = vi.spyOn(YTMusicParser, 'parsePlaylistItemsFromResponse')
+        .mockReturnValueOnce([{ id: 't1' }, { id: 't2' }])
+        .mockReturnValueOnce([{ id: 't3' }]);
+
+      const items = await api.getPlaylistItems('PL123');
+      expect(items).toEqual([{ id: 't1' }, { id: 't2' }, { id: 't3' }]);
+      expect(api.makePostRequest).toHaveBeenCalledTimes(2);
+    });
+
+    it('should handle continuation records from reloadContinuationItemsAction', async () => {
+      const firstResponse = {
+        contents: {
+          twoColumnBrowseResultsRenderer: {
+            secondaryContents: {
+              sectionListRenderer: {
+                contents: [{
+                  musicPlaylistShelfRenderer: {
+                    contents: [
+                      { musicResponsiveListItemRenderer: { id: 't1' } },
+                      { continuationItemRenderer: { continuationEndpoint: { continuationCommand: { token: 'token1' } } } }
+                    ]
+                  }
+                }]
+              }
+            }
+          }
+        }
+      };
+
+      const continuationResponse = {
+        onResponseReceivedActions: [{
+          reloadContinuationItemsAction: {
+            continuationItems: [
+              { musicResponsiveListItemRenderer: { id: 't2' } }
+            ]
+          }
+        }]
+      };
+
+      vi.spyOn(api, 'makePostRequest')
+        .mockResolvedValueOnce(firstResponse)
+        .mockResolvedValueOnce(continuationResponse);
+
+      vi.spyOn(YTMusicParser, 'parsePlaylistItemsFromResponse')
+        .mockReturnValueOnce([{ id: 't1' }])
+        .mockReturnValueOnce([{ id: 't2' }]);
+
+      const items = await api.getPlaylistItems('PL123');
+      expect(items).toEqual([{ id: 't1' }, { id: 't2' }]);
+      expect(api.makePostRequest).toHaveBeenCalledTimes(2);
+    });
+
     it('should throw error if request fails', async () => {
       vi.spyOn(api, 'makePostRequest').mockRejectedValue(new Error('API Error'));
       await expect(api.getPlaylistItems('PL123')).rejects.toThrow('API Error');

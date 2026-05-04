@@ -65,6 +65,12 @@
         align-items: center;
         justify-content: center;
         z-index: 9999;
+
+        /* Remove dark background when minimized */
+        &.yt-music-plus-minimized {
+            background-color: transparent;
+            pointer-events: none;
+        }
     }
 
     /* Inner Popup Container */

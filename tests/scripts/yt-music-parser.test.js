@@ -118,6 +118,59 @@ describe('YTMusicParser Extended', () => {
       const p = YTMusicParser.extractPlaylistFromMusicTwoRowRenderer(renderer);
       expect(p.id).toBe('PL456');
     });
+
+    it('should prioritize non-Mix IDs over Mix IDs in menu', () => {
+      const renderer = {
+        title: { simpleText: 'Liked Music' },
+        navigationEndpoint: { browseEndpoint: { browseId: 'VLLM' } },
+        menu: { 
+          menuRenderer: { 
+            items: [
+              { menuNavigationItemRenderer: { navigationEndpoint: { watchPlaylistEndpoint: { playlistId: 'LM' } } } },
+              { menuNavigationItemRenderer: { navigationEndpoint: { watchPlaylistEndpoint: { playlistId: 'RDAMPLLM' } } } }
+            ] 
+          } 
+        }
+      };
+      const p = YTMusicParser.extractPlaylistFromMusicTwoRowRenderer(renderer);
+      expect(p.id).toBe('LM');
+    });
+
+    it('should extract owner from navigation endpoint in subtitle runs', () => {
+      const renderer = {
+        title: { simpleText: 'Playlist' },
+        subtitle: { 
+          runs: [
+            { text: 'Playlist' },
+            { text: ' • ' },
+            { text: 'Owner Name', navigationEndpoint: { browseEndpoint: { browseId: 'UCOwner' } } },
+            { text: ' • ' },
+            { text: '100 tracks' }
+          ] 
+        },
+        navigationEndpoint: { browseEndpoint: { browseId: 'VLPL123' } },
+        menu: { menuRenderer: { items: [] } }
+      };
+      const p = YTMusicParser.extractPlaylistFromMusicTwoRowRenderer(renderer);
+      expect(p.owner).toBe('Owner Name');
+    });
+
+    it('should return null for non-playlist items like Artists', () => {
+      const renderer = {
+        title: { simpleText: 'Artist Name' },
+        subtitle: { 
+          runs: [
+            { text: 'Artist' },
+            { text: ' • ' },
+            { text: '1M subscribers' }
+          ] 
+        },
+        navigationEndpoint: { browseEndpoint: { browseId: 'UCArtist' } },
+        menu: { menuRenderer: { items: [] } }
+      };
+      const p = YTMusicParser.extractPlaylistFromMusicTwoRowRenderer(renderer);
+      expect(p).toBeNull();
+    });
   });
 
   describe('getBestSearchResult', () => {
