@@ -12,7 +12,8 @@ describe('UI Visibility Integration', () => {
   beforeEach(() => {
     const htmlPath = path.resolve(__dirname, '../../html/in-site-popup.html');
     const htmlContent = fs.readFileSync(htmlPath, 'utf8');
-    document.body.innerHTML = htmlContent;
+    // The actual popup is wrapped in a holder div with id 'yt-music-plus-popup'
+    document.body.innerHTML = `<div id="yt-music-plus-popup" class="yt-music-plus-root">${htmlContent}</div>`;
 
     mockBridge = {
       ytMusicAPI: {
@@ -116,6 +117,28 @@ describe('UI Visibility Integration', () => {
       expect(selectionScreen.classList.contains('yt-music-plus-hidden')).toBe(true);
       expect(cancelBtn.classList.contains('yt-music-plus-hidden')).toBe(true);
       expect(document.getElementById('yt-music-plus-targetPlaylistName').textContent).toBe('P2');
+    });
+  });
+
+  describe('Minimized State Restoration', () => {
+    it('should restore minimized popup when PopupManager.showPopup is called', () => {
+      const { PopupManager } = require('../../utils/popup-manager.js');
+      const pm = new PopupManager({ popupHtmlUrl: 'test' });
+      
+      const holder = document.getElementById('yt-music-plus-popup');
+      const container = holder.querySelector('.yt-music-plus-popup-container');
+      const minimizeBtn = holder.querySelector('#yt-music-plus-minimizePopupBtn');
+      
+      // Simulate minimized state
+      container.classList.add('yt-music-plus-minimized');
+      holder.classList.add('yt-music-plus-minimized');
+      minimizeBtn.textContent = '⤢';
+      
+      pm.showPopup();
+      
+      expect(container.classList.contains('yt-music-plus-minimized')).toBe(false);
+      expect(holder.classList.contains('yt-music-plus-minimized')).toBe(false);
+      expect(minimizeBtn.textContent).toBe('−');
     });
   });
 });
