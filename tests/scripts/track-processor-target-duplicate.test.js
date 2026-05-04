@@ -38,6 +38,7 @@ describe('TrackProcessor - Target Duplicate Check', () => {
       ui: {
         clearPlaylistItemsContainer: vi.fn(),
         addItem: vi.fn(),
+        addItems: vi.fn().mockResolvedValue(),
         updateItemRow: vi.fn(),
         updateViewMode: vi.fn(),
         setProgressText: vi.fn(),
@@ -103,6 +104,7 @@ describe('TrackProcessor - Target Duplicate Check', () => {
 
       await processor.processPlaylistItems(items);
 
+      expect(mockBridge.ui.addItems).toHaveBeenCalledWith(items, expect.any(String));
       expect(items[0].isDuplicate).toBe(true);
       expect(mockBridge.ui.updateItemRow).toHaveBeenCalledWith(
         expect.objectContaining({ isDuplicate: true }),
