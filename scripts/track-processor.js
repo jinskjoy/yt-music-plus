@@ -63,18 +63,20 @@ export class TrackProcessor {
     // Pre-fetch target playlist items to check for duplicates
     await this.fetchTargetPlaylistItems();
 
-    let i = 1;
-    for (const item of itemsToProcess) {
+    // Prepare items for display
+    itemsToProcess.forEach(item => {
       if (!item.isLocal) {
         item.isSearching = !item.isGeneric;
       }
       item.searchCancelled = false;
       item.replacement = null;
       item.isDuplicate = false;
-      this.bridge.ui.addItem(item, CONSTANTS.API.BASE_URL, i++);
-    }
+    });
 
-    i = 1;
+    // Batch add items to the grid
+    await this.bridge.ui.addItems(itemsToProcess, CONSTANTS.API.BASE_URL);
+
+    let i = 1;
     for (const item of itemsToProcess) {
       this.bridge.session.updateProgress();
       if (item.isGeneric || item.isSkipped) {
@@ -254,16 +256,18 @@ export class TrackProcessor {
        // Pre-fetch target playlist items to check for duplicates
        await this.fetchTargetPlaylistItems();
 
-       let i = 1;
-       for (const track of videoTracks) {
+       // Prepare items for display
+       videoTracks.forEach(track => {
          track.isSearching = true;
          track.searchCancelled = false;
          track.replacement = null;
          track.isDuplicate = false;
-         this.bridge.ui.addItem(track, CONSTANTS.API.BASE_URL, i++);
-       }
+       });
 
-       i = 1;
+       // Batch add items to the grid
+       await this.bridge.ui.addItems(videoTracks, CONSTANTS.API.BASE_URL);
+
+       let i = 1;
        this.bridge.session.start(videoTracks.length);
        for (const track of videoTracks) {
          this.bridge.session.updateProgress();
@@ -487,13 +491,14 @@ export class TrackProcessor {
 
       this.bridge.ui.setProgressText(MESSAGES.RESULTS.FOUND_TRACKS(items.length));
 
-      let i = 1;
-      for (const track of items) {
+      // Batch add items to the grid for better performance
+      items.forEach(track => {
         track.isSearching = false;
         track.searchCancelled = false;
         track.replacement = null;
-        this.bridge.ui.addItem(track, CONSTANTS.API.BASE_URL, i++);
-      }
+      });
+      
+      await this.bridge.ui.addItems(items, CONSTANTS.API.BASE_URL);
 
       UIHelper.updateCheckAllCheckbox();
     } catch (error) {
@@ -648,8 +653,8 @@ export class TrackProcessor {
 
       this.bridge.localTracks = localTracks;
 
-      let i = 1;
-      localTracks.forEach(track => this.bridge.ui.addItem(track, CONSTANTS.API.BASE_URL, i++));
+      // Batch add items to the grid
+      await this.bridge.ui.addItems(localTracks, CONSTANTS.API.BASE_URL);
 
       if (localTracks.length > 0) {
         const genericCount = localTracks.filter(t => t.isGeneric).length;
@@ -706,8 +711,8 @@ export class TrackProcessor {
 
       this.bridge.localTracks = localTracks;
 
-      let i = 1;
-      localTracks.forEach(track => this.bridge.ui.addItem(track, CONSTANTS.API.BASE_URL, i++));
+      // Batch add items to the grid
+      await this.bridge.ui.addItems(localTracks, CONSTANTS.API.BASE_URL);
 
       if (localTracks.length > 0) {
         const genericCount = localTracks.filter(t => t.isGeneric).length;

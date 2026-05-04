@@ -41,6 +41,7 @@ describe('TrackProcessor Coverage', () => {
         toggleSearchProgress: vi.fn(),
         setProgressText: vi.fn(),
         addItem: vi.fn(),
+        addItems: vi.fn().mockResolvedValue(),
         updateItemRow: vi.fn()
       },
       currentSelectedPlaylist: { id: 'PL123' },
@@ -76,7 +77,7 @@ describe('TrackProcessor Coverage', () => {
 
       await processor.findVideoTracks();
 
-      expect(mockBridge.ui.addItem).toHaveBeenCalled();
+      expect(mockBridge.ui.addItems).toHaveBeenCalled();
       expect(mockYTMusicAPI.searchMusic).toHaveBeenCalledWith(videoTrack);
       expect(videoTrack.replacement.videoId).toBe('v1');
       expect(mockBridge.ui.updateItemRow).toHaveBeenCalled();
@@ -215,7 +216,7 @@ describe('TrackProcessor Coverage', () => {
       
       await processor.importFromFolder();
       
-      expect(mockBridge.ui.addItem).toHaveBeenCalled();
+      expect(mockBridge.ui.addItems).toHaveBeenCalled();
       expect(mockBridge.ui.updateViewMode).toHaveBeenCalledWith(CONSTANTS.UI.VIEW_MODES.IMPORT, expect.anything());
     });
 
@@ -241,7 +242,7 @@ describe('TrackProcessor Coverage', () => {
 
       await processor.importFromFile(mockEvent);
 
-      expect(mockBridge.ui.addItem).toHaveBeenCalledTimes(2);
+      expect(mockBridge.ui.addItems).toHaveBeenCalled();
       expect(mockBridge.ui.setProgressText).toHaveBeenCalledWith(expect.stringContaining('Found 2 tracks'));
       expect(mockEvent.target.value).toBe('');
     });

@@ -122,6 +122,12 @@ export class PopupManager {
     const detailsScreen = popupElement.querySelector(`#${CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_DETAILS_SCREEN}`);
     const footer = popupElement.querySelector(`#${CONSTANTS.UI.ELEMENT_IDS.SELECTION_FOOTER}`);
     
+    // Clear the items grid when switching back to selection
+    const gridContainer = popupElement.querySelector(`#${CONSTANTS.UI.ELEMENT_IDS.ITEMS_GRID_CONTAINER}`);
+    if (gridContainer) {
+      gridContainer.replaceChildren();
+    }
+    
     if (selectionScreen && detailsScreen) {
       selectionScreen.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
       detailsScreen.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);

@@ -111,9 +111,10 @@ export class BridgeUI {
   }
 
   /**
-   * Adds an item row to the display
+   * Creates a grid row element for a media item
+   * @private
    */
-  addItem(item, baseUrl, index, groupInfo = null) {
+  #createRowElement(item, baseUrl, index, groupInfo = null) {
     const { originalMedia, replacementMedia } = this.bridge._createMediaObjects(item, baseUrl);
 
     // Use group-scoped index if available
@@ -149,9 +150,47 @@ export class BridgeUI {
       }
     }
 
+    return gridRow;
+  }
+
+  /**
+   * Adds an item row to the display
+   */
+  addItem(item, baseUrl, index, groupInfo = null) {
+    const gridRow = this.#createRowElement(item, baseUrl, index, groupInfo);
     document.getElementById(CONSTANTS.UI.ELEMENT_IDS.ITEMS_GRID_CONTAINER)?.appendChild(gridRow);
     this.rowMap.set(index, gridRow);
     return gridRow;
+  }
+
+  /**
+   * Adds multiple items to the display in chunks for better performance
+   * @async
+   */
+  async addItems(items, baseUrl, startIndex = 1, chunkSize = 50) {
+    const container = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.ITEMS_GRID_CONTAINER);
+    if (!container) return;
+
+    for (let i = 0; i < items.length; i += chunkSize) {
+      const chunk = items.slice(i, i + chunkSize);
+      const fragment = document.createDocumentFragment();
+      
+      chunk.forEach((item, index) => {
+        const globalIndex = startIndex + i + index;
+        const gridRow = this.#createRowElement(item, baseUrl, globalIndex);
+        fragment.appendChild(gridRow);
+        this.rowMap.set(globalIndex, gridRow);
+      });
+      
+      container.appendChild(fragment);
+      
+      // Yield to main thread for responsiveness
+      if (i + chunkSize < items.length) {
+        await new Promise(resolve => setTimeout(resolve, 0));
+      }
+    }
+    
+    UIHelper.updateCheckAllCheckbox();
   }
 
   /**
@@ -278,6 +317,10 @@ export class BridgeUI {
    * @param {boolean} isInitialSelection - Whether the initial selection screen should be visible
    */
   setPlaylistScreenVisibility(isInitialSelection) {
+    if (isInitialSelection) {
+      this.clearPlaylistItemsContainer();
+    }
+
     const detailsScreen = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_DETAILS_SCREEN);
     if (detailsScreen) detailsScreen.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, isInitialSelection);
 
