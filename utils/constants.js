@@ -25,6 +25,7 @@ export const CONSTANTS = {
     DEBOUNCE_DELAY_MS: 300,
     THROTTLE_LIMIT_MS: 300,
     UI_UPDATE_DELAY_MS: 500,
+    GRID_CHUNK_SIZE: 50,
     VIEW_MODES: {
       DEFAULT: 'DEFAULT',
       LIST_ALL: 'LIST_ALL',
@@ -212,7 +213,7 @@ export const CONSTANTS = {
   STORAGE_KEYS: {
     // Add storage keys here if needed
   },
-  VERSION: '1.6.2',
+  VERSION: '1.6.4',
   MESSAGE_TYPES: {
     EXT_SETTINGS: 'EXT_SETTINGS',
   }

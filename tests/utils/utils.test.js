@@ -21,8 +21,6 @@ describe('Utils', () => {
 
     it('should handle errors gracefully', () => {
       // Force an error by passing something that causes calculateJaroWinklerDistance to fail
-      // but calculateJaroWinklerDistance is pretty robust. 
-      // Let's mock it instead.
       const spy = vi.spyOn(TextSimilarity, 'calculateJaroWinklerDistance').mockImplementation(() => {
         throw new Error('Test error');
       });
@@ -61,6 +59,10 @@ describe('Utils', () => {
       const result = Formatters.formatDate(ts, { format: 'time' });
       // Time formatting can vary by environment, but it should contain numbers
       expect(result).toMatch(/\d+/);
+    });
+
+    it('should handle undefined opts', () => {
+       expect(Formatters.formatDate(ts, undefined)).toContain('2024');
     });
   });
 
@@ -144,6 +146,15 @@ describe('Utils', () => {
       expect(result).toBe(false);
       expect(consoleSpy).toHaveBeenCalled();
       consoleSpy.mockRestore();
+    });
+    
+    it('copyToClipboard should return false if navigator.clipboard is missing', async () => {
+       Object.defineProperty(navigator, 'clipboard', {
+         value: undefined,
+         configurable: true
+       });
+       const result = await BrowserUtils.copyToClipboard('test');
+       expect(result).toBe(false);
     });
 
     it('getRandomColor should return a hex color string', () => {

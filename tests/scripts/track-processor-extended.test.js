@@ -19,6 +19,7 @@ describe('TrackProcessor Extended', () => {
       ui: {
         clearPlaylistItemsContainer: vi.fn(),
         addItem: vi.fn(),
+        addItems: vi.fn().mockResolvedValue(),
         updateItemRow: vi.fn(),
         setProgressText: vi.fn(),
         toggleSearchProgress: vi.fn(),
@@ -85,7 +86,7 @@ describe('TrackProcessor Extended', () => {
 
       await processor.processPlaylistItems(items);
 
-      expect(mockBridge.ui.addItem).toHaveBeenCalledTimes(2);
+      expect(mockBridge.ui.addItems).toHaveBeenCalledWith(items, expect.any(String));
       expect(mockBridge.ui.updateItemRow).toHaveBeenCalledTimes(1); // T2 is generic, skipped
       expect(items[0].replacement.videoId).toBe('v_repl');
     });
@@ -95,6 +96,7 @@ describe('TrackProcessor Extended', () => {
        mockBridge.session.isCancelled = true;
        
        await processor.processPlaylistItems(items);
+       expect(mockBridge.ui.addItems).toHaveBeenCalled();
        expect(mockBridge.ui.updateItemRow).toHaveBeenCalled();
        expect(items[0].searchCancelled).toBe(true);
     });
@@ -129,7 +131,7 @@ describe('TrackProcessor Extended', () => {
       
       await processor.listAllTracks();
       
-      expect(mockBridge.ui.addItem).toHaveBeenCalledTimes(2);
+      expect(mockBridge.ui.addItems).toHaveBeenCalledWith(items, expect.any(String));
     });
   });
 });

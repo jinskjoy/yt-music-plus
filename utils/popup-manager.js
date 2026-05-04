@@ -122,6 +122,12 @@ export class PopupManager {
     const detailsScreen = popupElement.querySelector(`#${CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_DETAILS_SCREEN}`);
     const footer = popupElement.querySelector(`#${CONSTANTS.UI.ELEMENT_IDS.SELECTION_FOOTER}`);
     
+    // Clear the items grid when switching back to selection
+    const gridContainer = popupElement.querySelector(`#${CONSTANTS.UI.ELEMENT_IDS.ITEMS_GRID_CONTAINER}`);
+    if (gridContainer) {
+      gridContainer.replaceChildren();
+    }
+    
     if (selectionScreen && detailsScreen) {
       selectionScreen.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
       detailsScreen.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
@@ -169,9 +175,21 @@ export class PopupManager {
    * Shows the popup element on the page
    */
   showPopup() {
-    const popupContainer = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.POPUP_HOLDER);
-    if (popupContainer) {
-      popupContainer.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+    const popupHolder = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.POPUP_HOLDER);
+    if (popupHolder) {
+      popupHolder.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+      
+      const container = popupHolder.querySelector(`.${CONSTANTS.UI.CLASSES.POPUP_CONTAINER}`);
+      if (container && container.classList.contains(CONSTANTS.UI.CLASSES.MINIMIZED)) {
+        container.classList.remove(CONSTANTS.UI.CLASSES.MINIMIZED);
+        popupHolder.classList.remove(CONSTANTS.UI.CLASSES.MINIMIZED);
+        
+        const minimizeBtn = popupHolder.querySelector(`#${CONSTANTS.UI.BUTTON_IDS.MINIMIZE_POPUP}`);
+        if (minimizeBtn) {
+          minimizeBtn.textContent = '−';
+          minimizeBtn.setAttribute('aria-label', 'Minimize popup');
+        }
+      }
     }
   }
 
@@ -179,9 +197,22 @@ export class PopupManager {
    * Hides the popup element on the page
    */
   hidePopup() {
-    const popupContainer = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.POPUP_HOLDER);
-    if (popupContainer) {
-      popupContainer.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
+    const popupHolder = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.POPUP_HOLDER);
+    if (popupHolder) {
+      popupHolder.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
+      
+      // Reset minimized state when closing
+      const container = popupHolder.querySelector(`.${CONSTANTS.UI.CLASSES.POPUP_CONTAINER}`);
+      if (container && container.classList.contains(CONSTANTS.UI.CLASSES.MINIMIZED)) {
+        container.classList.remove(CONSTANTS.UI.CLASSES.MINIMIZED);
+        popupHolder.classList.remove(CONSTANTS.UI.CLASSES.MINIMIZED);
+        
+        const minimizeBtn = popupHolder.querySelector(`#${CONSTANTS.UI.BUTTON_IDS.MINIMIZE_POPUP}`);
+        if (minimizeBtn) {
+          minimizeBtn.textContent = '−';
+          minimizeBtn.setAttribute('aria-label', 'Minimize popup');
+        }
+      }
     }
   }
 }

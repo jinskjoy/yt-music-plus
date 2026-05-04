@@ -83,17 +83,31 @@ export class YTMusicParser {
    * @returns {Playlist|null}
    */
   static extractPlaylistFromMusicTwoRowRenderer(renderer) {
+    const subtitleRuns = renderer?.subtitle?.runs || [];
+    const subtitle = subtitleRuns.map((run) => run?.text || '').join('').trim();
+    
+    // Determine if this is actually a playlist or album (which we treat as playlist)
+    const isPlaylist = subtitleRuns.some(run => {
+      const text = run?.text || '';
+      return text.includes('Playlist') || text.includes('Auto playlist') || text.includes('Album');
+    });
+
     const menuItems = renderer?.menu?.menuRenderer?.items || [];
     const playlistInfo = this.getPlaylistInfoFromMenuItems(menuItems);
     
-    let id = playlistInfo.id;
-    if (!id) {
-      // Fallback: try to get ID from renderer's own navigation endpoint
-      const endpoint = renderer?.navigationEndpoint;
-      id = endpoint?.browseEndpoint?.browseId || endpoint?.watchPlaylistEndpoint?.playlistId;
+    // Prioritize renderer's own navigation endpoint for ID
+    const endpoint = renderer?.navigationEndpoint;
+    let id = endpoint?.browseEndpoint?.browseId || endpoint?.watchPlaylistEndpoint?.playlistId;
+    
+    // If we have a browseId that is likely an Artist (starts with UC), use menu info instead
+    if (!id || id.startsWith('UC')) {
+      id = playlistInfo.id;
     }
     
-    if (!id) return null;
+    // If still no ID, or if it's definitely not a playlist/album, skip
+    if (!id || (!isPlaylist && !id.startsWith('VL') && !id.startsWith('PL') && id !== 'VLLM')) {
+      return null;
+    }
     
     // Cleanup ID (strip VL prefix if present)
     if (id.startsWith('VL')) id = id.substring(2);
@@ -101,9 +115,20 @@ export class YTMusicParser {
     const title = this.parseTextField(renderer?.title);
     if (!title) return null;
 
-    const subtitleRuns = renderer?.subtitle?.runs || [];
-    const subtitle = subtitleRuns.map((run) => run?.text || '').join('').trim();
-    const owner = subtitleRuns?.[0]?.text || '';
+    // Find the owner in subtitle runs (usually the run with a browseEndpoint)
+    let owner = '';
+    const ownerRun = subtitleRuns.find(run => run?.navigationEndpoint?.browseEndpoint);
+    if (ownerRun) {
+      owner = ownerRun.text || '';
+    } else if (subtitleRuns.length > 0) {
+      // Fallback: if it's "Playlist • Name • Count", owner is index 2
+      if (subtitleRuns.length >= 3 && (subtitleRuns[0].text === 'Playlist' || subtitleRuns[0].text === 'Album')) {
+        owner = subtitleRuns[2].text || '';
+      } else {
+        owner = subtitleRuns[0].text || '';
+      }
+    }
+
     const thumbnail = renderer?.thumbnailRenderer?.musicThumbnailRenderer?.thumbnail?.thumbnails?.slice(-1)?.[0]?.url || '';
 
     // Final editability check using menu text runs as well
@@ -149,27 +174,37 @@ export class YTMusicParser {
     let id = null;
     let isEditable = false;
 
+    if (!menuItems || !Array.isArray(menuItems)) {
+      return { id, isEditable };
+    }
+
     for (const menuItem of menuItems) {
       const renderer = menuItem?.menuNavigationItemRenderer || menuItem?.menuServiceItemRenderer || menuItem?.toggleMenuServiceItemRenderer;
       if (!renderer) continue;
 
       const endpoint = renderer?.navigationEndpoint || renderer?.serviceEndpoint || renderer?.defaultServiceEndpoint;
-      if (!endpoint) continue;
-
+      
+      // Check for editability
+      if (endpoint?.playlistEditorEndpoint || endpoint?.playlistEditEndpoint) {
+        isEditable = true;
+      }
+      
+      // Look for playlist ID in various endpoints
       const playlistId = endpoint?.playlistEditorEndpoint?.playlistId
         || endpoint?.playlistEditEndpoint?.playlistId
-        || endpoint?.browseEndpoint?.browseId
         || endpoint?.watchPlaylistEndpoint?.playlistId
         || endpoint?.addToPlaylistEndpoint?.playlistId
         || endpoint?.queueAddEndpoint?.queueTarget?.playlistId
-        || endpoint?.likeEndpoint?.target?.playlistId;
+        || endpoint?.likeEndpoint?.target?.playlistId
+        || endpoint?.browseEndpoint?.browseId
+        // Also check nested delete endpoint
+        || endpoint?.confirmDialogEndpoint?.content?.confirmDialogRenderer?.confirmButton?.buttonRenderer?.serviceEndpoint?.deletePlaylistEndpoint?.playlistId;
 
       if (playlistId) {
-        id = playlistId;
-      }
-
-      if (endpoint?.playlistEditorEndpoint || endpoint?.playlistEditEndpoint) {
-        isEditable = true;
+        // Prioritize non-Mix IDs. If we have a regular ID, don't overwrite it with a Mix ID (starts with RD)
+        if (!id || (id.startsWith('RD') && !playlistId.startsWith('RD'))) {
+          id = playlistId;
+        }
       }
     }
 

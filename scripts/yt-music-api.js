@@ -171,40 +171,113 @@ export class YTMusicAPI {
    */
   async getPlaylistItems(playlistId) {
     try {
+      const browseId = playlistId.startsWith('VL') ? playlistId : `VL${playlistId}`;
       const response = await this.makePostRequest('/youtubei/v1/browse?prettyPrint=false', {
         context: this.getInnertubeContext(),
-        browseId: `VL${playlistId}`
+        browseId
       });
 
       let allItems = [];
+      const records = this.extractPlaylistShelfRecords(response);
+      const items = YTMusicParser.parsePlaylistItemsFromResponse(records);
+      allItems = allItems.concat(items);
 
-      if (response) {
-        const records = response?.contents?.twoColumnBrowseResultsRenderer?.secondaryContents
-          ?.sectionListRenderer?.contents?.[0]?.musicPlaylistShelfRenderer?.contents;
+      let continuationToken = this.findContinuationToken(records, response);
+      while (continuationToken) {
+        const continuationResponse = await this.getContinuationItems(continuationToken);
+        const continuationRecords = this.extractContinuationRecords(continuationResponse);
 
-        let continuationToken = records?.[records.length - 1]?.continuationItemRenderer
-          ?.continuationEndpoint?.continuationCommand?.token;
+        if (!continuationRecords || continuationRecords.length === 0) break;
 
-        const items = YTMusicParser.parsePlaylistItemsFromResponse(records);
-        allItems = allItems.concat(items);
-
-        while (continuationToken) {
-          const continuationResponse = await this.getContinuationItems(continuationToken);
-          const continuationRecords = continuationResponse?.onResponseReceivedActions?.[0]
-            ?.appendContinuationItemsAction?.continuationItems;
-
-          continuationToken = continuationRecords?.[continuationRecords.length - 1]
-            ?.continuationItemRenderer?.continuationEndpoint?.continuationCommand?.token;
-
-          const continuationItems = YTMusicParser.parsePlaylistItemsFromResponse(continuationRecords);
-          allItems = allItems.concat(continuationItems);
-        }
+        const continuationItems = YTMusicParser.parsePlaylistItemsFromResponse(continuationRecords);
+        allItems = allItems.concat(continuationItems);
+        continuationToken = this.findContinuationToken(continuationRecords, continuationResponse);
       }
 
       return allItems;
     } catch (error) {
       throw error;
     }
+  }
+
+  extractPlaylistShelfRecords(response) {
+    if (!response) return [];
+
+    const contents = response?.contents?.twoColumnBrowseResultsRenderer?.secondaryContents
+      ?.sectionListRenderer?.contents;
+
+    if (Array.isArray(contents)) {
+      const shelf = contents.find(section => section?.musicPlaylistShelfRenderer)
+        ?.musicPlaylistShelfRenderer?.contents;
+      if (Array.isArray(shelf)) return shelf;
+    }
+
+    const continuationShelf = response?.continuationContents?.musicPlaylistShelfContinuation?.contents;
+    if (Array.isArray(continuationShelf)) return continuationShelf;
+
+    return [];
+  }
+
+  extractContinuationRecords(response) {
+    if (!response) return [];
+
+    const actions = response?.onResponseReceivedActions || response?.onResponseReceivedEndpoints || [];
+    if (Array.isArray(actions)) {
+      for (const action of actions) {
+        const items = action?.appendContinuationItemsAction?.continuationItems
+          || action?.reloadContinuationItemsAction?.continuationItems
+          || action?.continuationItems;
+        if (Array.isArray(items)) return items;
+      }
+    }
+
+    const continuationShelf = response?.continuationContents?.musicPlaylistShelfContinuation?.contents;
+    if (Array.isArray(continuationShelf)) return continuationShelf;
+
+    return [];
+  }
+
+  findContinuationToken(items, response = null) {
+    // 1. Check items array for continuationItemRenderer (common in continuation responses)
+    if (Array.isArray(items)) {
+      for (const item of items) {
+        const renderer = item?.continuationItemRenderer;
+        if (!renderer) continue;
+
+        // Path A: Direct continuationEndpoint
+        let token = renderer?.continuationEndpoint?.continuationCommand?.token
+          || renderer?.continuationEndpoint?.token;
+        
+        // Path B: Nested in commandExecutorCommand (discovered in some responses)
+        if (!token && renderer?.continuationEndpoint?.commandExecutorCommand?.commands) {
+          const commands = renderer.continuationEndpoint.commandExecutorCommand.commands;
+          const contCommand = commands.find(c => c?.continuationCommand?.token);
+          token = contCommand?.continuationCommand?.token;
+        }
+
+        if (token) return token;
+      }
+    }
+
+    // 2. Check response for continuations property (common in initial browse response)
+    if (response) {
+      // Path C: Browse response structure
+      const browseContinuations = response?.contents?.twoColumnBrowseResultsRenderer?.secondaryContents
+        ?.sectionListRenderer?.contents?.find(c => c?.musicPlaylistShelfRenderer)
+        ?.musicPlaylistShelfRenderer?.continuations;
+      
+      if (browseContinuations?.[0]?.nextContinuationData?.continuation) {
+        return browseContinuations[0].nextContinuationData.continuation;
+      }
+
+      // Path D: Continuation response structure
+      const continuationContinuations = response?.continuationContents?.musicPlaylistShelfContinuation?.continuations;
+      if (continuationContinuations?.[0]?.nextContinuationData?.continuation) {
+        return continuationContinuations[0].nextContinuationData.continuation;
+      }
+    }
+
+    return null;
   }
 
   /**

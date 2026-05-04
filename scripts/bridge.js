@@ -283,6 +283,11 @@ import { MESSAGES } from '../utils/ui-messages.js';
     async showPopup() {
       if (this.cachePopupElements()) {
         this.popupElements.holder.classList.remove(CONSTANTS.UI.CLASSES.HIDDEN);
+        
+        // Restore if minimized
+        if (this.popupElements.container?.classList.contains(CONSTANTS.UI.CLASSES.MINIMIZED)) {
+          this.toggleMinimize();
+        }
       }
 
       this.ui.setPlaylistScreenVisibility(true);
