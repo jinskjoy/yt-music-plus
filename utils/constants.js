@@ -214,7 +214,7 @@ export const CONSTANTS = {
   STORAGE_KEYS: {
     // Add storage keys here if needed
   },
-  VERSION: '1.6.4',
+  VERSION: '1.6.5',
   MESSAGE_TYPES: {
     EXT_SETTINGS: 'EXT_SETTINGS',
   }

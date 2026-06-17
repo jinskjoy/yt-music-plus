@@ -180,6 +180,9 @@ import { MESSAGES } from '../utils/ui-messages.js';
     // Constants are now in CONSTANTS.API
 
     constructor() {
+      this.DisplayTrack = DisplayTrack;
+      this.SearchSession = SearchSession;
+      this.AuthInterceptor = AuthInterceptor;
       this.ytMusicAPI = new YTMusicAPI();
       this.ui = new BridgeUI(this);
       this.processor = new TrackProcessor(this);
@@ -343,19 +346,21 @@ import { MESSAGES } from '../utils/ui-messages.js';
      */
     addEventListeners() {
       // Navigation listener for playlist page detection
-      navigation?.addEventListener('navigate', (event) => {
-        if (event.navigationType !== 'push') return;
+      if (typeof navigation !== 'undefined') {
+        navigation.addEventListener('navigate', (event) => {
+          if (event.navigationType !== 'push') return;
 
-        const isPlaylistPage = event.destination?.url?.startsWith(CONSTANTS.API.PLAYLIST_PAGE_PATH);
-        if (isPlaylistPage) {
-          setTimeout(() => {
-            if (!this.extSettings || this.extSettings.showPlaylistButton !== false) {
-              this.ui.injectActionButtons(this.extSettings);
-              this.ui.showTriggerButtons(this.extSettings);
-            }
-          }, CONSTANTS.API.PAGE_LOAD_TIMEOUT_MS);
-        }
-      });
+          const isPlaylistPage = event.destination?.url?.startsWith(CONSTANTS.API.PLAYLIST_PAGE_PATH);
+          if (isPlaylistPage) {
+            setTimeout(() => {
+              if (!this.extSettings || this.extSettings.showPlaylistButton !== false) {
+                this.ui.injectActionButtons(this.extSettings);
+                this.ui.showTriggerButtons(this.extSettings);
+              }
+            }, CONSTANTS.API.PAGE_LOAD_TIMEOUT_MS);
+          }
+        });
+      }
 
       // Nav bar button listener
       const navBarBtn = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.NAV_BTN);
@@ -887,7 +892,7 @@ import { MESSAGES } from '../utils/ui-messages.js';
         const targetTitle = targetPlaylist.title || CONSTANTS.UI.STRINGS.PLAYLIST_FALLBACK;
         
         const videoIdsToAdd = selectedItems
-          .filter(item => item.originalMedia?.videoId)
+          .filter(item => item.originalMedia?.videoId && item.originalMedia?.playlistSetVideoId)
           .map(item => item.originalMedia.videoId);
 
         if (videoIdsToAdd.length === 0) {
