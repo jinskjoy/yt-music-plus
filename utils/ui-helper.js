@@ -440,6 +440,9 @@ export class UIHelper {
     const removeBtn = popupElement.querySelector(`#${CONSTANTS.UI.BUTTON_IDS.REMOVE_SELECTED}`);
     if (removeBtn) removeBtn.disabled = isSearching ? true : !anyChecked;
 
+    const moveBtn = popupElement.querySelector(`#${CONSTANTS.UI.BUTTON_IDS.MOVE_SELECTED}`);
+    if (moveBtn) moveBtn.disabled = isSearching || !isListOnlyMode ? true : !anyChecked;
+
     const addBtn = popupElement.querySelector(`#${CONSTANTS.UI.BUTTON_IDS.ADD_SELECTED}`);
     if (addBtn) addBtn.disabled = isSearching || isListOnlyMode || isDuplicateMode ? true : !anyCheckedWithReplacement;
 

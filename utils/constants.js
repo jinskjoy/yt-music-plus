@@ -45,6 +45,7 @@ export const CONSTANTS = {
       REPLACE_SELECTED: 'yt-music-plus-replaceSelectedBtn',
       ADD_SELECTED: 'yt-music-plus-addSelectedBtn',
       REMOVE_SELECTED: 'yt-music-plus-removeSelectedBtn',
+      MOVE_SELECTED: 'yt-music-plus-moveSelectedBtn',
       KEEP_ONLY_SELECTED: 'yt-music-plus-keepOnlySelectedBtn',
       IGNORE_GROUP: 'yt-music-plus-ignoreGroupBtn',
       FIND_REPLACE: 'yt-music-plus-findReplaceBtn',

@@ -47,12 +47,14 @@ describe('UI Visibility Integration', () => {
       const replaceBtn = document.getElementById('yt-music-plus-replaceSelectedBtn');
       const addBtn = document.getElementById('yt-music-plus-addSelectedBtn');
       const removeBtn = document.getElementById('yt-music-plus-removeSelectedBtn');
+      const moveBtn = document.getElementById('yt-music-plus-moveSelectedBtn');
       
       await trackProcessor.listAllTracks();
       
       expect(replaceBtn.classList.contains('yt-music-plus-hidden')).toBe(true);
       expect(addBtn.classList.contains('yt-music-plus-hidden')).toBe(true);
       expect(removeBtn.classList.contains('yt-music-plus-hidden')).toBe(false);
+      expect(moveBtn.classList.contains('yt-music-plus-hidden')).toBe(false);
     });
   });
 
