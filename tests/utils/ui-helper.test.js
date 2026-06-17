@@ -184,6 +184,45 @@ describe('UIHelper', () => {
        playBtn.click();
        expect(playerHandler.playTrack).toHaveBeenCalledWith('v1');
     });
+
+    it('should stop propagation on play button click', () => {
+      const media = { videoId: 'vid123', name: 'Test Song' };
+      const playerHandler = {
+        playTrack: vi.fn(),
+        getVideoData: vi.fn(),
+        getPlayerState: vi.fn(),
+      };
+      const el = MediaItem.render(media, playerHandler);
+      const playBtn = el.querySelector('.yt-music-plus-btn-play');
+      const clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true });
+      const spy = vi.spyOn(clickEvent, 'stopPropagation');
+      
+      playBtn.dispatchEvent(clickEvent);
+      expect(spy).toHaveBeenCalled();
+    });
+
+    it('should stop propagation on link click', () => {
+      const media = { url: 'https://youtube.com/watch?v=123', name: 'Test Song' };
+      const el = MediaItem.render(media);
+      const link = el.querySelector('.yt-music-plus-media-link');
+      const clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true });
+      const spy = vi.spyOn(clickEvent, 'stopPropagation');
+      
+      link.dispatchEvent(clickEvent);
+      expect(spy).toHaveBeenCalled();
+    });
+
+    it('should trigger playLocalFile on play button click for local file', () => {
+      const media = { localFile: { name: 'test.mp3' }, name: 'Test Song' };
+      const playerHandler = {
+        playLocalFile: vi.fn(),
+        isLocalFilePlaying: vi.fn().mockReturnValue(false),
+      };
+      const el = MediaItem.render(media, playerHandler);
+      const playBtn = el.querySelector('.yt-music-plus-btn-play');
+      playBtn.click();
+      expect(playerHandler.playLocalFile).toHaveBeenCalledWith(media.localFile);
+    });
   });
 
   describe('MediaGridRow.render', () => {
@@ -256,6 +295,20 @@ describe('UIHelper', () => {
        const checkbox = row.querySelector('.yt-music-plus-item-checkbox');
        expect(checkbox.disabled).toBe(false);
        expect(checkbox.checked).toBe(false);
+    });
+
+    it('should stop propagation when control button is clicked inside column', () => {
+      const row = MediaGridRow.render({ name: 'O' }, { name: 'R', videoId: 'v1' });
+      const checkbox = row.querySelector('.yt-music-plus-item-checkbox');
+      const originalCol = row.querySelector('.yt-music-plus-grid-col-original');
+      
+      const btn = document.createElement('button');
+      btn.className = 'yt-music-plus-control-btn';
+      originalCol.appendChild(btn);
+
+      checkbox.checked = true;
+      btn.click();
+      expect(checkbox.checked).toBe(true);
     });
   });
 
@@ -542,6 +595,61 @@ describe('UIHelper', () => {
     it('toggleGrid should return early if no infoSection', () => {
       document.querySelector('.yt-music-plus-playlist-info-section').remove();
       expect(UIHelper.toggleGrid()).toBeUndefined();
+    });
+  });
+
+  describe('updateCheckAllCheckbox', () => {
+    it('should return early if popup container is missing', () => {
+      document.querySelector('.yt-music-plus-popup-container').remove();
+      expect(UIHelper.updateCheckAllCheckbox()).toBeUndefined();
+    });
+
+    it('should check selectAllCheckbox if all visible non-disabled checkboxes are checked', () => {
+      const selectAllCheckbox = document.getElementById('yt-music-plus-selectAllCheckbox');
+      
+      const row = MediaGridRow.render({ videoId: 'v1', name: 'O1' }, { videoId: 'r1' });
+      document.getElementById('yt-music-plus-itemsGridContainer').appendChild(row);
+
+      // Trigger update
+      UIHelper.updateCheckAllCheckbox();
+      expect(selectAllCheckbox.checked).toBe(true);
+    });
+
+    it('should uncheck selectAllCheckbox if any checkboxes are unchecked', () => {
+      const selectAllCheckbox = document.getElementById('yt-music-plus-selectAllCheckbox');
+      
+      const row1 = MediaGridRow.render({ videoId: 'v1', name: 'O1' }, { videoId: 'r1' });
+      const row2 = MediaGridRow.render({ videoId: 'v2', name: 'O2' }, { videoId: 'r2', isChecked: false });
+      const container = document.getElementById('yt-music-plus-itemsGridContainer');
+      container.appendChild(row1);
+      container.appendChild(row2);
+
+      UIHelper.updateCheckAllCheckbox();
+      expect(selectAllCheckbox.checked).toBe(false);
+    });
+
+    it('should enable/disable action buttons depending on selected items and active mode', () => {
+      const container = document.getElementById('yt-music-plus-itemsGridContainer');
+      const row = MediaGridRow.render({ videoId: 'v1', name: 'O1' }, { videoId: 'r1' });
+      container.appendChild(row);
+
+      const removeBtn = document.getElementById('yt-music-plus-removeSelectedBtn');
+      const addBtn = document.getElementById('yt-music-plus-addSelectedBtn');
+      const replaceBtn = document.getElementById('yt-music-plus-replaceSelectedBtn');
+      const moveBtn = document.getElementById('yt-music-plus-moveSelectedBtn');
+
+      // Default state with checked item having replacement
+      UIHelper.updateCheckAllCheckbox();
+      expect(removeBtn.disabled).toBe(false);
+      expect(addBtn.disabled).toBe(false);
+      expect(replaceBtn.disabled).toBe(false);
+      expect(moveBtn.disabled).toBe(true); // only enabled in list-only mode
+
+      // Switch to list-only mode
+      document.getElementById('yt-music-plus-itemsGridContainer').parentElement.classList.add('yt-music-plus-list-only-mode');
+      UIHelper.updateCheckAllCheckbox();
+      expect(moveBtn.disabled).toBe(false);
+      expect(addBtn.disabled).toBe(true); // disabled in list-only mode
     });
   });
 });

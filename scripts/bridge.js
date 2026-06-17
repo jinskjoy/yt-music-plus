@@ -180,6 +180,9 @@ import { MESSAGES } from '../utils/ui-messages.js';
     // Constants are now in CONSTANTS.API
 
     constructor() {
+      this.DisplayTrack = DisplayTrack;
+      this.SearchSession = SearchSession;
+      this.AuthInterceptor = AuthInterceptor;
       this.ytMusicAPI = new YTMusicAPI();
       this.ui = new BridgeUI(this);
       this.processor = new TrackProcessor(this);
@@ -189,6 +192,8 @@ import { MESSAGES } from '../utils/ui-messages.js';
       this.currentSelectedPlaylist = null;
       this.targetPlaylist = null;
       this.isSelectingTarget = false;
+      this.isMovingTracks = false;
+      this.tracksToMove = null;
       this.playlistsCache = [];
       this.isReloadDisabled = false;
       this.isFetchingPlaylists = false;
@@ -341,19 +346,21 @@ import { MESSAGES } from '../utils/ui-messages.js';
      */
     addEventListeners() {
       // Navigation listener for playlist page detection
-      navigation?.addEventListener('navigate', (event) => {
-        if (event.navigationType !== 'push') return;
+      if (typeof navigation !== 'undefined') {
+        navigation.addEventListener('navigate', (event) => {
+          if (event.navigationType !== 'push') return;
 
-        const isPlaylistPage = event.destination?.url?.startsWith(CONSTANTS.API.PLAYLIST_PAGE_PATH);
-        if (isPlaylistPage) {
-          setTimeout(() => {
-            if (!this.extSettings || this.extSettings.showPlaylistButton !== false) {
-              this.ui.injectActionButtons(this.extSettings);
-              this.ui.showTriggerButtons(this.extSettings);
-            }
-          }, CONSTANTS.API.PAGE_LOAD_TIMEOUT_MS);
-        }
-      });
+          const isPlaylistPage = event.destination?.url?.startsWith(CONSTANTS.API.PLAYLIST_PAGE_PATH);
+          if (isPlaylistPage) {
+            setTimeout(() => {
+              if (!this.extSettings || this.extSettings.showPlaylistButton !== false) {
+                this.ui.injectActionButtons(this.extSettings);
+                this.ui.showTriggerButtons(this.extSettings);
+              }
+            }, CONSTANTS.API.PAGE_LOAD_TIMEOUT_MS);
+          }
+        });
+      }
 
       // Nav bar button listener
       const navBarBtn = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.NAV_BTN);
@@ -425,6 +432,7 @@ import { MESSAGES } from '../utils/ui-messages.js';
       this.attachButtonListener(CONSTANTS.UI.BUTTON_IDS.REPLACE_SELECTED, () => this.replaceSelectedItems());
       this.attachButtonListener(CONSTANTS.UI.BUTTON_IDS.ADD_SELECTED, () => this.addSelectedItems());
       this.attachButtonListener(CONSTANTS.UI.BUTTON_IDS.REMOVE_SELECTED, () => this.removeSelectedItems());
+      this.attachButtonListener(CONSTANTS.UI.BUTTON_IDS.MOVE_SELECTED, () => this.moveSelectedItems());
       this.attachButtonListener(CONSTANTS.UI.BUTTON_IDS.IMPORT_FROM_FOLDER, () => {
         this.processor.importFromFolder();
         this.ui.setActiveButton(CONSTANTS.UI.BUTTON_IDS.IMPORT_FROM_FOLDER);
@@ -592,6 +600,18 @@ import { MESSAGES } from '../utils/ui-messages.js';
      * Handles target playlist selection
      */
     onTargetPlaylistSelected(playlist) {
+      if (this.isMovingTracks) {
+        this.isMovingTracks = false;
+        const targetPlaylist = playlist;
+        this.ui.setTargetModalVisibility(false);
+        if (this.currentSelectedPlaylist) {
+          this.ui.updatePopupTitle(`Playlist: ${this.currentSelectedPlaylist.title}`);
+        }
+        this.executeMoveSelectedItems(targetPlaylist, this.tracksToMove);
+        this.tracksToMove = null;
+        return;
+      }
+
       const oldTarget = this.targetPlaylist;
       this.targetPlaylist = playlist;
       this.finishTargetSelection();
@@ -606,6 +626,8 @@ import { MESSAGES } from '../utils/ui-messages.js';
      * Cancels target playlist selection
      */
     cancelTargetSelection() {
+      this.isMovingTracks = false;
+      this.tracksToMove = null;
       this.finishTargetSelection();
     }
 
@@ -831,6 +853,86 @@ import { MESSAGES } from '../utils/ui-messages.js';
         }
       } catch (error) {
         this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('removing'));
+      } finally {
+        await this.afterActionsOnSelectedItems(true);
+      }
+    }
+
+    /**
+     * Initiates the move process by prompting the user to select a target playlist
+     */
+    async moveSelectedItems() {
+      const selectedItems = UIHelper.getSelectedMediaItems();
+      if (selectedItems.length === 0) return;
+
+      this.isMovingTracks = true;
+      this.tracksToMove = selectedItems;
+      this.ui.setTargetModalVisibility(true);
+      
+      await this.initPlaylistFetching(false, null, true);
+    }
+
+    /**
+     * Executes the move operation to simulate moving items from one playlist to another
+     * @param {Object} targetPlaylist - Destination playlist object
+     * @param {Array} selectedItems - Array of media items to move
+     */
+    async executeMoveSelectedItems(targetPlaylist, selectedItems) {
+      if (selectedItems.length === 0) return;
+
+      this.beforeActionsOnSelectedItems();
+      this.ui.setProgressText(MESSAGES.ACTIONS.MOVING_SELECTED);
+
+      try {
+        const sourcePlaylistId = this.currentSelectedPlaylist?.id || 
+                                 this.ytMusicAPI.getCurrentPlaylistIdFromURL();
+
+        if (!sourcePlaylistId || !targetPlaylist?.id) return;
+
+        const targetTitle = targetPlaylist.title || CONSTANTS.UI.STRINGS.PLAYLIST_FALLBACK;
+        
+        const videoIdsToAdd = selectedItems
+          .filter(item => item.originalMedia?.videoId && item.originalMedia?.playlistSetVideoId)
+          .map(item => item.originalMedia.videoId);
+
+        if (videoIdsToAdd.length === 0) {
+          this.ui.setProgressText(MESSAGES.ACTIONS.NO_ADDITIONS_MADE);
+          return;
+        }
+
+        const addSuccess = await this.ytMusicAPI.addItemsToPlaylist(targetPlaylist.id, videoIdsToAdd);
+        
+        if (addSuccess) {
+          this.ui.setProgressText(MESSAGES.ACTIONS.REMOVING_SELECTED);
+          const itemsToRemove = selectedItems
+            .filter(item => item.originalMedia?.videoId && item.originalMedia?.playlistSetVideoId)
+            .map(item => ({
+              videoId: item.originalMedia.videoId,
+              setVideoId: item.originalMedia.playlistSetVideoId
+            }));
+
+          if (itemsToRemove.length > 0) {
+            try {
+              const removeSuccess = await this.ytMusicAPI.removeItemsFromPlaylist(sourcePlaylistId, itemsToRemove);
+              if (removeSuccess) {
+                selectedItems.forEach(item => {
+                  UIHelper.removeMediaGridRow(item.originalMedia);
+                });
+                this.ui.setProgressText(MESSAGES.ACTIONS.MOVE_COMPLETE(videoIdsToAdd.length, targetTitle));
+              } else {
+                this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('removing moved tracks'));
+              }
+            } catch (error) {
+              this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('removing moved tracks'));
+            }
+          } else {
+            this.ui.setProgressText(MESSAGES.ACTIONS.MOVE_COMPLETE(videoIdsToAdd.length, targetTitle));
+          }
+        } else {
+          this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('moving'));
+        }
+      } catch (error) {
+        this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('moving'));
       } finally {
         await this.afterActionsOnSelectedItems(true);
       }

@@ -78,8 +78,9 @@ This document provides a comprehensive list of features for the YouTube Music + 
 
 ### 2.6 List All Tracks
 - **Feature**: Fetches every track in the selected playlist.
-- **Use Case**: Intended for bulk deletion or general management.
-- **Testable Case**: Click "List All Tracks"; verify all tracks are displayed in the grid.
+- **Use Case**: Intended for bulk deletion, moving tracks, or general management.
+- **Move Tracks**: Select multiple tracks, click "Move Selected", choose a target playlist from the playlist selection popup. This adds selected tracks to the target playlist and then removes them from the source playlist.
+- **Testable Case**: Click "List All Tracks"; verify all tracks are displayed in the grid. Select tracks, click "Move Selected", select target playlist, verify items are added to target and removed from current playlist.
 
 ### 2.7 Duplicate Track Check
 - **Feature**: Scans the selected playlist for duplicate tracks.

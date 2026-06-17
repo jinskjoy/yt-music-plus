@@ -40,6 +40,8 @@ export const MESSAGES = {
     ADD_ITEMS: (current, total, target) => `Adding track ${current} of ${total} to ${target}...`,
     ADDING_SELECTED: 'Adding selected items...',
     ADD_COMPLETE: (count, target) => `All additions completed. Added ${count} items to ${target}.`,
+    MOVING_SELECTED: 'Moving selected items...',
+    MOVE_COMPLETE: (count, target) => `All moves completed. Moved ${count} items to ${target}.`,
     NO_ADDITIONS_MADE: 'No valid items were added.',
     ERROR_OCCURRED: (action) => `Error occurred while ${action}.`,
   },
