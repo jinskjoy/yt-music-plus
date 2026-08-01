@@ -11,6 +11,7 @@ export class BridgeUI {
     this.rowMap = new Map();
     this.renderVersion = 0;
     this.initTargetModalButtons();
+    this.initTokenModalButtons();
     this.setVersion();
   }
 
@@ -44,6 +45,23 @@ export class BridgeUI {
     attach(CONSTANTS.UI.BUTTON_IDS.CANCEL_TARGET_MODAL, () => this.bridge.cancelTargetSelection());
     attach(CONSTANTS.UI.BUTTON_IDS.REFRESH_TARGET_PLAYLISTS, () => this.bridge.initPlaylistFetching(true, true, true));
     attach(CONSTANTS.UI.BUTTON_IDS.LOAD_ALL_TARGET_PLAYLISTS, () => this.bridge.initPlaylistFetching(true, false, true));
+  }
+
+  /**
+   * Initializes buttons for the token expired modal
+   */
+  initTokenModalButtons() {
+    const attach = (id, handler) => {
+      const btn = document.getElementById(id);
+      if (btn && !btn.dataset.initialized) {
+        btn.dataset.initialized = 'true';
+        btn.addEventListener('click', handler);
+      }
+    };
+
+    attach(CONSTANTS.UI.BUTTON_IDS.FETCH_TOKEN, () => this.bridge.attemptTokenRefresh());
+    attach(CONSTANTS.UI.BUTTON_IDS.CANCEL_TOKEN_MODAL, () => this.bridge.cancelTokenRefresh());
+    attach(CONSTANTS.UI.BUTTON_IDS.CLOSE_TOKEN_MODAL, () => this.bridge.cancelTokenRefresh());
   }
 
   /**
@@ -303,6 +321,26 @@ export class BridgeUI {
     if (modal) {
       modal.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !isVisible);
     }
+  }
+
+  /**
+   * Toggles the visibility of the token expired modal
+   * @param {boolean} isVisible - Whether the token expired modal is visible
+   */
+  setTokenExpiredModalVisibility(isVisible) {
+    const modal = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.TOKEN_EXPIRED_MODAL);
+    if (modal) {
+      modal.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !isVisible);
+    }
+  }
+
+  /**
+   * Checks if the token expired modal is currently visible
+   * @returns {boolean}
+   */
+  isTokenExpiredModalVisible() {
+    const modal = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.TOKEN_EXPIRED_MODAL);
+    return modal ? !modal.classList.contains(CONSTANTS.UI.CLASSES.HIDDEN) : false;
   }
 
   /**

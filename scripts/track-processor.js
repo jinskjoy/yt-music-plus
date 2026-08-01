@@ -2,7 +2,7 @@ import { UIHelper } from '../utils/ui-helper.js';
 import { Track } from './models/track.js';
 import { CONSTANTS } from '../utils/constants.js';
 import { MESSAGES } from '../utils/ui-messages.js';
-import { TextSimilarity } from '../utils/utils.js';
+import { TextSimilarity, isTokenExpiredError } from '../utils/utils.js';
 
 /**
  * TrackProcessor - Handles the logic for processing tracks and finding replacements
@@ -12,6 +12,19 @@ export class TrackProcessor {
     this.bridge = bridge;
     this.ytMusicAPI = bridge.ytMusicAPI;
     this.targetPlaylistItems = new Map(); // Cache for target playlist video IDs
+  }
+
+  isTokenExpiredError(error) {
+    if (this.bridge?.isTokenExpiredError) {
+      return this.bridge.isTokenExpiredError(error);
+    }
+    return isTokenExpiredError(error);
+  }
+
+  handleTokenExpired(actionFn) {
+    if (this.bridge?.handleTokenExpired) {
+      this.bridge.handleTokenExpired(actionFn);
+    }
   }
 
   /**
@@ -34,6 +47,9 @@ export class TrackProcessor {
         }
       });
     } catch (error) {
+      if (this.isTokenExpiredError(error)) {
+        throw error;
+      }
       console.error('Error fetching target playlist items:', error);
     }
   }
@@ -61,7 +77,14 @@ export class TrackProcessor {
     this.bridge.ui.clearPlaylistItemsContainer();
 
     // Pre-fetch target playlist items to check for duplicates
-    await this.fetchTargetPlaylistItems();
+    try {
+      await this.fetchTargetPlaylistItems();
+    } catch (error) {
+      if (this.isTokenExpiredError(error)) {
+        this.handleTokenExpired(() => this.processPlaylistItems(items));
+        return;
+      }
+    }
 
     // Prepare items for display
     itemsToProcess.forEach(item => {
@@ -97,6 +120,10 @@ export class TrackProcessor {
         item.replacement = bestSearchResult;
         this.checkForDuplicate(item);
       } catch (error) {
+        if (this.isTokenExpiredError(error)) {
+          this.handleTokenExpired(() => this.processPlaylistItems(items));
+          return;
+        }
         item.replacement = null;
         item.isDuplicate = false;
       }
@@ -213,6 +240,10 @@ export class TrackProcessor {
       this.bridge.ui.setProgressText(MESSAGES.RESULTS.FOUND_TRACKS(unavailableItems.length));
       await this.processPlaylistItems(unavailableItems);
     } catch (error) {
+      if (this.isTokenExpiredError(error)) {
+        this.handleTokenExpired(() => this.findUnavailableTracks());
+        return;
+      }
       this.bridge.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('finding unavailable tracks'));
     } finally {
       this.bridge.ui.toggleSearchProgress(false);
@@ -276,12 +307,18 @@ export class TrackProcessor {
            break;
          }
 
+         this.bridge.ui.setProgressText(this.bridge.session.progressText);
+
          try {
            const searchResult = await this.ytMusicAPI.searchMusic(track);
            const replacement = this.ytMusicAPI.getBestSearchResult(searchResult, track);
            track.replacement = replacement;
            this.checkForDuplicate(track);
          } catch (error) {
+           if (this.isTokenExpiredError(error)) {
+             this.handleTokenExpired(() => this.findVideoTracks());
+             return;
+           }
            track.replacement = null;
            track.isDuplicate = false;
          }
@@ -304,6 +341,10 @@ export class TrackProcessor {
        this.setVideoTrackProgressMessage(videoTracks);
        UIHelper.updateCheckAllCheckbox();
      } catch (error) {
+       if (this.isTokenExpiredError(error)) {
+         this.handleTokenExpired(() => this.findVideoTracks());
+         return;
+       }
        this.bridge.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('finding video tracks'));
      } finally {
        this.bridge.ui.toggleSearchProgress(false);
@@ -430,6 +471,10 @@ export class TrackProcessor {
 
       UIHelper.updateCheckAllCheckbox();
     } catch (error) {
+      if (this.isTokenExpiredError(error)) {
+        this.handleTokenExpired(() => this.findDuplicateTracks());
+        return;
+      }
       console.error('Duplicate check error:', error);
       this.bridge.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('finding duplicate tracks'));
     } finally {
@@ -502,6 +547,10 @@ export class TrackProcessor {
 
       UIHelper.updateCheckAllCheckbox();
     } catch (error) {
+      if (this.isTokenExpiredError(error)) {
+        this.handleTokenExpired(() => this.listAllTracks());
+        return;
+      }
       this.bridge.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('fetching tracks'));
     } finally {
       this.bridge.ui.toggleSearchProgress(false);
@@ -571,6 +620,10 @@ export class TrackProcessor {
         this.bridge.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('removing duplicates'));
       }
     } catch (error) {
+      if (this.isTokenExpiredError(error)) {
+        this.handleTokenExpired(() => this.keepOnlySelected());
+        return;
+      }
       console.error('Error in keepOnlySelected:', error);
       this.bridge.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('removing duplicates'));
     } finally {

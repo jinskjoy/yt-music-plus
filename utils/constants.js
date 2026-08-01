@@ -66,6 +66,9 @@ export const CONSTANTS = {
       LOAD_ALL_TARGET_PLAYLISTS: 'yt-music-plus-loadAllTargetPlaylistsBtn',
       CANCEL_TARGET_MODAL: 'yt-music-plus-cancelTargetModalBtn',
       CLOSE_TARGET_MODAL: 'yt-music-plus-closeTargetModalBtn',
+      FETCH_TOKEN: 'yt-music-plus-fetchTokenBtn',
+      CANCEL_TOKEN_MODAL: 'yt-music-plus-cancelTokenModalBtn',
+      CLOSE_TOKEN_MODAL: 'yt-music-plus-closeTokenModalBtn',
     },
     ELEMENT_IDS: {
       PROGRESS_TEXT: 'yt-music-plus-progressText',
@@ -87,6 +90,7 @@ export const CONSTANTS = {
       TARGET_PLAYLIST_NAME: 'yt-music-plus-targetPlaylistName',
       TARGET_PLAYLIST_CONTAINER: 'yt-music-plus-targetPlaylistContainer',
       TARGET_PLAYLIST_MODAL: 'yt-music-plus-targetPlaylistModal',
+      TOKEN_EXPIRED_MODAL: 'yt-music-plus-tokenExpiredModal',
       TARGET_PLAYLISTS_GRID: 'yt-music-plus-targetPlaylistsGrid',
       TARGET_PLAYLISTS_LOADING: 'yt-music-plus-targetPlaylistsLoadingIndicator',
       PLAYLIST_SELECTION_ACTIONS: 'yt-music-plus-playlistSelectionActions',
@@ -215,7 +219,7 @@ export const CONSTANTS = {
   STORAGE_KEYS: {
     // Add storage keys here if needed
   },
-  VERSION: '1.7.0',
+  VERSION: '1.8.0',
   MESSAGE_TYPES: {
     EXT_SETTINGS: 'EXT_SETTINGS',
   }

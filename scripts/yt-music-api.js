@@ -41,10 +41,22 @@ export class YTMusicAPI {
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const error = new Error(`HTTP error! status: ${response.status}`);
+      error.status = response.status;
+      if (response.status === 401 || response.status === 403) {
+        error.isTokenExpired = true;
+      }
+      throw error;
     }
 
-    return response.json();
+    const data = await response.json();
+    if (data && data.error && (data.error.code === 401 || data.error.code === 403)) {
+      const error = new Error(data.error.message || `API error! status: ${data.error.code}`);
+      error.status = data.error.code;
+      error.isTokenExpired = true;
+      throw error;
+    }
+    return data;
   }
 
   /**
@@ -71,10 +83,22 @@ export class YTMusicAPI {
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const error = new Error(`HTTP error! status: ${response.status}`);
+      error.status = response.status;
+      if (response.status === 401 || response.status === 403) {
+        error.isTokenExpired = true;
+      }
+      throw error;
     }
 
-    return response.json();
+    const data = await response.json();
+    if (data && data.error && (data.error.code === 401 || data.error.code === 403)) {
+      const error = new Error(data.error.message || `API error! status: ${data.error.code}`);
+      error.status = data.error.code;
+      error.isTokenExpired = true;
+      throw error;
+    }
+    return data;
   }
 
   /**

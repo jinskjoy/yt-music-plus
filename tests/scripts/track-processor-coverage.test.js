@@ -450,4 +450,20 @@ describe('TrackProcessor Coverage', () => {
       expect(mockBridge.ui.setProgressText).toHaveBeenCalledWith(expect.stringContaining('1/2 are good matches'));
     });
   });
+
+  describe('importFromFile edge cases', () => {
+    it('should handle empty file', async () => {
+      const fakeFile = { text: vi.fn().mockResolvedValue('') };
+      const event = { target: { files: [fakeFile], value: 'test.txt' } };
+      await processor.importFromFile(event);
+      expect(mockBridge.ui.setProgressText).toHaveBeenCalledWith('No valid tracks found in the file.');
+    });
+
+    it('should handle file reading error', async () => {
+      const fakeFile = { text: vi.fn().mockRejectedValue(new Error('Read error')) };
+      const event = { target: { files: [fakeFile], value: 'test.txt' } };
+      await processor.importFromFile(event);
+      expect(mockBridge.ui.setProgressText).toHaveBeenCalledWith('Error reading file.');
+    });
+  });
 });

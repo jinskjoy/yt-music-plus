@@ -654,5 +654,32 @@ describe('UIHelper', () => {
       expect(copyBtn.disabled).toBe(false);
       expect(addBtn.disabled).toBe(true); // disabled in list-only mode
     });
+
+    it('should update selectionCountEl text when items exist and selection screen is hidden', () => {
+      document.getElementById('yt-music-plus-playlistSelectionScreen').classList.add('yt-music-plus-hidden');
+      const container = document.getElementById('yt-music-plus-itemsGridContainer');
+      const row = MediaGridRow.render({ videoId: 'v1', name: 'O1' }, { videoId: 'r1' });
+      container.appendChild(row);
+
+      UIHelper.updateCheckAllCheckbox();
+
+      const selectionCountEl = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.SELECTION_COUNT);
+      expect(selectionCountEl.textContent).toContain('1 of 1 item selected');
+      expect(selectionCountEl.classList.contains('yt-music-plus-hidden')).toBe(false);
+    });
+
+    it('showErrorInGridRow should append error div', () => {
+      const container = document.getElementById('yt-music-plus-itemsGridContainer');
+      const row = MediaGridRow.render({ videoId: 'v1', name: 'Song' }, null);
+      container.appendChild(row);
+
+      UIHelper.showErrorInGridRow({ videoId: 'v1' }, 'Custom error');
+      expect(container.querySelector('.yt-music-plus-error-message').textContent).toContain('Custom error');
+    });
+
+    it('showErrorInGridRow should return early if template missing', () => {
+      document.getElementById(CONSTANTS.UI.ELEMENT_IDS.ERROR_MESSAGE_TEMPLATE).remove();
+      expect(UIHelper.showErrorInGridRow({ videoId: 'v1' }, 'Error')).toBeUndefined();
+    });
   });
 });

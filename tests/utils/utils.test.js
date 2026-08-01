@@ -161,5 +161,46 @@ describe('Utils', () => {
       const color = BrowserUtils.getRandomColor();
       expect(color).toMatch(/^#[0-9a-f]{6}$/i);
     });
+
+    it('formatDate should format long and time options', () => {
+      const ts = 1700000000000;
+      expect(Formatters.formatDate(ts, { format: 'long' })).toBeTruthy();
+      expect(Formatters.formatDate(ts, { format: 'time' })).toBeTruthy();
+    });
+
+    it('throttle should throttle function calls', () => {
+      vi.useFakeTimers();
+      const fn = vi.fn();
+      const throttled = BrowserUtils.throttle(fn, 100);
+
+      throttled();
+      throttled();
+      expect(fn).toHaveBeenCalledTimes(1);
+
+      vi.advanceTimersByTime(150);
+      throttled();
+      expect(fn).toHaveBeenCalledTimes(2);
+
+      vi.useRealTimers();
+    });
+
+    it('debounce should delay function calls', () => {
+      vi.useFakeTimers();
+      const fn = vi.fn();
+      const debounced = BrowserUtils.debounce(fn, 100);
+
+      debounced();
+      expect(fn).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(150);
+      expect(fn).toHaveBeenCalledTimes(1);
+
+      vi.useRealTimers();
+    });
+
+    it('formatFileSize should handle 0 bytes and large bytes', () => {
+      expect(Formatters.formatFileSize(0)).toBe('0 Bytes');
+      expect(Formatters.formatFileSize(1048576)).toBe('1 MB');
+    });
   });
 });

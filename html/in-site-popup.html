@@ -174,6 +174,24 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Token Expired Modal -->
+            <div id="yt-music-plus-tokenExpiredModal" class="yt-music-plus-modal-overlay yt-music-plus-hidden">
+                <div class="yt-music-plus-modal-content">
+                    <div class="yt-music-plus-modal-header">
+                        <h3>Authentication Token Expired</h3>
+                        <button id="yt-music-plus-closeTokenModalBtn" class="yt-music-plus-close-btn" type="button" aria-label="Close modal">&times;</button>
+                    </div>
+                    <div class="yt-music-plus-modal-body">
+                        <p class="yt-music-plus-modal-text">Your session token has expired due to inactivity. Please obtain a new token to continue your action.</p>
+                        <p class="yt-music-plus-modal-hint">💡 Minimizing this window and navigating anywhere within YouTube Music will speed up token fetching. Alternatively, click the button below to attempt fetching a new token.</p>
+                    </div>
+                    <div class="yt-music-plus-modal-footer">
+                        <button id="yt-music-plus-fetchTokenBtn" class="yt-music-plus-btn yt-music-plus-btn-primary yt-music-plus-btn-small" type="button">Fetch New Token</button>
+                        <button id="yt-music-plus-cancelTokenModalBtn" class="yt-music-plus-btn yt-music-plus-btn-secondary yt-music-plus-btn-small" type="button">Cancel</button>
+                    </div>
+                </div>
+            </div>
             </div>    </div>
 
     <!-- Templates for Dynamic Elements -->

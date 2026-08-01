@@ -381,14 +381,14 @@ describe('Bridge Script Unit Tests', () => {
         data: {
           type: CONSTANTS.MESSAGE_TYPES.EXT_SETTINGS,
           settings: { showPlaylistButton: false },
-          version: '1.7.0'
+          version: '1.8.0'
         },
         source: window
       });
       window.dispatchEvent(event);
       
       expect(bridge.extSettings).toEqual({ showPlaylistButton: false });
-      expect(bridge.version).toBe('1.7.0');
+      expect(bridge.version).toBe('1.8.0');
     });
   });
 
@@ -979,6 +979,135 @@ describe('Bridge Script Unit Tests', () => {
         cancelBtn.click();
         expect(bridge.cancelSearch).toBe(true);
       }
+    });
+
+    describe('token expiration handling in Bridge', () => {
+      it('should detect token expired errors correctly', () => {
+        expect(bridge.isTokenExpiredError({ status: 401 })).toBe(true);
+        expect(bridge.isTokenExpiredError({ status: 403 })).toBe(true);
+        expect(bridge.isTokenExpiredError(new Error('Permission error 403'))).toBe(true);
+        expect(bridge.isTokenExpiredError(new Error('Normal error'))).toBe(false);
+      });
+
+      it('should set pendingAction and show modal on handleTokenExpired', () => {
+        const spyModal = vi.spyOn(bridge.ui, 'setTokenExpiredModalVisibility').mockImplementation(() => {});
+        const spyText = vi.spyOn(bridge.ui, 'setProgressText').mockImplementation(() => {});
+        const actionFn = vi.fn();
+
+        bridge.handleTokenExpired(actionFn);
+
+        expect(bridge.pendingAction).toBe(actionFn);
+        expect(spyModal).toHaveBeenCalledWith(true);
+        expect(spyText).toHaveBeenCalledWith(MESSAGES.ERRORS.TOKEN_EXPIRED_MSG);
+      });
+
+      it('should clear pendingAction and hide modal on cancelTokenRefresh', () => {
+        const spyModal = vi.spyOn(bridge.ui, 'setTokenExpiredModalVisibility').mockImplementation(() => {});
+        const spyText = vi.spyOn(bridge.ui, 'setProgressText').mockImplementation(() => {});
+        bridge.pendingAction = () => {};
+
+        bridge.cancelTokenRefresh();
+
+        expect(bridge.pendingAction).toBeNull();
+        expect(spyModal).toHaveBeenCalledWith(false);
+        expect(spyText).toHaveBeenCalledWith('Operation cancelled.');
+      });
+
+      it('should resume pendingAction and hide modal when setAuthToken is called with new token', () => {
+        const spyModal = vi.spyOn(bridge.ui, 'setTokenExpiredModalVisibility').mockImplementation(() => {});
+        const spyText = vi.spyOn(bridge.ui, 'setProgressText').mockImplementation(() => {});
+        const actionFn = vi.fn();
+        bridge.pendingAction = actionFn;
+
+        bridge.setAuthToken('new-token-abc');
+
+        expect(bridge.ytMusicAPI.setAuthToken).toHaveBeenCalledWith('new-token-abc');
+        expect(bridge.pendingAction).toBeNull();
+        expect(spyModal).toHaveBeenCalledWith(false);
+        expect(spyText).toHaveBeenCalledWith(MESSAGES.ERRORS.TOKEN_FETCHED_RESUMING);
+        expect(actionFn).toHaveBeenCalled();
+      });
+
+      it('should attempt token refresh by dispatching click event on available selectors', () => {
+        const logo = document.createElement('div');
+        logo.id = 'logo';
+        const clickSpy = vi.fn();
+        logo.addEventListener('click', clickSpy);
+        document.body.appendChild(logo);
+
+        bridge.attemptTokenRefresh();
+
+        expect(clickSpy).toHaveBeenCalled();
+        logo.remove();
+      });
+
+      it('should handle token expiration during replaceSelectedItems', async () => {
+        const selectedItems = [{
+          originalMedia: { videoId: 'v1', playlistSetVideoId: 's1' },
+          replacementMedia: { videoId: 'v2' }
+        }];
+        vi.spyOn(window, 'confirm').mockReturnValue(true);
+        vi.spyOn(UIHelper, 'getSelectedMediaItems').mockReturnValue(selectedItems);
+        const err = new Error('401 Unauthorized');
+        err.status = 401;
+        vi.spyOn(bridge.ytMusicAPI, 'addItemsToPlaylist').mockRejectedValue(err);
+        const handleSpy = vi.spyOn(bridge, 'handleTokenExpired').mockImplementation(() => {});
+
+        await bridge.replaceSelectedItems();
+
+        expect(handleSpy).toHaveBeenCalled();
+      });
+
+      it('should handle token expiration during addSelectedItems', async () => {
+        const selectedItems = [{ replacementMedia: { videoId: 'v2' } }];
+        vi.spyOn(UIHelper, 'getSelectedMediaItems').mockReturnValue(selectedItems);
+        const err = new Error('403 Forbidden');
+        err.status = 403;
+        vi.spyOn(bridge.ytMusicAPI, 'addItemsToPlaylist').mockRejectedValue(err);
+        const handleSpy = vi.spyOn(bridge, 'handleTokenExpired').mockImplementation(() => {});
+
+        await bridge.addSelectedItems();
+
+        expect(handleSpy).toHaveBeenCalled();
+      });
+
+      it('should handle token expiration during removeSelectedItems', async () => {
+        const selectedItems = [{ originalMedia: { videoId: 'v1', playlistSetVideoId: 's1' } }];
+        vi.spyOn(window, 'confirm').mockReturnValue(true);
+        vi.spyOn(UIHelper, 'getSelectedMediaItems').mockReturnValue(selectedItems);
+        const err = new Error('401 Token expired');
+        err.status = 401;
+        vi.spyOn(bridge.ytMusicAPI, 'removeItemsFromPlaylist').mockRejectedValue(err);
+        const handleSpy = vi.spyOn(bridge, 'handleTokenExpired').mockImplementation(() => {});
+
+        await bridge.removeSelectedItems();
+
+        expect(handleSpy).toHaveBeenCalled();
+      });
+
+      it('should handle token expiration during executeMoveSelectedItems', async () => {
+        const selectedItems = [{ originalMedia: { videoId: 'v1', playlistSetVideoId: 's1' } }];
+        const err = new Error('401 Token expired');
+        err.status = 401;
+        vi.spyOn(bridge.ytMusicAPI, 'addItemsToPlaylist').mockRejectedValue(err);
+        const handleSpy = vi.spyOn(bridge, 'handleTokenExpired').mockImplementation(() => {});
+
+        await bridge.executeMoveSelectedItems({ id: 'target1' }, selectedItems);
+
+        expect(handleSpy).toHaveBeenCalled();
+      });
+
+      it('should handle token expiration during executeCopySelectedItems', async () => {
+        const selectedItems = [{ originalMedia: { videoId: 'v1' } }];
+        const err = new Error('403 Forbidden');
+        err.status = 403;
+        vi.spyOn(bridge.ytMusicAPI, 'addItemsToPlaylist').mockRejectedValue(err);
+        const handleSpy = vi.spyOn(bridge, 'handleTokenExpired').mockImplementation(() => {});
+
+        await bridge.executeCopySelectedItems({ id: 'target1' }, selectedItems);
+
+        expect(handleSpy).toHaveBeenCalled();
+      });
     });
   });
 });

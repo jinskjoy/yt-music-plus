@@ -51,4 +51,10 @@ export const MESSAGES = {
     NO_FILES_SELECTED: 'No files selected for import.',
     READING_FILES: (count) => `Reading ${count} audio files...`,
   },
+  ERRORS: {
+    TOKEN_EXPIRED_TITLE: 'Authentication Token Expired',
+    TOKEN_EXPIRED_MSG: 'Your session token has expired due to inactivity. Please obtain a new token to continue.',
+    TOKEN_EXPIRED_HINT: 'Tip: Minimizing this window and navigating anywhere within the site will speed up token fetching. You can also try clicking the button below.',
+    TOKEN_FETCHED_RESUMING: 'New token received. Resuming action...',
+  },
 };

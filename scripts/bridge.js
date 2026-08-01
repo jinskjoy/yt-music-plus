@@ -10,6 +10,7 @@ import { TrackProcessor } from './track-processor.js';
 import { PlayerHandler } from './player-handler.js';
 import { CONSTANTS } from '../utils/constants.js';
 import { MESSAGES } from '../utils/ui-messages.js';
+import { isTokenExpiredError } from '../utils/utils.js';
 
 (function () {
   /**
@@ -200,6 +201,7 @@ import { MESSAGES } from '../utils/ui-messages.js';
       this.isReloadDisabled = false;
       this.isFetchingPlaylists = false;
       this.localTracks = [];
+      this.pendingAction = null;
       this.extSettings = {
         showPlaylistButton: true,
         showNavButton: true
@@ -274,6 +276,80 @@ import { MESSAGES } from '../utils/ui-messages.js';
     }
 
     /**
+     * Checks if error represents token expiration or permission error
+     */
+    isTokenExpiredError(error) {
+      return isTokenExpiredError(error);
+    }
+
+    /**
+     * Handles token expiration by storing the pending action and showing the modal
+     */
+    handleTokenExpired(actionFn) {
+      this.pendingAction = actionFn;
+      this.ui.setTokenExpiredModalVisibility(true);
+      this.ui.setProgressText(MESSAGES.ERRORS?.TOKEN_EXPIRED_MSG || 'Authentication Token Expired');
+    }
+
+    /**
+     * Cancels token refresh and clears pending action
+     */
+    cancelTokenRefresh() {
+      this.pendingAction = null;
+      this.ui.setTokenExpiredModalVisibility(false);
+      this.session.stop();
+      this.ui.toggleSearchProgress(false);
+      this.ui.setProgressText('Operation cancelled.');
+    }
+
+    /**
+     * Attempts to trigger a pseudo click event on YouTube Music elements to trigger an API call and fetch a new token
+     */
+    attemptTokenRefresh() {
+      const selectors = [
+        'ytmusic-logo',
+        '#logo',
+        '.ytmusic-logo',
+        'ytmusic-pivot-bar-renderer ytmusic-pivot-bar-item-renderer',
+        'ytmusic-search-box',
+        'ytmusic-nav-bar',
+        'tp-yt-paper-icon-button'
+      ];
+
+      let clicked = false;
+      for (const selector of selectors) {
+        const el = document.querySelector(selector);
+        if (el) {
+          try {
+            const clickEvent = new MouseEvent('click', {
+              bubbles: true,
+              cancelable: true,
+              view: window
+            });
+            el.dispatchEvent(clickEvent);
+            clicked = true;
+            break;
+          } catch (e) {
+            // Ignore
+          }
+        }
+      }
+
+      if (!clicked && document.body) {
+        try {
+          const clickEvent = new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+            view: window
+          });
+          document.body.dispatchEvent(clickEvent);
+        } catch (e) {
+          // Ignore
+        }
+      }
+    }
+
+    /**
      * Sets authentication token and initializes UI elements
      */
     setAuthToken(token) {
@@ -282,6 +358,14 @@ import { MESSAGES } from '../utils/ui-messages.js';
       this.ui.injectActionButtons(this.extSettings);
       this.ui.showTriggerButtons(this.extSettings);
       this.playerHandler.init();
+
+      if (this.pendingAction) {
+        const action = this.pendingAction;
+        this.pendingAction = null;
+        this.ui.setTokenExpiredModalVisibility(false);
+        this.ui.setProgressText(MESSAGES.ERRORS?.TOKEN_FETCHED_RESUMING || 'New token received. Resuming action...');
+        action();
+      }
     }
 
     /**
@@ -529,6 +613,10 @@ import { MESSAGES } from '../utils/ui-messages.js';
         
         this.playlistsCache = playlists;
       } catch (error) {
+        if (this.isTokenExpiredError(error)) {
+          this.handleTokenExpired(() => this.initPlaylistFetching(forceRefresh, onlyEditable, isTargetSelection));
+          return;
+        }
         console.error('YouTube Music +: Error fetching playlists', error);
         this.playlistsCache = [];
       } finally {
@@ -740,8 +828,13 @@ import { MESSAGES } from '../utils/ui-messages.js';
             if (addSuccess) {
               // Only remove originals if adding replacements succeeded
               if (itemsToRemove.length > 0) {
-                const removeSuccess = await this.ytMusicAPI.removeItemsFromPlaylist(playlistId, itemsToRemove);
-                if (!removeSuccess) {
+                try {
+                  const removeSuccess = await this.ytMusicAPI.removeItemsFromPlaylist(playlistId, itemsToRemove);
+                  if (!removeSuccess) {
+                    success = false;
+                  }
+                } catch (error) {
+                  if (this.isTokenExpiredError(error)) throw error;
                   success = false;
                 }
               }
@@ -754,6 +847,7 @@ import { MESSAGES } from '../utils/ui-messages.js';
               success = false;
             }
           } catch (error) {
+            if (this.isTokenExpiredError(error)) throw error;
             success = false;
           }
         }
@@ -765,6 +859,10 @@ import { MESSAGES } from '../utils/ui-messages.js';
           this.ui.setProgressText(countReplaced > 0 ? MESSAGES.ACTIONS.REPLACE_COMPLETE(countReplaced) : MESSAGES.ACTIONS.NO_REPLACEMENTS_MADE);
         }
       } catch (error) {
+        if (this.isTokenExpiredError(error)) {
+          this.handleTokenExpired(() => this.replaceSelectedItems());
+          return;
+        }
         this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('replacing'));
       } finally {
         await this.afterActionsOnSelectedItems(true);
@@ -810,12 +908,17 @@ import { MESSAGES } from '../utils/ui-messages.js';
               this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('adding'));
             }
           } catch (error) {
+            if (this.isTokenExpiredError(error)) throw error;
             this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('adding'));
           }
         } else {
           this.ui.setProgressText(MESSAGES.ACTIONS.NO_ADDITIONS_MADE);
         }
       } catch (error) {
+        if (this.isTokenExpiredError(error)) {
+          this.handleTokenExpired(() => this.addSelectedItems());
+          return;
+        }
         this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('adding'));
       } finally {
         await this.afterActionsOnSelectedItems(true);
@@ -863,12 +966,17 @@ import { MESSAGES } from '../utils/ui-messages.js';
               this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('removing'));
             }
           } catch (error) {
+            if (this.isTokenExpiredError(error)) throw error;
             this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('removing'));
           }
         } else {
           this.ui.setProgressText(MESSAGES.ACTIONS.NO_REMOVALS);
         }
       } catch (error) {
+        if (this.isTokenExpiredError(error)) {
+          this.handleTokenExpired(() => this.removeSelectedItems());
+          return;
+        }
         this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('removing'));
       } finally {
         await this.afterActionsOnSelectedItems(true);
@@ -940,6 +1048,7 @@ import { MESSAGES } from '../utils/ui-messages.js';
                 this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('removing moved tracks'));
               }
             } catch (error) {
+              if (this.isTokenExpiredError(error)) throw error;
               this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('removing moved tracks'));
             }
           } else {
@@ -949,6 +1058,10 @@ import { MESSAGES } from '../utils/ui-messages.js';
           this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('moving'));
         }
       } catch (error) {
+        if (this.isTokenExpiredError(error)) {
+          this.handleTokenExpired(() => this.executeMoveSelectedItems(targetPlaylist, selectedItems));
+          return;
+        }
         this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('moving'));
       } finally {
         await this.afterActionsOnSelectedItems(true);
@@ -1002,6 +1115,10 @@ import { MESSAGES } from '../utils/ui-messages.js';
           this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('copying tracks'));
         }
       } catch (error) {
+        if (this.isTokenExpiredError(error)) {
+          this.handleTokenExpired(() => this.executeCopySelectedItems(targetPlaylist, selectedItems));
+          return;
+        }
         this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('copying tracks'));
       } finally {
         await this.afterActionsOnSelectedItems(true);

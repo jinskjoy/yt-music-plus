@@ -33,7 +33,45 @@ describe('PopupManager', () => {
     expect(popupManager.extSettings.hideWarningMessage).toBe(false);
   });
 
+  describe('showPopup and hidePopup minimized state', () => {
+    it('showPopup should un-minimize if minimized', () => {
+      document.body.innerHTML = `
+        <div id="${CONSTANTS.UI.ELEMENT_IDS.POPUP_HOLDER}" class="yt-music-plus-hidden yt-music-plus-minimized">
+          <div class="yt-music-plus-popup-container yt-music-plus-minimized">
+            <button id="${CONSTANTS.UI.BUTTON_IDS.MINIMIZE_POPUP}">-</button>
+          </div>
+        </div>
+      `;
+      popupManager.showPopup();
+      const holder = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.POPUP_HOLDER);
+      expect(holder.classList.contains('yt-music-plus-hidden')).toBe(false);
+      expect(holder.classList.contains('yt-music-plus-minimized')).toBe(false);
+    });
+
+    it('hidePopup should un-minimize if minimized when hiding', () => {
+      document.body.innerHTML = `
+        <div id="${CONSTANTS.UI.ELEMENT_IDS.POPUP_HOLDER}" class="yt-music-plus-minimized">
+          <div class="yt-music-plus-popup-container yt-music-plus-minimized">
+            <button id="${CONSTANTS.UI.BUTTON_IDS.MINIMIZE_POPUP}">-</button>
+          </div>
+        </div>
+      `;
+      popupManager.hidePopup();
+      const holder = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.POPUP_HOLDER);
+      expect(holder.classList.contains('yt-music-plus-hidden')).toBe(true);
+      expect(holder.classList.contains('yt-music-plus-minimized')).toBe(false);
+    });
+  });
+
   describe('injectPopup', () => {
+    it('should handle injectPopup error branch', async () => {
+      global.fetch = vi.fn().mockRejectedValue(new Error('Fetch failed'));
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      await popupManager.injectPopup();
+      expect(consoleSpy).toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+
     it('should fetch and inject popup HTML', async () => {
       const mockHtml = `
         <div id="yt-music-plus-warningMessage">Warning</div>
