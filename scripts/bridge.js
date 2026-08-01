@@ -69,27 +69,33 @@ import { isTokenExpiredError } from '../utils/utils.js';
         }
 
         try {
-          const request = args[0];
-          const headers = request?.headers;
+          let headers = null;
+          const firstArg = args[0];
+          const secondArg = args[1];
 
-          if (headers && request?.url?.includes('music.youtube.com')) {
+          if (firstArg && typeof firstArg === 'object' && firstArg.headers) {
+            headers = firstArg.headers;
+          } else if (secondArg && typeof secondArg === 'object' && secondArg.headers) {
+            headers = secondArg.headers;
+          }
+
+          if (headers) {
             let authToken = null;
-
-            if (headers instanceof Headers) {
-              authToken = headers.get('Authorization');
-            } else {
-              authToken = headers['Authorization'] || headers['authorization'];
+            if (typeof Headers !== 'undefined' && headers instanceof Headers) {
+              authToken = headers.get('Authorization') || headers.get('authorization');
+            } else if (typeof headers === 'object') {
+              authToken = headers['Authorization'] || headers['authorization'] || headers['AUTHORIZATION'];
             }
 
             if (authToken) {
               self.onTokenFound(authToken);
             }
           }
-
-          return self.originalFetch.apply(window, args);
         } catch (error) {
-          return self.originalFetch.apply(window, args);
+          // Handle fetch error silently
         }
+
+        return self.originalFetch.apply(window, args);
       };
     }
   }
@@ -306,14 +312,19 @@ import { isTokenExpiredError } from '../utils/utils.js';
      * Attempts to trigger a pseudo click event on YouTube Music elements to trigger an API call and fetch a new token
      */
     attemptTokenRefresh() {
-      this.ui.setProgressText(MESSAGES.ERRORS?.TOKEN_FETCHING_HINT || 'Attempting to fetch new token... Please wait or navigate anywhere in YouTube Music.');
+      // Hide the token expired modal immediately so progress takes place in the main popup
+      this.ui.setTokenExpiredModalVisibility(false);
       this.ui.toggleSearchProgress(true, true);
+      this.ui.setProgressText(MESSAGES.ERRORS?.TOKEN_FETCHING_HINT || 'Attempting to fetch new token... Please wait or navigate anywhere in YouTube Music.');
 
       const selectors = [
+        'ytmusic-logo a',
         'ytmusic-logo',
         '#logo',
         '.ytmusic-logo',
+        'ytmusic-pivot-bar-renderer ytmusic-pivot-bar-item-renderer a',
         'ytmusic-pivot-bar-renderer ytmusic-pivot-bar-item-renderer',
+        'ytmusic-search-box input',
         'ytmusic-search-box',
         'ytmusic-nav-bar',
         'tp-yt-paper-icon-button'
@@ -1183,7 +1194,7 @@ import { isTokenExpiredError } from '../utils/utils.js';
     (token) => {
       window.bridgeInstance?.setAuthToken(token);
     },
-    () => !window.bridgeInstance?.ytMusicAPI.isAuthTokenSet()
+    () => true
   );
   interceptor.start();
 })();
