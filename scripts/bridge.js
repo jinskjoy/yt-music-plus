@@ -457,9 +457,13 @@ import { isTokenExpiredError } from '../utils/utils.js';
     /**
      * Adds event listeners for popup buttons and navigation
      */
+    /**
+     * Adds event listeners for popup buttons and navigation
+     */
     addEventListeners() {
       // Navigation listener for playlist page detection
-      if (typeof navigation !== 'undefined') {
+      if (typeof navigation !== 'undefined' && !this.navigationListenerAttached) {
+        this.navigationListenerAttached = true;
         navigation.addEventListener('navigate', (event) => {
           if (event.navigationType !== 'push') return;
 
@@ -477,7 +481,8 @@ import { isTokenExpiredError } from '../utils/utils.js';
 
       // Nav bar button listener
       const navBarBtn = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.NAV_BTN);
-      if (navBarBtn) {
+      if (navBarBtn && navBarBtn.dataset.ytMusicPlusListenerAttached !== 'true') {
+        navBarBtn.dataset.ytMusicPlusListenerAttached = 'true';
         navBarBtn.addEventListener('click', () => this.showPopup());
       }
 
@@ -486,44 +491,53 @@ import { isTokenExpiredError } from '../utils/utils.js';
         const { holder, container, header } = this.popupElements;
 
         // Use event delegation for header actions (close, minimize, restore)
-        header?.addEventListener('click', (e) => {
-          const target = e.target;
-          
-          // Handle close button
-          if (target.id === CONSTANTS.UI.BUTTON_IDS.CLOSE_POPUP || target.closest(`#${CONSTANTS.UI.BUTTON_IDS.CLOSE_POPUP}`)) {
-            this.hidePopup();
-            return;
-          }
-
-          // Handle minimize button
-          if (target.id === CONSTANTS.UI.BUTTON_IDS.MINIMIZE_POPUP || target.closest(`#${CONSTANTS.UI.BUTTON_IDS.MINIMIZE_POPUP}`)) {
-            e.stopPropagation();
-            this.toggleMinimize();
-            return;
-          }
-
-          // Restore on header click if minimized
-          if (container.classList.contains(CONSTANTS.UI.CLASSES.MINIMIZED)) {
-            // If it's a link, prevent default action
-            if (target.closest('a')) {
-              e.preventDefault();
+        if (header && header.dataset.ytMusicPlusListenerAttached !== 'true') {
+          header.dataset.ytMusicPlusListenerAttached = 'true';
+          header.addEventListener('click', (e) => {
+            const target = e.target;
+            
+            // Handle close button
+            if (target.id === CONSTANTS.UI.BUTTON_IDS.CLOSE_POPUP || target.closest(`#${CONSTANTS.UI.BUTTON_IDS.CLOSE_POPUP}`)) {
+              this.hidePopup();
+              return;
             }
-            this.toggleMinimize();
-          }
-        });
+
+            // Handle minimize button
+            if (target.id === CONSTANTS.UI.BUTTON_IDS.MINIMIZE_POPUP || target.closest(`#${CONSTANTS.UI.BUTTON_IDS.MINIMIZE_POPUP}`)) {
+              e.stopPropagation();
+              this.toggleMinimize();
+              return;
+            }
+
+            // Restore on header click if minimized
+            if (container.classList.contains(CONSTANTS.UI.CLASSES.MINIMIZED)) {
+              // If it's a link, prevent default action
+              if (target.closest('a')) {
+                e.preventDefault();
+              }
+              this.toggleMinimize();
+            }
+          });
+        }
 
         // Backdrop click handler
-        holder.addEventListener('click', (e) => {
-          if (e.target === holder) {
-            this.toggleMinimize();
-          }
-        });
+        if (holder && holder.dataset.ytMusicPlusListenerAttached !== 'true') {
+          holder.dataset.ytMusicPlusListenerAttached = 'true';
+          holder.addEventListener('click', (e) => {
+            if (e.target === holder) {
+              this.toggleMinimize();
+            }
+          });
+        }
 
-        document.addEventListener('keydown', (e) => {
-          if (e.key === 'Escape' && !holder.classList.contains(CONSTANTS.UI.CLASSES.HIDDEN)) {
-            this.hidePopup();
-          }
-        });
+        if (!this.keydownListenerAttached) {
+          this.keydownListenerAttached = true;
+          document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && holder && !holder.classList.contains(CONSTANTS.UI.CLASSES.HIDDEN)) {
+              this.hidePopup();
+            }
+          });
+        }
       }
 
       // Action button listeners
@@ -564,7 +578,8 @@ import { isTokenExpiredError } from '../utils/utils.js';
       this.attachButtonListener(CONSTANTS.UI.BUTTON_IDS.CANCEL_TARGET_SELECTION, () => this.cancelTargetSelection());
 
       const fileInput = document.getElementById(CONSTANTS.UI.BUTTON_IDS.IMPORT_FILE_INPUT);
-      if (fileInput) {
+      if (fileInput && fileInput.dataset.ytMusicPlusListenerAttached !== 'true') {
+        fileInput.dataset.ytMusicPlusListenerAttached = 'true';
         fileInput.addEventListener('change', (e) => {
           this.processor.importFromFile(e);
           this.ui.setActiveButton(CONSTANTS.UI.BUTTON_IDS.IMPORT_FROM_FILE);
@@ -589,6 +604,10 @@ import { isTokenExpiredError } from '../utils/utils.js';
     attachButtonListener(buttonId, handler) {
       const button = document.getElementById(buttonId);
       if (button) {
+        if (button.dataset.ytMusicPlusListenerAttached === 'true') {
+          return;
+        }
+        button.dataset.ytMusicPlusListenerAttached = 'true';
         button.addEventListener('click', handler);
       }
     }
