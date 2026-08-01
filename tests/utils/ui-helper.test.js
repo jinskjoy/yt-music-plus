@@ -637,6 +637,7 @@ describe('UIHelper', () => {
       const addBtn = document.getElementById('yt-music-plus-addSelectedBtn');
       const replaceBtn = document.getElementById('yt-music-plus-replaceSelectedBtn');
       const moveBtn = document.getElementById('yt-music-plus-moveSelectedBtn');
+      const copyBtn = document.getElementById('yt-music-plus-copySelectedBtn');
 
       // Default state with checked item having replacement
       UIHelper.updateCheckAllCheckbox();
@@ -644,11 +645,13 @@ describe('UIHelper', () => {
       expect(addBtn.disabled).toBe(false);
       expect(replaceBtn.disabled).toBe(false);
       expect(moveBtn.disabled).toBe(true); // only enabled in list-only mode
+      expect(copyBtn.disabled).toBe(true); // only enabled in list-only mode
 
       // Switch to list-only mode
       document.getElementById('yt-music-plus-itemsGridContainer').parentElement.classList.add('yt-music-plus-list-only-mode');
       UIHelper.updateCheckAllCheckbox();
       expect(moveBtn.disabled).toBe(false);
+      expect(copyBtn.disabled).toBe(false);
       expect(addBtn.disabled).toBe(true); // disabled in list-only mode
     });
   });

@@ -276,6 +276,8 @@ export class BridgeUI {
       CONSTANTS.UI.BUTTON_IDS.REPLACE_SELECTED,
       CONSTANTS.UI.BUTTON_IDS.ADD_SELECTED,
       CONSTANTS.UI.BUTTON_IDS.REMOVE_SELECTED,
+      CONSTANTS.UI.BUTTON_IDS.MOVE_SELECTED,
+      CONSTANTS.UI.BUTTON_IDS.COPY_SELECTED,
       CONSTANTS.UI.BUTTON_IDS.KEEP_ONLY_SELECTED,
       CONSTANTS.UI.BUTTON_IDS.BACK_BUTTON,
       CONSTANTS.UI.BUTTON_IDS.IMPORT_FROM_FOLDER,
@@ -447,6 +449,7 @@ export class BridgeUI {
       [BUTTON_IDS.ADD_SELECTED]: (mode === VIEW_MODES.SEARCH_RESULTS || mode === VIEW_MODES.IMPORT) && isEditable,
       [BUTTON_IDS.REMOVE_SELECTED]: (mode === VIEW_MODES.SEARCH_RESULTS || mode === VIEW_MODES.LIST_ALL) && isEditable,
       [BUTTON_IDS.MOVE_SELECTED]: mode === VIEW_MODES.LIST_ALL && isEditable,
+      [BUTTON_IDS.COPY_SELECTED]: mode === VIEW_MODES.LIST_ALL && isEditable,
       [BUTTON_IDS.KEEP_ONLY_SELECTED]: mode === VIEW_MODES.DUPLICATES && isEditable,
       [BUTTON_IDS.FIND_LOCAL_REPLACEMENTS]: mode === VIEW_MODES.IMPORT,
       [ELEMENT_IDS.TARGET_PLAYLIST_CONTAINER]: mode === VIEW_MODES.IMPORT,
@@ -482,12 +485,14 @@ export class BridgeUI {
     const addBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.ADD_SELECTED);
     const keepBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.KEEP_ONLY_SELECTED);
     const moveBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.MOVE_SELECTED);
+    const copyBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.COPY_SELECTED);
 
     if (replaceBtn && options.replace !== undefined) replaceBtn.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !options.replace);
     if (removeBtn && options.remove !== undefined) removeBtn.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !options.remove);
     if (addBtn && options.add !== undefined) addBtn.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !options.add);
     if (keepBtn && options.keep !== undefined) keepBtn.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !options.keep);
     if (moveBtn && options.move !== undefined) moveBtn.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !options.move);
+    if (copyBtn && options.copy !== undefined) copyBtn.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !options.copy);
   }
 
   /**
