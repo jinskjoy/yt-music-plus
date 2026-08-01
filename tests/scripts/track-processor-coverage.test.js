@@ -371,6 +371,25 @@ describe('TrackProcessor Coverage', () => {
        await processor.keepOnlySelected();
        expect(mockBridge.ui.setProgressText).toHaveBeenCalledWith(expect.stringContaining('Error occurred'));
     });
+
+    it('should handle API errors and token expiration in keepOnlySelected', async () => {
+       vi.spyOn(console, 'error').mockImplementation(() => {});
+       const row = document.createElement('div');
+       row.className = `${CONSTANTS.UI.CLASSES.GRID_ROW} ${CONSTANTS.UI.CLASSES.DUPLICATE_GROUP_ROW}`;
+       row.dataset.originalMedia = JSON.stringify({ videoId: 'v1', playlistSetVideoId: 'ps1' });
+       const cb = document.createElement('input');
+       cb.type = 'checkbox';
+       cb.className = CONSTANTS.UI.CLASSES.ITEM_CHECKBOX;
+       cb.checked = false;
+       row.appendChild(cb);
+       document.body.appendChild(row);
+
+       window.confirm = vi.fn().mockReturnValue(true);
+       mockYTMusicAPI.removeItemsFromPlaylist.mockRejectedValue(new Error('Fail'));
+       
+       await processor.keepOnlySelected();
+       expect(mockBridge.ui.setProgressText).toHaveBeenCalledWith(expect.stringContaining('Error occurred'));
+    });
   });
 
   describe('processPlaylistItems', () => {
