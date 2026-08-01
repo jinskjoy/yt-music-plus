@@ -306,6 +306,9 @@ import { isTokenExpiredError } from '../utils/utils.js';
      * Attempts to trigger a pseudo click event on YouTube Music elements to trigger an API call and fetch a new token
      */
     attemptTokenRefresh() {
+      this.ui.setProgressText(MESSAGES.ERRORS?.TOKEN_FETCHING_HINT || 'Attempting to fetch new token... Please wait or navigate anywhere in YouTube Music.');
+      this.ui.toggleSearchProgress(true, true);
+
       const selectors = [
         'ytmusic-logo',
         '#logo',
@@ -363,6 +366,7 @@ import { isTokenExpiredError } from '../utils/utils.js';
         const action = this.pendingAction;
         this.pendingAction = null;
         this.ui.setTokenExpiredModalVisibility(false);
+        this.ui.toggleSearchProgress(false);
         this.ui.setProgressText(MESSAGES.ERRORS?.TOKEN_FETCHED_RESUMING || 'New token received. Resuming action...');
         action();
       }

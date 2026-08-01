@@ -320,6 +320,9 @@ export class BridgeUI {
     const modal = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.TARGET_PLAYLIST_MODAL);
     if (modal) {
       modal.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !isVisible);
+      if (isVisible) {
+        this.initTargetModalButtons();
+      }
     }
   }
 
@@ -331,6 +334,9 @@ export class BridgeUI {
     const modal = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.TOKEN_EXPIRED_MODAL);
     if (modal) {
       modal.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !isVisible);
+      if (isVisible) {
+        this.initTokenModalButtons();
+      }
     }
   }
 
