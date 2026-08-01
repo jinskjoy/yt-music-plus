@@ -115,7 +115,7 @@ describe('TrackProcessor Extended', () => {
       
       await processor.findUnavailableTracks();
       
-      expect(spyProcess).toHaveBeenCalledWith([allItems[0]]);
+      expect(spyProcess).toHaveBeenCalledWith([allItems[0]], expect.anything());
     });
 
     it('should handle case where no unavailable tracks are found', async () => {

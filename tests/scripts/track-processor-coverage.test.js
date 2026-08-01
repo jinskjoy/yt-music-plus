@@ -69,7 +69,7 @@ describe('TrackProcessor Coverage', () => {
 
       await processor.findUnavailableTracks();
 
-      expect(processor.processPlaylistItems).toHaveBeenCalledWith([items[0]]);
+      expect(processor.processPlaylistItems).toHaveBeenCalledWith([items[0]], expect.anything());
       expect(mockBridge.ui.setProgressText).toHaveBeenCalledWith(MESSAGES.RESULTS.FOUND_TRACKS(1));
     });
 
@@ -465,6 +465,36 @@ describe('TrackProcessor Coverage', () => {
       const event = { target: { files: [fakeFile], value: 'test.txt' } };
       await processor.importFromFile(event);
       expect(mockBridge.ui.setProgressText).toHaveBeenCalledWith('Error reading file.');
+    });
+  });
+
+  describe('importFromFolder recursive edge cases', () => {
+    it('should recursively scan subdirectories and handle empty folder', async () => {
+      const subDirHandle = {
+        kind: 'directory',
+        values: async function* () {
+          yield { kind: 'file', getFile: async () => ({ name: 'sub_song.mp3' }) };
+        }
+      };
+      const rootDirHandle = {
+        kind: 'directory',
+        values: async function* () {
+          yield subDirHandle;
+          yield { kind: 'file', getFile: async () => ({ name: 'ignore.txt' }) };
+        }
+      };
+      window.showDirectoryPicker = vi.fn().mockResolvedValue(rootDirHandle);
+      await processor.importFromFolder();
+      expect(mockBridge.ui.setProgressText).toHaveBeenCalledWith(expect.stringContaining('Found 1 tracks'));
+
+      // Empty directory
+      const emptyDirHandle = {
+        kind: 'directory',
+        values: async function* () {}
+      };
+      window.showDirectoryPicker = vi.fn().mockResolvedValue(emptyDirHandle);
+      await processor.importFromFolder();
+      expect(mockBridge.ui.setProgressText).toHaveBeenCalledWith('No media files found in the selected folder.');
     });
   });
 });
