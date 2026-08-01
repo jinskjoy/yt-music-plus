@@ -212,6 +212,7 @@ describe('TrackProcessor Coverage', () => {
     });
     
     it('should handle API errors in findDuplicateTracks', async () => {
+       vi.spyOn(console, 'error').mockImplementation(() => {});
        mockYTMusicAPI.getPlaylistItems.mockRejectedValue(new Error('Fail'));
        await processor.findDuplicateTracks();
        expect(mockBridge.ui.setProgressText).toHaveBeenCalledWith(MESSAGES.ACTIONS.ERROR_OCCURRED('finding duplicate tracks'));

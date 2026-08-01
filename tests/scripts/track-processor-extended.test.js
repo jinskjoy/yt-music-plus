@@ -54,6 +54,7 @@ describe('TrackProcessor Extended', () => {
     });
 
     it('should handle API errors gracefully', async () => {
+       vi.spyOn(console, 'error').mockImplementation(() => {});
        mockBridge.ytMusicAPI.getPlaylistItems.mockRejectedValue(new Error('Fail'));
        await processor.fetchTargetPlaylistItems();
        expect(processor.targetPlaylistItems.size).toBe(0);

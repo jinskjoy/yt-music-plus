@@ -149,6 +149,7 @@ describe('Utils', () => {
     });
     
     it('copyToClipboard should return false if navigator.clipboard is missing', async () => {
+       vi.spyOn(console, 'error').mockImplementation(() => {});
        Object.defineProperty(navigator, 'clipboard', {
          value: undefined,
          configurable: true
