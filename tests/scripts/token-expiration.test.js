@@ -175,13 +175,15 @@ describe('Token Expiration Handling', () => {
         },
 
         handleTokenExpired(actionFn) {
-          this.pendingAction = actionFn;
+          this.pendingAction = null;
+          this.isWaitingForToken = true;
           this.ui.setTokenExpiredModalVisibility(true);
           this.ui.setProgressText(MESSAGES.ERRORS?.TOKEN_EXPIRED_MSG || 'Authentication Token Expired');
         },
 
         cancelTokenRefresh() {
           this.pendingAction = null;
+          this.isWaitingForToken = false;
           this.ui.setTokenExpiredModalVisibility(false);
           this.session.stop();
           this.ui.toggleSearchProgress(false);
@@ -229,51 +231,51 @@ describe('Token Expiration Handling', () => {
         },
 
         setAuthToken(token) {
+          const previousToken = this.ytMusicAPI.authToken;
           this.ytMusicAPI.setAuthToken(token);
-          this.addEventListeners();
-          this.ui.injectActionButtons(this.extSettings);
-          this.ui.showTriggerButtons(this.extSettings);
-          this.playerHandler.init();
+          if (previousToken !== token) {
+            this.addEventListeners();
+            this.ui.injectActionButtons(this.extSettings);
+            this.ui.showTriggerButtons(this.extSettings);
+            this.playerHandler.init();
 
-          if (this.pendingAction) {
-            const action = this.pendingAction;
-            this.pendingAction = null;
-            this.ui.setTokenExpiredModalVisibility(false);
-            this.ui.setProgressText(MESSAGES.ERRORS?.TOKEN_FETCHED_RESUMING || 'New token received. Resuming action...');
-            action();
+            if (this.isWaitingForToken || this.ui.isTokenExpiredModalVisible()) {
+              this.isWaitingForToken = false;
+              this.ui.setTokenExpiredModalVisibility(false);
+              this.ui.setProgressText(MESSAGES.ERRORS?.TOKEN_FETCHED_RESUMING || 'New token received.');
+            }
           }
         }
       };
     });
 
-    it('should set pendingAction and show modal on handleTokenExpired', () => {
+    it('should set isWaitingForToken and show modal on handleTokenExpired', () => {
       const actionFn = vi.fn();
       mockBridge.handleTokenExpired(actionFn);
 
-      expect(mockBridge.pendingAction).toBe(actionFn);
+      expect(mockBridge.isWaitingForToken).toBe(true);
       expect(mockUI.setTokenExpiredModalVisibility).toHaveBeenCalledWith(true);
       expect(mockUI.setProgressText).toHaveBeenCalledWith(MESSAGES.ERRORS.TOKEN_EXPIRED_MSG);
     });
 
-    it('should clear pendingAction and hide modal on cancelTokenRefresh', () => {
-      mockBridge.pendingAction = () => {};
+    it('should clear isWaitingForToken and hide modal on cancelTokenRefresh', () => {
+      mockBridge.isWaitingForToken = true;
       mockBridge.cancelTokenRefresh();
 
-      expect(mockBridge.pendingAction).toBeNull();
+      expect(mockBridge.isWaitingForToken).toBe(false);
       expect(mockUI.setTokenExpiredModalVisibility).toHaveBeenCalledWith(false);
       expect(mockUI.setProgressText).toHaveBeenCalledWith('Operation cancelled.');
     });
 
-    it('should resume pending action and hide modal when setAuthToken is called', () => {
-      const actionFn = vi.fn();
-      mockBridge.pendingAction = actionFn;
+    it('should hide modal and prompt user to retry action when setAuthToken is called', () => {
+      mockBridge.ytMusicAPI.authToken = 'old-token';
+      mockBridge.isWaitingForToken = true;
 
       mockBridge.setAuthToken('new-valid-token');
 
       expect(mockBridge.ytMusicAPI.setAuthToken).toHaveBeenCalledWith('new-valid-token');
-      expect(mockBridge.pendingAction).toBeNull();
       expect(mockUI.setTokenExpiredModalVisibility).toHaveBeenCalledWith(false);
-      expect(actionFn).toHaveBeenCalled();
+      expect(mockUI.setProgressText).toHaveBeenCalledWith(MESSAGES.ERRORS.TOKEN_FETCHED_RESUMING);
     });
 
     it('should attempt token refresh by clicking target elements or body', () => {

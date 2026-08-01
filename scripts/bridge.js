@@ -292,18 +292,18 @@ import { isTokenExpiredError } from '../utils/utils.js';
      * Handles token expiration by storing the pending action and showing the modal
      */
     handleTokenExpired(actionFn) {
-      this.failedToken = this.ytMusicAPI?.authToken || null;
-      this.pendingAction = actionFn;
+      this.pendingAction = null;
+      this.isWaitingForToken = true;
       this.ui.setTokenExpiredModalVisibility(true);
       this.ui.setProgressText(MESSAGES.ERRORS?.TOKEN_EXPIRED_MSG || 'Authentication Token Expired');
     }
 
     /**
-     * Cancels token refresh and clears pending action
+     * Cancels token refresh
      */
     cancelTokenRefresh() {
       this.pendingAction = null;
-      this.failedToken = null;
+      this.isWaitingForToken = false;
       this.ui.setTokenExpiredModalVisibility(false);
       this.session.stop();
       this.ui.toggleSearchProgress(false);
@@ -315,6 +315,7 @@ import { isTokenExpiredError } from '../utils/utils.js';
      */
     attemptTokenRefresh() {
       // Hide the token expired modal immediately so progress takes place in the main popup
+      this.isWaitingForToken = true;
       this.ui.setTokenExpiredModalVisibility(false);
       this.ui.toggleSearchProgress(true, true);
       this.ui.setProgressText(MESSAGES.ERRORS?.TOKEN_FETCHING_HINT || 'Attempting to fetch new token... Please wait or navigate anywhere in YouTube Music.');
@@ -377,17 +378,13 @@ import { isTokenExpiredError } from '../utils/utils.js';
         this.ui.injectActionButtons(this.extSettings);
         this.ui.showTriggerButtons(this.extSettings);
         this.playerHandler.init();
-      }
 
-      // Only resume pending action if a NEW/different token is received
-      if (this.pendingAction && token && token !== this.failedToken) {
-        const action = this.pendingAction;
-        this.pendingAction = null;
-        this.failedToken = null;
-        this.ui.setTokenExpiredModalVisibility(false);
-        this.ui.toggleSearchProgress(false);
-        this.ui.setProgressText(MESSAGES.ERRORS?.TOKEN_FETCHED_RESUMING || 'New token received. Resuming action...');
-        action();
+        if (this.isWaitingForToken || this.ui.isTokenExpiredModalVisible()) {
+          this.isWaitingForToken = false;
+          this.ui.setTokenExpiredModalVisibility(false);
+          this.ui.toggleSearchProgress(false);
+          this.ui.setProgressText(MESSAGES.ERRORS?.TOKEN_FETCHED_RESUMING || 'New authentication token received! Please retry your action.');
+        }
       }
     }
 

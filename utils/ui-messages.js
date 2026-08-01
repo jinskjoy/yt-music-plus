@@ -55,6 +55,6 @@ export const MESSAGES = {
     TOKEN_EXPIRED_TITLE: 'Authentication Token Expired',
     TOKEN_EXPIRED_MSG: 'Your session token has expired due to inactivity. Please obtain a new token to continue.',
     TOKEN_EXPIRED_HINT: 'Tip: Minimizing this window and navigating anywhere within the site will speed up token fetching. You can also try clicking the button below.',
-    TOKEN_FETCHED_RESUMING: 'New token received. Resuming action...',
+    TOKEN_FETCHED_RESUMING: 'New authentication token received! Please retry your action.',
   },
 };

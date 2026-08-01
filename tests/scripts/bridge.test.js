@@ -989,14 +989,14 @@ describe('Bridge Script Unit Tests', () => {
         expect(bridge.isTokenExpiredError(new Error('Normal error'))).toBe(false);
       });
 
-      it('should set pendingAction and show modal on handleTokenExpired', () => {
+      it('should set isWaitingForToken and show modal on handleTokenExpired', () => {
         const spyModal = vi.spyOn(bridge.ui, 'setTokenExpiredModalVisibility').mockImplementation(() => {});
         const spyText = vi.spyOn(bridge.ui, 'setProgressText').mockImplementation(() => {});
         const actionFn = vi.fn();
 
         bridge.handleTokenExpired(actionFn);
 
-        expect(bridge.pendingAction).toBe(actionFn);
+        expect(bridge.isWaitingForToken).toBe(true);
         expect(spyModal).toHaveBeenCalledWith(true);
         expect(spyText).toHaveBeenCalledWith(MESSAGES.ERRORS.TOKEN_EXPIRED_MSG);
       });
@@ -1013,19 +1013,16 @@ describe('Bridge Script Unit Tests', () => {
         expect(spyText).toHaveBeenCalledWith('Operation cancelled.');
       });
 
-      it('should resume pendingAction and hide modal when setAuthToken is called with new token', () => {
+      it('should notify user to retry action and hide modal when setAuthToken is called with new token', () => {
         const spyModal = vi.spyOn(bridge.ui, 'setTokenExpiredModalVisibility').mockImplementation(() => {});
         const spyText = vi.spyOn(bridge.ui, 'setProgressText').mockImplementation(() => {});
-        const actionFn = vi.fn();
-        bridge.pendingAction = actionFn;
+        bridge.isWaitingForToken = true;
 
         bridge.setAuthToken('new-token-abc');
 
         expect(bridge.ytMusicAPI.setAuthToken).toHaveBeenCalledWith('new-token-abc');
-        expect(bridge.pendingAction).toBeNull();
         expect(spyModal).toHaveBeenCalledWith(false);
         expect(spyText).toHaveBeenCalledWith(MESSAGES.ERRORS.TOKEN_FETCHED_RESUMING);
-        expect(actionFn).toHaveBeenCalled();
       });
 
       it('should attempt token refresh by dispatching click event on available selectors', () => {
