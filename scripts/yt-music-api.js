@@ -207,15 +207,24 @@ export class YTMusicAPI {
       allItems = allItems.concat(items);
 
       let continuationToken = this.findContinuationToken(records, response);
-      while (continuationToken) {
+      const seenTokens = new Set();
+
+      while (continuationToken && !seenTokens.has(continuationToken)) {
+        seenTokens.add(continuationToken);
+
         const continuationResponse = await this.getContinuationItems(continuationToken);
         const continuationRecords = this.extractContinuationRecords(continuationResponse);
 
         if (!continuationRecords || continuationRecords.length === 0) break;
 
         const continuationItems = YTMusicParser.parsePlaylistItemsFromResponse(continuationRecords);
+        if (continuationItems.length === 0) break;
+
         allItems = allItems.concat(continuationItems);
-        continuationToken = this.findContinuationToken(continuationRecords, continuationResponse);
+
+        const nextToken = this.findContinuationToken(continuationRecords, continuationResponse);
+        if (nextToken === continuationToken) break;
+        continuationToken = nextToken;
       }
 
       return allItems;
