@@ -292,6 +292,7 @@ import { isTokenExpiredError } from '../utils/utils.js';
      * Handles token expiration by storing the pending action and showing the modal
      */
     handleTokenExpired(actionFn) {
+      this.failedToken = this.ytMusicAPI?.authToken || null;
       this.pendingAction = actionFn;
       this.ui.setTokenExpiredModalVisibility(true);
       this.ui.setProgressText(MESSAGES.ERRORS?.TOKEN_EXPIRED_MSG || 'Authentication Token Expired');
@@ -302,6 +303,7 @@ import { isTokenExpiredError } from '../utils/utils.js';
      */
     cancelTokenRefresh() {
       this.pendingAction = null;
+      this.failedToken = null;
       this.ui.setTokenExpiredModalVisibility(false);
       this.session.stop();
       this.ui.toggleSearchProgress(false);
@@ -367,15 +369,21 @@ import { isTokenExpiredError } from '../utils/utils.js';
      * Sets authentication token and initializes UI elements
      */
     setAuthToken(token) {
+      const previousToken = this.ytMusicAPI.authToken;
       this.ytMusicAPI.setAuthToken(token);
-      this.addEventListeners();
-      this.ui.injectActionButtons(this.extSettings);
-      this.ui.showTriggerButtons(this.extSettings);
-      this.playerHandler.init();
 
-      if (this.pendingAction) {
+      if (previousToken !== token) {
+        this.addEventListeners();
+        this.ui.injectActionButtons(this.extSettings);
+        this.ui.showTriggerButtons(this.extSettings);
+        this.playerHandler.init();
+      }
+
+      // Only resume pending action if a NEW/different token is received
+      if (this.pendingAction && token && token !== this.failedToken) {
         const action = this.pendingAction;
         this.pendingAction = null;
+        this.failedToken = null;
         this.ui.setTokenExpiredModalVisibility(false);
         this.ui.toggleSearchProgress(false);
         this.ui.setProgressText(MESSAGES.ERRORS?.TOKEN_FETCHED_RESUMING || 'New token received. Resuming action...');
