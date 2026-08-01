@@ -292,6 +292,7 @@ import { isTokenExpiredError } from '../utils/utils.js';
      * Handles token expiration by storing the pending action and showing the modal
      */
     handleTokenExpired(actionFn) {
+      this.failedToken = this.ytMusicAPI.authToken;
       this.pendingAction = null;
       this.isWaitingForToken = true;
       this.ui.setTokenExpiredModalVisibility(true);
@@ -370,10 +371,16 @@ import { isTokenExpiredError } from '../utils/utils.js';
      * Sets authentication token and initializes UI elements
      */
     setAuthToken(token) {
+      if (!token || typeof token !== 'string') return;
+      if (this.failedToken && token === this.failedToken) {
+        return;
+      }
+
       const previousToken = this.ytMusicAPI.authToken;
       this.ytMusicAPI.setAuthToken(token);
 
       if (previousToken !== token) {
+        this.failedToken = null;
         this.addEventListeners();
         this.ui.injectActionButtons(this.extSettings);
         this.ui.showTriggerButtons(this.extSettings);

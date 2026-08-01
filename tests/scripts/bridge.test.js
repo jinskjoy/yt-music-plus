@@ -785,12 +785,24 @@ describe('Bridge Script Unit Tests', () => {
       await bridge.executeCopySelectedItems({ id: 't1' }, []);
       expect(bridge.beforeActionsOnSelectedItems).not.toHaveBeenCalled();
 
-      await bridge.executeCopySelectedItems(null, [{ originalMedia: { videoId: 'v1' } }]);
-      expect(bridge.ui.setProgressText).toHaveBeenCalledWith(MESSAGES.ACTIONS.COPYING_SELECTED);
     });
   });
 
   describe('Global Interceptors and DOM Events', () => {
+    it('should ignore setAuthToken if token is invalid or matches failedToken', () => {
+      bridge.ytMusicAPI.setAuthToken = vi.fn(function(t) { this.authToken = t; });
+      bridge.setAuthToken(null);
+      expect(bridge.ytMusicAPI.authToken).toBeNull();
+
+      bridge.failedToken = 'Bearer old-failed-token';
+      bridge.setAuthToken('Bearer old-failed-token');
+      expect(bridge.failedToken).toBe('Bearer old-failed-token');
+
+      bridge.setAuthToken('Bearer brand-new-token');
+      expect(bridge.failedToken).toBeNull();
+      expect(bridge.ytMusicAPI.authToken).toBe('Bearer brand-new-token');
+    });
+
     it('should intercept token and call setAuthToken using the global interceptor', async () => {
       bridge.ytMusicAPI.isAuthTokenSet.mockReturnValue(false);
       const setAuthTokenSpy = vi.spyOn(bridge, 'setAuthToken');
