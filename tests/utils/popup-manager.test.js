@@ -446,5 +446,50 @@ describe('PopupManager', () => {
       const container = document.querySelector(`.${CONSTANTS.UI.CLASSES.POPUP_CONTAINER}`);
       expect(container.classList.contains(CONSTANTS.UI.CLASSES.MINIMIZED)).toBe(false);
     });
+
+    it('should show playlist selection screen and toggle element classes', () => {
+      document.body.innerHTML = `
+        <div id="${CONSTANTS.UI.ELEMENT_IDS.POPUP_HOLDER}">
+          <div id="${CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_SELECTION_SCREEN}"></div>
+          <div id="${CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_DETAILS_SCREEN}" class="${CONSTANTS.UI.CLASSES.HIDDEN}"></div>
+          <div id="${CONSTANTS.UI.ELEMENT_IDS.ITEMS_GRID_CONTAINER}"><div>Item</div></div>
+          <div id="${CONSTANTS.UI.ELEMENT_IDS.SELECTION_FOOTER}">
+            <div id="${CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_SELECTION_ACTIONS}"></div>
+            <div id="${CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_COUNTS}"></div>
+            <div id="${CONSTANTS.UI.ELEMENT_IDS.SELECTION_COUNT}"></div>
+            <div id="${CONSTANTS.UI.ELEMENT_IDS.PROGRESS_TEXT}"></div>
+            <div id="${CONSTANTS.UI.ELEMENT_IDS.SEARCH_PROGRESS}"></div>
+            <button id="${CONSTANTS.UI.BUTTON_IDS.CANCEL_SEARCH}"></button>
+          </div>
+          <div id="${CONSTANTS.UI.ELEMENT_IDS.POPUP_TITLE}">Old Title</div>
+        </div>
+      `;
+      popupManager.showPlaylistSelection();
+      expect(document.getElementById(CONSTANTS.UI.ELEMENT_IDS.ITEMS_GRID_CONTAINER).children.length).toBe(0);
+      expect(document.getElementById(CONSTANTS.UI.ELEMENT_IDS.POPUP_TITLE).textContent).toBe('');
+    });
+
+    it('should handle missing elements in showPlaylistSelection and showPlaylistDetails', () => {
+      document.body.innerHTML = '';
+      popupManager.showPlaylistSelection();
+      popupManager.showPlaylistDetails();
+    });
+
+    it('should show playlist details screen and update footer', () => {
+      document.body.innerHTML = `
+        <div id="${CONSTANTS.UI.ELEMENT_IDS.POPUP_HOLDER}">
+          <div id="${CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_SELECTION_SCREEN}"></div>
+          <div id="${CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_DETAILS_SCREEN}" class="${CONSTANTS.UI.CLASSES.HIDDEN}"></div>
+          <div id="${CONSTANTS.UI.ELEMENT_IDS.SELECTION_FOOTER}">
+            <div id="${CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_SELECTION_ACTIONS}"></div>
+            <div id="${CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_COUNTS}"></div>
+            <div id="${CONSTANTS.UI.ELEMENT_IDS.SELECTION_COUNT}"></div>
+          </div>
+        </div>
+      `;
+      popupManager.showPlaylistDetails();
+      const details = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.PLAYLIST_DETAILS_SCREEN);
+      expect(details.classList.contains(CONSTANTS.UI.CLASSES.HIDDEN)).toBe(false);
+    });
   });
 });
