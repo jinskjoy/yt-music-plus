@@ -10,6 +10,7 @@ import { TrackProcessor } from './track-processor.js';
 import { PlayerHandler } from './player-handler.js';
 import { CONSTANTS } from '../utils/constants.js';
 import { MESSAGES } from '../utils/ui-messages.js';
+import { isTokenExpiredError } from '../utils/utils.js';
 
 (function () {
   /**
@@ -68,27 +69,33 @@ import { MESSAGES } from '../utils/ui-messages.js';
         }
 
         try {
-          const request = args[0];
-          const headers = request?.headers;
+          let headers = null;
+          const firstArg = args[0];
+          const secondArg = args[1];
 
-          if (headers && request?.url?.includes('music.youtube.com')) {
+          if (firstArg && typeof firstArg === 'object' && firstArg.headers) {
+            headers = firstArg.headers;
+          } else if (secondArg && typeof secondArg === 'object' && secondArg.headers) {
+            headers = secondArg.headers;
+          }
+
+          if (headers) {
             let authToken = null;
-
-            if (headers instanceof Headers) {
-              authToken = headers.get('Authorization');
-            } else {
-              authToken = headers['Authorization'] || headers['authorization'];
+            if (typeof Headers !== 'undefined' && headers instanceof Headers) {
+              authToken = headers.get('Authorization') || headers.get('authorization');
+            } else if (typeof headers === 'object') {
+              authToken = headers['Authorization'] || headers['authorization'] || headers['AUTHORIZATION'];
             }
 
             if (authToken) {
               self.onTokenFound(authToken);
             }
           }
-
-          return self.originalFetch.apply(window, args);
         } catch (error) {
-          return self.originalFetch.apply(window, args);
+          // Handle fetch error silently
         }
+
+        return self.originalFetch.apply(window, args);
       };
     }
   }
@@ -200,6 +207,7 @@ import { MESSAGES } from '../utils/ui-messages.js';
       this.isReloadDisabled = false;
       this.isFetchingPlaylists = false;
       this.localTracks = [];
+      this.pendingAction = null;
       this.extSettings = {
         showPlaylistButton: true,
         showNavButton: true
@@ -274,14 +282,117 @@ import { MESSAGES } from '../utils/ui-messages.js';
     }
 
     /**
+     * Checks if error represents token expiration or permission error
+     */
+    isTokenExpiredError(error) {
+      return isTokenExpiredError(error);
+    }
+
+    /**
+     * Handles token expiration by storing the pending action and showing the modal
+     */
+    handleTokenExpired(actionFn) {
+      this.failedToken = this.ytMusicAPI.authToken;
+      this.pendingAction = null;
+      this.isWaitingForToken = true;
+      this.ui.setTokenExpiredModalVisibility(true);
+      this.ui.setProgressText(MESSAGES.ERRORS?.TOKEN_EXPIRED_MSG || 'Authentication Token Expired');
+    }
+
+    /**
+     * Cancels token refresh
+     */
+    cancelTokenRefresh() {
+      this.pendingAction = null;
+      this.isWaitingForToken = false;
+      this.ui.setTokenExpiredModalVisibility(false);
+      this.session.stop();
+      this.ui.toggleSearchProgress(false);
+      this.ui.setProgressText('Operation cancelled.');
+    }
+
+    /**
+     * Attempts to trigger a pseudo click event on YouTube Music elements to trigger an API call and fetch a new token
+     */
+    attemptTokenRefresh() {
+      // Hide the token expired modal immediately so progress takes place in the main popup
+      this.isWaitingForToken = true;
+      this.ui.setTokenExpiredModalVisibility(false);
+      this.ui.toggleSearchProgress(true, true);
+      this.ui.setProgressText(MESSAGES.ERRORS?.TOKEN_FETCHING_HINT || 'Attempting to fetch new token... Please wait or navigate anywhere in YouTube Music.');
+
+      const selectors = [
+        'ytmusic-logo a',
+        'ytmusic-logo',
+        '#logo',
+        '.ytmusic-logo',
+        'ytmusic-pivot-bar-renderer ytmusic-pivot-bar-item-renderer a',
+        'ytmusic-pivot-bar-renderer ytmusic-pivot-bar-item-renderer',
+        'ytmusic-search-box input',
+        'ytmusic-search-box',
+        'ytmusic-nav-bar',
+        'tp-yt-paper-icon-button'
+      ];
+
+      let clicked = false;
+      for (const selector of selectors) {
+        const el = document.querySelector(selector);
+        if (el) {
+          try {
+            const clickEvent = new MouseEvent('click', {
+              bubbles: true,
+              cancelable: true,
+              view: window
+            });
+            el.dispatchEvent(clickEvent);
+            clicked = true;
+            break;
+          } catch (e) {
+            // Ignore
+          }
+        }
+      }
+
+      if (!clicked && document.body) {
+        try {
+          const clickEvent = new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+            view: window
+          });
+          document.body.dispatchEvent(clickEvent);
+        } catch (e) {
+          // Ignore
+        }
+      }
+    }
+
+    /**
      * Sets authentication token and initializes UI elements
      */
     setAuthToken(token) {
+      if (!token || typeof token !== 'string') return;
+      if (this.failedToken && token === this.failedToken) {
+        return;
+      }
+
+      const previousToken = this.ytMusicAPI.authToken;
       this.ytMusicAPI.setAuthToken(token);
-      this.addEventListeners();
-      this.ui.injectActionButtons(this.extSettings);
-      this.ui.showTriggerButtons(this.extSettings);
-      this.playerHandler.init();
+
+      if (previousToken !== token) {
+        this.failedToken = null;
+        this.addEventListeners();
+        this.ui.injectActionButtons(this.extSettings);
+        this.ui.showTriggerButtons(this.extSettings);
+        this.playerHandler.init();
+
+        if (this.isWaitingForToken || this.ui.isTokenExpiredModalVisible()) {
+          this.isWaitingForToken = false;
+          this.ui.setTokenExpiredModalVisibility(false);
+          this.ui.toggleSearchProgress(false);
+          this.ui.setProgressText(MESSAGES.ERRORS?.TOKEN_FETCHED_RESUMING || 'New authentication token received! Please retry your action.');
+        }
+      }
     }
 
     /**
@@ -346,9 +457,13 @@ import { MESSAGES } from '../utils/ui-messages.js';
     /**
      * Adds event listeners for popup buttons and navigation
      */
+    /**
+     * Adds event listeners for popup buttons and navigation
+     */
     addEventListeners() {
       // Navigation listener for playlist page detection
-      if (typeof navigation !== 'undefined') {
+      if (typeof navigation !== 'undefined' && !this.navigationListenerAttached) {
+        this.navigationListenerAttached = true;
         navigation.addEventListener('navigate', (event) => {
           if (event.navigationType !== 'push') return;
 
@@ -366,7 +481,8 @@ import { MESSAGES } from '../utils/ui-messages.js';
 
       // Nav bar button listener
       const navBarBtn = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.NAV_BTN);
-      if (navBarBtn) {
+      if (navBarBtn && navBarBtn.dataset.ytMusicPlusListenerAttached !== 'true') {
+        navBarBtn.dataset.ytMusicPlusListenerAttached = 'true';
         navBarBtn.addEventListener('click', () => this.showPopup());
       }
 
@@ -375,44 +491,53 @@ import { MESSAGES } from '../utils/ui-messages.js';
         const { holder, container, header } = this.popupElements;
 
         // Use event delegation for header actions (close, minimize, restore)
-        header?.addEventListener('click', (e) => {
-          const target = e.target;
-          
-          // Handle close button
-          if (target.id === CONSTANTS.UI.BUTTON_IDS.CLOSE_POPUP || target.closest(`#${CONSTANTS.UI.BUTTON_IDS.CLOSE_POPUP}`)) {
-            this.hidePopup();
-            return;
-          }
-
-          // Handle minimize button
-          if (target.id === CONSTANTS.UI.BUTTON_IDS.MINIMIZE_POPUP || target.closest(`#${CONSTANTS.UI.BUTTON_IDS.MINIMIZE_POPUP}`)) {
-            e.stopPropagation();
-            this.toggleMinimize();
-            return;
-          }
-
-          // Restore on header click if minimized
-          if (container.classList.contains(CONSTANTS.UI.CLASSES.MINIMIZED)) {
-            // If it's a link, prevent default action
-            if (target.closest('a')) {
-              e.preventDefault();
+        if (header && header.dataset.ytMusicPlusListenerAttached !== 'true') {
+          header.dataset.ytMusicPlusListenerAttached = 'true';
+          header.addEventListener('click', (e) => {
+            const target = e.target;
+            
+            // Handle close button
+            if (target.id === CONSTANTS.UI.BUTTON_IDS.CLOSE_POPUP || target.closest(`#${CONSTANTS.UI.BUTTON_IDS.CLOSE_POPUP}`)) {
+              this.hidePopup();
+              return;
             }
-            this.toggleMinimize();
-          }
-        });
+
+            // Handle minimize button
+            if (target.id === CONSTANTS.UI.BUTTON_IDS.MINIMIZE_POPUP || target.closest(`#${CONSTANTS.UI.BUTTON_IDS.MINIMIZE_POPUP}`)) {
+              e.stopPropagation();
+              this.toggleMinimize();
+              return;
+            }
+
+            // Restore on header click if minimized
+            if (container.classList.contains(CONSTANTS.UI.CLASSES.MINIMIZED)) {
+              // If it's a link, prevent default action
+              if (target.closest('a')) {
+                e.preventDefault();
+              }
+              this.toggleMinimize();
+            }
+          });
+        }
 
         // Backdrop click handler
-        holder.addEventListener('click', (e) => {
-          if (e.target === holder) {
-            this.toggleMinimize();
-          }
-        });
+        if (holder && holder.dataset.ytMusicPlusListenerAttached !== 'true') {
+          holder.dataset.ytMusicPlusListenerAttached = 'true';
+          holder.addEventListener('click', (e) => {
+            if (e.target === holder) {
+              this.toggleMinimize();
+            }
+          });
+        }
 
-        document.addEventListener('keydown', (e) => {
-          if (e.key === 'Escape' && !holder.classList.contains(CONSTANTS.UI.CLASSES.HIDDEN)) {
-            this.hidePopup();
-          }
-        });
+        if (!this.keydownListenerAttached) {
+          this.keydownListenerAttached = true;
+          document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && holder && !holder.classList.contains(CONSTANTS.UI.CLASSES.HIDDEN)) {
+              this.hidePopup();
+            }
+          });
+        }
       }
 
       // Action button listeners
@@ -453,7 +578,8 @@ import { MESSAGES } from '../utils/ui-messages.js';
       this.attachButtonListener(CONSTANTS.UI.BUTTON_IDS.CANCEL_TARGET_SELECTION, () => this.cancelTargetSelection());
 
       const fileInput = document.getElementById(CONSTANTS.UI.BUTTON_IDS.IMPORT_FILE_INPUT);
-      if (fileInput) {
+      if (fileInput && fileInput.dataset.ytMusicPlusListenerAttached !== 'true') {
+        fileInput.dataset.ytMusicPlusListenerAttached = 'true';
         fileInput.addEventListener('change', (e) => {
           this.processor.importFromFile(e);
           this.ui.setActiveButton(CONSTANTS.UI.BUTTON_IDS.IMPORT_FROM_FILE);
@@ -478,6 +604,10 @@ import { MESSAGES } from '../utils/ui-messages.js';
     attachButtonListener(buttonId, handler) {
       const button = document.getElementById(buttonId);
       if (button) {
+        if (button.dataset.ytMusicPlusListenerAttached === 'true') {
+          return;
+        }
+        button.dataset.ytMusicPlusListenerAttached = 'true';
         button.addEventListener('click', handler);
       }
     }
@@ -529,6 +659,10 @@ import { MESSAGES } from '../utils/ui-messages.js';
         
         this.playlistsCache = playlists;
       } catch (error) {
+        if (this.isTokenExpiredError(error)) {
+          this.handleTokenExpired(() => this.initPlaylistFetching(forceRefresh, onlyEditable, isTargetSelection));
+          return;
+        }
         console.error('YouTube Music +: Error fetching playlists', error);
         this.playlistsCache = [];
       } finally {
@@ -740,8 +874,13 @@ import { MESSAGES } from '../utils/ui-messages.js';
             if (addSuccess) {
               // Only remove originals if adding replacements succeeded
               if (itemsToRemove.length > 0) {
-                const removeSuccess = await this.ytMusicAPI.removeItemsFromPlaylist(playlistId, itemsToRemove);
-                if (!removeSuccess) {
+                try {
+                  const removeSuccess = await this.ytMusicAPI.removeItemsFromPlaylist(playlistId, itemsToRemove);
+                  if (!removeSuccess) {
+                    success = false;
+                  }
+                } catch (error) {
+                  if (this.isTokenExpiredError(error)) throw error;
                   success = false;
                 }
               }
@@ -754,6 +893,7 @@ import { MESSAGES } from '../utils/ui-messages.js';
               success = false;
             }
           } catch (error) {
+            if (this.isTokenExpiredError(error)) throw error;
             success = false;
           }
         }
@@ -765,6 +905,10 @@ import { MESSAGES } from '../utils/ui-messages.js';
           this.ui.setProgressText(countReplaced > 0 ? MESSAGES.ACTIONS.REPLACE_COMPLETE(countReplaced) : MESSAGES.ACTIONS.NO_REPLACEMENTS_MADE);
         }
       } catch (error) {
+        if (this.isTokenExpiredError(error)) {
+          this.handleTokenExpired(() => this.replaceSelectedItems());
+          return;
+        }
         this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('replacing'));
       } finally {
         await this.afterActionsOnSelectedItems(true);
@@ -810,12 +954,17 @@ import { MESSAGES } from '../utils/ui-messages.js';
               this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('adding'));
             }
           } catch (error) {
+            if (this.isTokenExpiredError(error)) throw error;
             this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('adding'));
           }
         } else {
           this.ui.setProgressText(MESSAGES.ACTIONS.NO_ADDITIONS_MADE);
         }
       } catch (error) {
+        if (this.isTokenExpiredError(error)) {
+          this.handleTokenExpired(() => this.addSelectedItems());
+          return;
+        }
         this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('adding'));
       } finally {
         await this.afterActionsOnSelectedItems(true);
@@ -863,12 +1012,17 @@ import { MESSAGES } from '../utils/ui-messages.js';
               this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('removing'));
             }
           } catch (error) {
+            if (this.isTokenExpiredError(error)) throw error;
             this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('removing'));
           }
         } else {
           this.ui.setProgressText(MESSAGES.ACTIONS.NO_REMOVALS);
         }
       } catch (error) {
+        if (this.isTokenExpiredError(error)) {
+          this.handleTokenExpired(() => this.removeSelectedItems());
+          return;
+        }
         this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('removing'));
       } finally {
         await this.afterActionsOnSelectedItems(true);
@@ -940,6 +1094,7 @@ import { MESSAGES } from '../utils/ui-messages.js';
                 this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('removing moved tracks'));
               }
             } catch (error) {
+              if (this.isTokenExpiredError(error)) throw error;
               this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('removing moved tracks'));
             }
           } else {
@@ -949,6 +1104,10 @@ import { MESSAGES } from '../utils/ui-messages.js';
           this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('moving'));
         }
       } catch (error) {
+        if (this.isTokenExpiredError(error)) {
+          this.handleTokenExpired(() => this.executeMoveSelectedItems(targetPlaylist, selectedItems));
+          return;
+        }
         this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('moving'));
       } finally {
         await this.afterActionsOnSelectedItems(true);
@@ -1002,6 +1161,10 @@ import { MESSAGES } from '../utils/ui-messages.js';
           this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('copying tracks'));
         }
       } catch (error) {
+        if (this.isTokenExpiredError(error)) {
+          this.handleTokenExpired(() => this.executeCopySelectedItems(targetPlaylist, selectedItems));
+          return;
+        }
         this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('copying tracks'));
       } finally {
         await this.afterActionsOnSelectedItems(true);
@@ -1062,7 +1225,7 @@ import { MESSAGES } from '../utils/ui-messages.js';
     (token) => {
       window.bridgeInstance?.setAuthToken(token);
     },
-    () => !window.bridgeInstance?.ytMusicAPI.isAuthTokenSet()
+    () => true
   );
   interceptor.start();
 })();

@@ -41,10 +41,22 @@ export class YTMusicAPI {
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const error = new Error(`HTTP error! status: ${response.status}`);
+      error.status = response.status;
+      if (response.status === 401 || response.status === 403) {
+        error.isTokenExpired = true;
+      }
+      throw error;
     }
 
-    return response.json();
+    const data = await response.json();
+    if (data && data.error && (data.error.code === 401 || data.error.code === 403)) {
+      const error = new Error(data.error.message || `API error! status: ${data.error.code}`);
+      error.status = data.error.code;
+      error.isTokenExpired = true;
+      throw error;
+    }
+    return data;
   }
 
   /**
@@ -71,10 +83,22 @@ export class YTMusicAPI {
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const error = new Error(`HTTP error! status: ${response.status}`);
+      error.status = response.status;
+      if (response.status === 401 || response.status === 403) {
+        error.isTokenExpired = true;
+      }
+      throw error;
     }
 
-    return response.json();
+    const data = await response.json();
+    if (data && data.error && (data.error.code === 401 || data.error.code === 403)) {
+      const error = new Error(data.error.message || `API error! status: ${data.error.code}`);
+      error.status = data.error.code;
+      error.isTokenExpired = true;
+      throw error;
+    }
+    return data;
   }
 
   /**
@@ -183,18 +207,39 @@ export class YTMusicAPI {
       allItems = allItems.concat(items);
 
       let continuationToken = this.findContinuationToken(records, response);
-      while (continuationToken) {
+      const seenTokens = new Set();
+
+      while (continuationToken && !seenTokens.has(continuationToken)) {
+        seenTokens.add(continuationToken);
+
         const continuationResponse = await this.getContinuationItems(continuationToken);
         const continuationRecords = this.extractContinuationRecords(continuationResponse);
 
         if (!continuationRecords || continuationRecords.length === 0) break;
 
         const continuationItems = YTMusicParser.parsePlaylistItemsFromResponse(continuationRecords);
+        if (continuationItems.length === 0) break;
+
         allItems = allItems.concat(continuationItems);
-        continuationToken = this.findContinuationToken(continuationRecords, continuationResponse);
+
+        const nextToken = this.findContinuationToken(continuationRecords, continuationResponse);
+        if (nextToken === continuationToken) break;
+        continuationToken = nextToken;
       }
 
-      return allItems;
+      // Deduplicate items by unique key (playlistSetVideoId or videoId+name)
+      const seenKeys = new Set();
+      const uniqueItems = [];
+      for (const item of allItems) {
+        const key = item.playlistSetVideoId || (item.videoId ? `${item.videoId}_${item.name}` : null);
+        if (key) {
+          if (seenKeys.has(key)) continue;
+          seenKeys.add(key);
+        }
+        uniqueItems.push(item);
+      }
+
+      return uniqueItems;
     } catch (error) {
       throw error;
     }

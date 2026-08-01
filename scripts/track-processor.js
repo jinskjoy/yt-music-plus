@@ -2,7 +2,7 @@ import { UIHelper } from '../utils/ui-helper.js';
 import { Track } from './models/track.js';
 import { CONSTANTS } from '../utils/constants.js';
 import { MESSAGES } from '../utils/ui-messages.js';
-import { TextSimilarity } from '../utils/utils.js';
+import { TextSimilarity, isTokenExpiredError } from '../utils/utils.js';
 
 /**
  * TrackProcessor - Handles the logic for processing tracks and finding replacements
@@ -12,6 +12,26 @@ export class TrackProcessor {
     this.bridge = bridge;
     this.ytMusicAPI = bridge.ytMusicAPI;
     this.targetPlaylistItems = new Map(); // Cache for target playlist video IDs
+    this.currentOperationId = 0;
+  }
+
+  startNewOperation() {
+    this.currentOperationId++;
+    this.bridge.ui.clearPlaylistItemsContainer();
+    return this.currentOperationId;
+  }
+
+  isTokenExpiredError(error) {
+    if (this.bridge?.isTokenExpiredError) {
+      return this.bridge.isTokenExpiredError(error);
+    }
+    return isTokenExpiredError(error);
+  }
+
+  handleTokenExpired(actionFn) {
+    if (this.bridge?.handleTokenExpired) {
+      this.bridge.handleTokenExpired(actionFn);
+    }
   }
 
   /**
@@ -28,12 +48,17 @@ export class TrackProcessor {
     try {
       const items = await this.ytMusicAPI.getPlaylistItems(targetPlaylistId);
       this.targetPlaylistItems.clear();
-      items.forEach(item => {
-        if (item.videoId) {
-          this.targetPlaylistItems.set(item.videoId, true);
-        }
-      });
+      if (Array.isArray(items)) {
+        items.forEach(item => {
+          if (item.videoId) {
+            this.targetPlaylistItems.set(item.videoId, true);
+          }
+        });
+      }
     } catch (error) {
+      if (this.isTokenExpiredError(error)) {
+        throw error;
+      }
       console.error('Error fetching target playlist items:', error);
     }
   }
@@ -54,14 +79,30 @@ export class TrackProcessor {
    * Processes playlist items and finds replacements for unavailable tracks
    * @async
    * @param {Array<Track>} items - Playlist tracks to process
+   * @param {number} [parentOpId] - Optional parent operation ID
    */
-  async processPlaylistItems(items) {
+  async processPlaylistItems(items, parentOpId = null) {
+    const opId = parentOpId || this.startNewOperation();
     this.bridge.session.start(items.length);
     const itemsToProcess = items;
-    this.bridge.ui.clearPlaylistItemsContainer();
+    
+    if (!parentOpId) {
+      this.bridge.ui.clearPlaylistItemsContainer();
+    }
 
     // Pre-fetch target playlist items to check for duplicates
-    await this.fetchTargetPlaylistItems();
+    try {
+      await this.fetchTargetPlaylistItems();
+    } catch (error) {
+      if (this.currentOperationId !== opId) return;
+      if (this.isTokenExpiredError(error)) {
+        itemsToProcess.forEach(item => { item.isSearching = false; });
+        this.handleTokenExpired(() => this.processPlaylistItems(items));
+        return;
+      }
+    }
+
+    if (this.currentOperationId !== opId) return;
 
     // Prepare items for display
     itemsToProcess.forEach(item => {
@@ -78,6 +119,10 @@ export class TrackProcessor {
 
     let i = 1;
     for (const item of itemsToProcess) {
+      if (this.currentOperationId !== opId) {
+        break;
+      }
+
       this.bridge.session.updateProgress();
       if (item.isGeneric || item.isSkipped) {
         i++;
@@ -97,12 +142,24 @@ export class TrackProcessor {
         item.replacement = bestSearchResult;
         this.checkForDuplicate(item);
       } catch (error) {
+        if (this.currentOperationId !== opId) return;
+        if (this.isTokenExpiredError(error)) {
+          // Clear searching state on remaining items so UI doesn't get stuck on "waiting for search..."
+          for (let k = i - 1; k < itemsToProcess.length; k++) {
+            itemsToProcess[k].isSearching = false;
+            this.bridge.ui.updateItemRow(itemsToProcess[k], CONSTANTS.API.BASE_URL, k + 1);
+          }
+          this.handleTokenExpired(() => this.processPlaylistItems(items));
+          return;
+        }
         item.replacement = null;
         item.isDuplicate = false;
       }
       
       item.isSearching = false;
-      this.bridge.ui.updateItemRow(item, CONSTANTS.API.BASE_URL, i++);
+      if (this.currentOperationId === opId) {
+        this.bridge.ui.updateItemRow(item, CONSTANTS.API.BASE_URL, i++);
+      }
 
       await this.bridge.sleep(CONSTANTS.API.TIMEOUT_DURATION_MS);
     }
@@ -112,14 +169,18 @@ export class TrackProcessor {
         if (!itemsToProcess[j - 1].isGeneric && !itemsToProcess[j - 1].isSkipped) {
           itemsToProcess[j - 1].isSearching = false;
           itemsToProcess[j - 1].searchCancelled = true;
-          this.bridge.ui.updateItemRow(itemsToProcess[j - 1], CONSTANTS.API.BASE_URL, j);
+          if (this.currentOperationId === opId) {
+            this.bridge.ui.updateItemRow(itemsToProcess[j - 1], CONSTANTS.API.BASE_URL, j);
+          }
         }
       }
     }
 
-    this.bridge.session.stop();
-    this.setFinalProgressText(itemsToProcess);
-    UIHelper.updateCheckAllCheckbox();
+    if (this.currentOperationId === opId) {
+      this.bridge.session.stop();
+      this.setFinalProgressText(itemsToProcess);
+      UIHelper.updateCheckAllCheckbox();
+    }
   }
 
   /**
@@ -183,8 +244,7 @@ export class TrackProcessor {
    * @async
    */
   async findUnavailableTracks() {
-    this.bridge.session.isCancelled = false;
-    this.bridge.ui.clearPlaylistItemsContainer();
+    const opId = this.startNewOperation();
     this.bridge.ui.updateViewMode(CONSTANTS.UI.VIEW_MODES.SEARCH_RESULTS, this.bridge.currentSelectedPlaylist);
     this.bridge.ui.toggleSearchProgress(true, true);
     this.bridge.ui.setProgressText(MESSAGES.SEARCH.FINDING_UNAVAILABLE);
@@ -197,7 +257,8 @@ export class TrackProcessor {
 
       const items = await this.ytMusicAPI.getPlaylistItems(currentPlaylistId);
       
-      if (this.bridge.session.isCancelled) return;
+      if (this.currentOperationId !== opId || this.bridge.session.isCancelled) return;
+
       if (items.length === 0) {
         this.bridge.ui.setProgressText(MESSAGES.RESULTS.NO_TRACKS_FOUND);
         return;
@@ -211,11 +272,18 @@ export class TrackProcessor {
       }
 
       this.bridge.ui.setProgressText(MESSAGES.RESULTS.FOUND_TRACKS(unavailableItems.length));
-      await this.processPlaylistItems(unavailableItems);
+      await this.processPlaylistItems(unavailableItems, opId);
     } catch (error) {
+      if (this.currentOperationId !== opId) return;
+      if (this.isTokenExpiredError(error)) {
+        this.handleTokenExpired(() => this.findUnavailableTracks());
+        return;
+      }
       this.bridge.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('finding unavailable tracks'));
     } finally {
-      this.bridge.ui.toggleSearchProgress(false);
+      if (this.currentOperationId === opId) {
+        this.bridge.ui.toggleSearchProgress(false);
+      }
     }
   }
 
@@ -224,91 +292,119 @@ export class TrackProcessor {
    * @async
    */
   async findVideoTracks() {
-     this.bridge.session.isCancelled = false;
-     this.bridge.ui.clearPlaylistItemsContainer();
-     this.bridge.ui.updateViewMode(CONSTANTS.UI.VIEW_MODES.SEARCH_RESULTS, this.bridge.currentSelectedPlaylist);
-     this.bridge.ui.toggleSearchProgress(true, true);
-     this.bridge.ui.setProgressText(MESSAGES.SEARCH.FINDING_VIDEO_TRACKS);
+    const opId = this.startNewOperation();
+    this.bridge.ui.updateViewMode(CONSTANTS.UI.VIEW_MODES.SEARCH_RESULTS, this.bridge.currentSelectedPlaylist);
+    this.bridge.ui.toggleSearchProgress(true, true);
+    this.bridge.ui.setProgressText(MESSAGES.SEARCH.FINDING_VIDEO_TRACKS);
 
-     try {
-       const currentPlaylistId = this.bridge.currentSelectedPlaylist?.id || 
-                                 this.ytMusicAPI.getCurrentPlaylistIdFromURL();
+    try {
+      const currentPlaylistId = this.bridge.currentSelectedPlaylist?.id || 
+                                this.ytMusicAPI.getCurrentPlaylistIdFromURL();
 
-       if (!currentPlaylistId) return;
+      if (!currentPlaylistId) return;
 
-       const items = await this.ytMusicAPI.getPlaylistItems(currentPlaylistId);
+      const items = await this.ytMusicAPI.getPlaylistItems(currentPlaylistId);
 
-       if (this.bridge.session.isCancelled) return;
-       if (items.length === 0) {
-         this.bridge.ui.setProgressText(MESSAGES.RESULTS.NO_TRACKS_FOUND);
-         return;
-       }
+      if (this.currentOperationId !== opId || this.bridge.session.isCancelled) return;
+      if (items.length === 0) {
+        this.bridge.ui.setProgressText(MESSAGES.RESULTS.NO_TRACKS_FOUND);
+        return;
+      }
 
-       const videoTracks = items.filter(item => item.isVideo);
+      const videoTracks = items.filter(item => item.isVideo);
 
-       if (videoTracks.length === 0) {
-         this.bridge.ui.setProgressText(MESSAGES.RESULTS.NO_VIDEO_TRACKS_FOUND);
-         return;
-       }
+      if (videoTracks.length === 0) {
+        this.bridge.ui.setProgressText(MESSAGES.RESULTS.NO_VIDEO_TRACKS_FOUND);
+        return;
+      }
 
-       this.bridge.ui.setProgressText(MESSAGES.RESULTS.FOUND_TRACKS(videoTracks.length));
+      this.bridge.ui.setProgressText(MESSAGES.RESULTS.FOUND_TRACKS(videoTracks.length));
 
-       // Pre-fetch target playlist items to check for duplicates
-       await this.fetchTargetPlaylistItems();
+      // Pre-fetch target playlist items to check for duplicates
+      await this.fetchTargetPlaylistItems();
+      if (this.currentOperationId !== opId || this.bridge.session.isCancelled) return;
 
-       // Prepare items for display
-       videoTracks.forEach(track => {
-         track.isSearching = true;
-         track.searchCancelled = false;
-         track.replacement = null;
-         track.isDuplicate = false;
-       });
+      // Prepare items for display
+      videoTracks.forEach(track => {
+        track.isSearching = true;
+        track.searchCancelled = false;
+        track.replacement = null;
+        track.isDuplicate = false;
+      });
 
-       // Batch add items to the grid
-       await this.bridge.ui.addItems(videoTracks, CONSTANTS.API.BASE_URL);
+      // Batch add items to the grid
+      await this.bridge.ui.addItems(videoTracks, CONSTANTS.API.BASE_URL);
 
-       let i = 1;
-       this.bridge.session.start(videoTracks.length);
-       for (const track of videoTracks) {
-         this.bridge.session.updateProgress();
-         if (this.bridge.session.isCancelled) {
-           this.bridge.ui.setProgressText(MESSAGES.SEARCH.CANCELLING);
-           break;
-         }
+      let i = 1;
+      this.bridge.session.start(videoTracks.length);
+      for (const track of videoTracks) {
+        if (this.currentOperationId !== opId) {
+          break;
+        }
 
-         try {
-           const searchResult = await this.ytMusicAPI.searchMusic(track);
-           const replacement = this.ytMusicAPI.getBestSearchResult(searchResult, track);
-           track.replacement = replacement;
-           this.checkForDuplicate(track);
-         } catch (error) {
-           track.replacement = null;
-           track.isDuplicate = false;
-         }
-         
-         track.isSearching = false;
-         this.bridge.ui.updateItemRow(track, CONSTANTS.API.BASE_URL, i++);
+        this.bridge.session.updateProgress();
+        if (this.bridge.session.isCancelled) {
+          this.bridge.ui.setProgressText(MESSAGES.SEARCH.CANCELLING);
+          break;
+        }
 
-         await this.bridge.sleep(CONSTANTS.API.TIMEOUT_DURATION_MS);
-       }
-       
-       if (this.bridge.session.isCancelled) {
-         for (let j = i; j <= videoTracks.length; j++) {
-           videoTracks[j - 1].isSearching = false;
-           videoTracks[j - 1].searchCancelled = true;
-           this.bridge.ui.updateItemRow(videoTracks[j - 1], CONSTANTS.API.BASE_URL, j);
-         }
-       }
+        this.bridge.ui.setProgressText(this.bridge.session.progressText);
 
-       this.bridge.session.stop();
-       this.setVideoTrackProgressMessage(videoTracks);
-       UIHelper.updateCheckAllCheckbox();
-     } catch (error) {
-       this.bridge.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('finding video tracks'));
-     } finally {
-       this.bridge.ui.toggleSearchProgress(false);
-     }
-   }
+        try {
+          const searchResult = await this.ytMusicAPI.searchMusic(track);
+          const replacement = this.ytMusicAPI.getBestSearchResult(searchResult, track);
+          track.replacement = replacement;
+          this.checkForDuplicate(track);
+        } catch (error) {
+          if (this.currentOperationId !== opId) return;
+          if (this.isTokenExpiredError(error)) {
+            for (let k = i - 1; k < videoTracks.length; k++) {
+              videoTracks[k].isSearching = false;
+              this.bridge.ui.updateItemRow(videoTracks[k], CONSTANTS.API.BASE_URL, k + 1);
+            }
+            this.handleTokenExpired(() => this.findVideoTracks());
+            return;
+          }
+          track.replacement = null;
+          track.isDuplicate = false;
+        }
+        
+        track.isSearching = false;
+        if (this.currentOperationId === opId) {
+          this.bridge.ui.updateItemRow(track, CONSTANTS.API.BASE_URL, i++);
+        }
+
+        await this.bridge.sleep(CONSTANTS.API.TIMEOUT_DURATION_MS);
+      }
+      
+      if (this.bridge.session.isCancelled) {
+        for (let j = i; j <= videoTracks.length; j++) {
+          videoTracks[j - 1].isSearching = false;
+          videoTracks[j - 1].searchCancelled = true;
+          if (this.currentOperationId === opId) {
+            this.bridge.ui.updateItemRow(videoTracks[j - 1], CONSTANTS.API.BASE_URL, j);
+          }
+        }
+      }
+
+      if (this.currentOperationId === opId) {
+        this.bridge.session.stop();
+        this.setVideoTrackProgressMessage(videoTracks);
+        UIHelper.updateCheckAllCheckbox();
+      }
+    } catch (error) {
+      if (this.currentOperationId !== opId) return;
+      if (this.isTokenExpiredError(error)) {
+        this.handleTokenExpired(() => this.findVideoTracks());
+        return;
+      }
+      this.bridge.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('finding video tracks'));
+    } finally {
+      if (this.currentOperationId === opId) {
+        this.bridge.ui.toggleSearchProgress(false);
+      }
+    }
+  }
 
   /**
    * Rechecks for duplicates in the current target playlist
@@ -369,8 +465,7 @@ export class TrackProcessor {
    * @async
    */
   async findDuplicateTracks() {
-    this.bridge.session.isCancelled = false;
-    this.bridge.ui.clearPlaylistItemsContainer();
+    const opId = this.startNewOperation();
     this.bridge.ui.updateViewMode(CONSTANTS.UI.VIEW_MODES.DUPLICATES, this.bridge.currentSelectedPlaylist);
     this.bridge.ui.toggleSearchProgress(true, true);
     this.bridge.ui.setProgressText(MESSAGES.SEARCH.FINDING_DUPLICATES);
@@ -383,7 +478,7 @@ export class TrackProcessor {
 
       const items = await this.ytMusicAPI.getPlaylistItems(currentPlaylistId);
       
-      if (this.bridge.session.isCancelled) return;
+      if (this.currentOperationId !== opId || this.bridge.session.isCancelled) return;
       if (items.length === 0) {
         this.bridge.ui.setProgressText(MESSAGES.RESULTS.NO_TRACKS_FOUND);
         return;
@@ -403,11 +498,13 @@ export class TrackProcessor {
 
       let i = 1;
       duplicateGroups.forEach((group, groupIndex) => {
+        if (this.currentOperationId !== opId) return;
         // By default the first audio track (if present) should be selected to keep
         const audioTrackIndex = group.findIndex(t => !t.isVideo);
         const keepIndex = audioTrackIndex !== -1 ? audioTrackIndex : 0;
 
         group.forEach((track, trackIndex) => {
+          if (this.currentOperationId !== opId) return;
           const isToKeep = (trackIndex === keepIndex);
           track.isSearching = false;
           track.searchCancelled = false;
@@ -428,12 +525,21 @@ export class TrackProcessor {
         });
       });
 
-      UIHelper.updateCheckAllCheckbox();
+      if (this.currentOperationId === opId) {
+        UIHelper.updateCheckAllCheckbox();
+      }
     } catch (error) {
+      if (this.currentOperationId !== opId) return;
+      if (this.isTokenExpiredError(error)) {
+        this.handleTokenExpired(() => this.findDuplicateTracks());
+        return;
+      }
       console.error('Duplicate check error:', error);
       this.bridge.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('finding duplicate tracks'));
     } finally {
-      this.bridge.ui.toggleSearchProgress(false);
+      if (this.currentOperationId === opId) {
+        this.bridge.ui.toggleSearchProgress(false);
+      }
     }
   }
 
@@ -464,8 +570,7 @@ export class TrackProcessor {
    * @async
    */
   async listAllTracks() {
-    this.bridge.session.isCancelled = false;
-    this.bridge.ui.clearPlaylistItemsContainer();
+    const opId = this.startNewOperation();
     this.bridge.ui.updateViewMode(CONSTANTS.UI.VIEW_MODES.LIST_ALL, this.bridge.currentSelectedPlaylist);
     this.bridge.ui.toggleSearchProgress(true, true);
     this.bridge.ui.setProgressText(MESSAGES.SEARCH.FETCHING_ALL_TRACKS);
@@ -478,12 +583,16 @@ export class TrackProcessor {
 
       const items = await this.ytMusicAPI.getPlaylistItems(currentPlaylistId);
       
+      // Operation guard check: Verify if another operation has started or session was cancelled
+      if (this.currentOperationId !== opId || this.bridge.session.isCancelled) {
+        return;
+      }
+
       // Race condition check: Verify if we are still on the same playlist
       if (this.bridge.currentSelectedPlaylist?.id !== currentPlaylistId) {
         return;
       }
 
-      if (this.bridge.session.isCancelled) return;
       if (items.length === 0) {
         this.bridge.ui.setProgressText(MESSAGES.RESULTS.NO_TRACKS_FOUND);
         return;
@@ -500,11 +609,20 @@ export class TrackProcessor {
       
       await this.bridge.ui.addItems(items, CONSTANTS.API.BASE_URL);
 
-      UIHelper.updateCheckAllCheckbox();
+      if (this.currentOperationId === opId) {
+        UIHelper.updateCheckAllCheckbox();
+      }
     } catch (error) {
+      if (this.currentOperationId !== opId) return;
+      if (this.isTokenExpiredError(error)) {
+        this.handleTokenExpired(() => this.listAllTracks());
+        return;
+      }
       this.bridge.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('fetching tracks'));
     } finally {
-      this.bridge.ui.toggleSearchProgress(false);
+      if (this.currentOperationId === opId) {
+        this.bridge.ui.toggleSearchProgress(false);
+      }
     }
   }
 
@@ -571,6 +689,10 @@ export class TrackProcessor {
         this.bridge.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('removing duplicates'));
       }
     } catch (error) {
+      if (this.isTokenExpiredError(error)) {
+        this.handleTokenExpired(() => this.keepOnlySelected());
+        return;
+      }
       console.error('Error in keepOnlySelected:', error);
       this.bridge.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('removing duplicates'));
     } finally {

@@ -194,3 +194,16 @@ export class BrowserUtils {
     return `#${Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0')}`;
   }
 }
+
+/**
+ * Checks if an error represents a token expiration or permission error
+ * @param {Error|Object} error 
+ * @returns {boolean}
+ */
+export function isTokenExpiredError(error) {
+  if (!error) return false;
+  if (error.status === 401 || error.status === 403 || error.isTokenExpired) return true;
+  const msg = (error.message || String(error)).toLowerCase();
+  return msg.includes('401') || msg.includes('403') || msg.includes('unauthorized') || msg.includes('forbidden') || msg.includes('permission') || msg.includes('token expired');
+}
+

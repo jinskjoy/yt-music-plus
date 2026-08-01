@@ -69,7 +69,7 @@ describe('TrackProcessor Coverage', () => {
 
       await processor.findUnavailableTracks();
 
-      expect(processor.processPlaylistItems).toHaveBeenCalledWith([items[0]]);
+      expect(processor.processPlaylistItems).toHaveBeenCalledWith([items[0]], expect.anything());
       expect(mockBridge.ui.setProgressText).toHaveBeenCalledWith(MESSAGES.RESULTS.FOUND_TRACKS(1));
     });
 
@@ -212,6 +212,7 @@ describe('TrackProcessor Coverage', () => {
     });
     
     it('should handle API errors in findDuplicateTracks', async () => {
+       vi.spyOn(console, 'error').mockImplementation(() => {});
        mockYTMusicAPI.getPlaylistItems.mockRejectedValue(new Error('Fail'));
        await processor.findDuplicateTracks();
        expect(mockBridge.ui.setProgressText).toHaveBeenCalledWith(MESSAGES.ACTIONS.ERROR_OCCURRED('finding duplicate tracks'));
@@ -370,6 +371,25 @@ describe('TrackProcessor Coverage', () => {
        await processor.keepOnlySelected();
        expect(mockBridge.ui.setProgressText).toHaveBeenCalledWith(expect.stringContaining('Error occurred'));
     });
+
+    it('should handle API errors and token expiration in keepOnlySelected', async () => {
+       vi.spyOn(console, 'error').mockImplementation(() => {});
+       const row = document.createElement('div');
+       row.className = `${CONSTANTS.UI.CLASSES.GRID_ROW} ${CONSTANTS.UI.CLASSES.DUPLICATE_GROUP_ROW}`;
+       row.dataset.originalMedia = JSON.stringify({ videoId: 'v1', playlistSetVideoId: 'ps1' });
+       const cb = document.createElement('input');
+       cb.type = 'checkbox';
+       cb.className = CONSTANTS.UI.CLASSES.ITEM_CHECKBOX;
+       cb.checked = false;
+       row.appendChild(cb);
+       document.body.appendChild(row);
+
+       window.confirm = vi.fn().mockReturnValue(true);
+       mockYTMusicAPI.removeItemsFromPlaylist.mockRejectedValue(new Error('Fail'));
+       
+       await processor.keepOnlySelected();
+       expect(mockBridge.ui.setProgressText).toHaveBeenCalledWith(expect.stringContaining('Error occurred'));
+    });
   });
 
   describe('processPlaylistItems', () => {
@@ -448,6 +468,52 @@ describe('TrackProcessor Coverage', () => {
       ];
       processor.setVideoTrackProgressMessage(tracks);
       expect(mockBridge.ui.setProgressText).toHaveBeenCalledWith(expect.stringContaining('1/2 are good matches'));
+    });
+  });
+
+  describe('importFromFile edge cases', () => {
+    it('should handle empty file', async () => {
+      const fakeFile = { text: vi.fn().mockResolvedValue('') };
+      const event = { target: { files: [fakeFile], value: 'test.txt' } };
+      await processor.importFromFile(event);
+      expect(mockBridge.ui.setProgressText).toHaveBeenCalledWith('No valid tracks found in the file.');
+    });
+
+    it('should handle file reading error', async () => {
+      const fakeFile = { text: vi.fn().mockRejectedValue(new Error('Read error')) };
+      const event = { target: { files: [fakeFile], value: 'test.txt' } };
+      await processor.importFromFile(event);
+      expect(mockBridge.ui.setProgressText).toHaveBeenCalledWith('Error reading file.');
+    });
+  });
+
+  describe('importFromFolder recursive edge cases', () => {
+    it('should recursively scan subdirectories and handle empty folder', async () => {
+      const subDirHandle = {
+        kind: 'directory',
+        values: async function* () {
+          yield { kind: 'file', getFile: async () => ({ name: 'sub_song.mp3' }) };
+        }
+      };
+      const rootDirHandle = {
+        kind: 'directory',
+        values: async function* () {
+          yield subDirHandle;
+          yield { kind: 'file', getFile: async () => ({ name: 'ignore.txt' }) };
+        }
+      };
+      window.showDirectoryPicker = vi.fn().mockResolvedValue(rootDirHandle);
+      await processor.importFromFolder();
+      expect(mockBridge.ui.setProgressText).toHaveBeenCalledWith(expect.stringContaining('Found 1 tracks'));
+
+      // Empty directory
+      const emptyDirHandle = {
+        kind: 'directory',
+        values: async function* () {}
+      };
+      window.showDirectoryPicker = vi.fn().mockResolvedValue(emptyDirHandle);
+      await processor.importFromFolder();
+      expect(mockBridge.ui.setProgressText).toHaveBeenCalledWith('No media files found in the selected folder.');
     });
   });
 });

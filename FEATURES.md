@@ -160,3 +160,14 @@ This document provides a comprehensive list of features for the YouTube Music + 
 ### 4.3 Grid Expansion
 - **Feature**: A "⤢" button to expand the grid view for better visibility of many tracks.
 - **Testable Case**: Click expand; verify the grid container enlarges.
+
+### 4.4 Token Expiration & Automatic Retry Handling
+- **Feature**: Handles authorization token expiration during long-running or delayed user actions.
+- **Behavior**:
+  - Detects permission or authorization errors (HTTP 401/403) from YouTube Music API requests.
+  - Displays a Token Expired dialog asking users to obtain a new token.
+  - Provides a "Fetch New Token" button to trigger a pseudo-click event on YouTube Music elements to refresh the authorization token.
+  - Informs users that minimizing the window and navigating anywhere within YouTube Music will speed up token fetching.
+  - Allows users to cancel the dialog if desired.
+  - Upon receiving a new token, automatically closes the dialog and resumes the user's pending action.
+- **Testable Case**: Simulate an expired token during an action; verify the modal appears; click "Fetch New Token" or issue a new token; verify the pending operation resumes seamlessly.
