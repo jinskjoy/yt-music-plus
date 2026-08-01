@@ -760,6 +760,27 @@ describe('Bridge Script Unit Tests', () => {
       expect(bridge.ui.setProgressText).toHaveBeenCalledWith(MESSAGES.ACTIONS.ERROR_OCCURRED('copying tracks'));
     });
 
+    it('should set NO_ADDITIONS_MADE when no videoIds present in executeMoveSelectedItems', async () => {
+      const mockTarget = { id: 'target999', title: 'Target Playlist' };
+      const selectedItems = [{ originalMedia: {} }];
+
+      await bridge.executeMoveSelectedItems(mockTarget, selectedItems);
+      expect(bridge.ui.setProgressText).toHaveBeenCalledWith(MESSAGES.ACTIONS.NO_ADDITIONS_MADE);
+    });
+
+    it('should complete move when itemsToRemove is empty in executeMoveSelectedItems', async () => {
+      bridge.ytMusicAPI.addItemsToPlaylist.mockResolvedValue(true);
+      const mockTarget = { id: 'target999', title: 'Target Playlist' };
+      // item has videoId and playlistSetVideoId for videoIdsToAdd, but empty itemsToRemove filter
+      const selectedItems = [{ originalMedia: { videoId: 'v1', playlistSetVideoId: 's1' } }];
+      // Mock filter inside itemsToRemove to return empty
+      vi.spyOn(selectedItems, 'filter').mockImplementationOnce(() => [{ originalMedia: { videoId: 'v1', playlistSetVideoId: 's1' } }])
+                                      .mockImplementationOnce(() => []);
+
+      await bridge.executeMoveSelectedItems(mockTarget, selectedItems);
+      expect(bridge.ui.setProgressText).toHaveBeenCalledWith(MESSAGES.ACTIONS.MOVE_COMPLETE(1, 'Target Playlist'));
+    });
+
     it('should return early if executeCopySelectedItems is called with empty items or invalid target', async () => {
       await bridge.executeCopySelectedItems({ id: 't1' }, []);
       expect(bridge.beforeActionsOnSelectedItems).not.toHaveBeenCalled();
