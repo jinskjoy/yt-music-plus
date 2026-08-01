@@ -31,8 +31,9 @@ Managing large YouTube Music playlists can be a chore. Songs become unavailable,
 - **Find Duplicate Tracks:** Intelligently identify duplicate tracks based on Video ID or title similarity. Groups are visually marked, and the extension automatically picks the best version to keep.
 - **Import Local Music:** Scan a local folder of music files or import a list from a text file. The extension will search for these tracks on YouTube Music, allowing you to add them to any of your playlists.
 - **Integrated Track Playback:** Preview any track directly within the extension's grid. Hover over track details to access playback controls (Play, Pause, Skip) without leaving the popup.
-- **List All Tracks:** View all tracks in a playlist in a simple list, making it easy to select, remove, or move tracks in bulk.
+- **List All Tracks:** View all tracks in a playlist in a simple list, making it easy to select, remove, move, or copy tracks in bulk.
 - **Move Tracks in Bulk:** Move selected tracks from one playlist to another. The extension handles adding them to the target playlist and removing them from the source playlist in a single action.
+- **Copy Tracks in Bulk:** Copy selected tracks from one playlist to another while keeping the source playlist untouched.
 - **Visual Feedback:** Action buttons highlight when active, clearly indicating the current view or operation.
 - **Flexible Actions:** After finding replacements, you can choose to replace the original tracks, add the new tracks alongside the old ones, or just remove the original tracks.
 
@@ -70,6 +71,8 @@ The core functionality is cleaning up playlists. Here's how it works:
 - **Bulk Deleting:** Click "List All Tracks" to see every song in the playlist. Check the ones you want to remove and click "Remove Selected".
 
 - **Bulk Moving:** Click "List All Tracks" to see every song in the playlist. Select the tracks you want to move, click "Move Selected", choose a target playlist, and confirm. The extension will copy them to the target playlist and remove them from the source playlist.
+
+- **Bulk Copying:** Click "List All Tracks" to see every song in the playlist. Select the tracks you want to copy, click "Copy Selected", choose a target playlist, and confirm. The extension will copy them to the target playlist without modifying the source playlist.
 
 - **Cleaning Duplicates:** Click "Find Duplicate Tracks" to see tracks grouped by similarity. The extension will pre-select the best audio versions to keep; simply click "Keep Only Selected" to remove the duplicates. You can also use the "✕" button to ignore specific groups.
 

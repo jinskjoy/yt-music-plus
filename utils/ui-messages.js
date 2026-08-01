@@ -42,6 +42,8 @@ export const MESSAGES = {
     ADD_COMPLETE: (count, target) => `All additions completed. Added ${count} items to ${target}.`,
     MOVING_SELECTED: 'Moving selected items...',
     MOVE_COMPLETE: (count, target) => `All moves completed. Moved ${count} items to ${target}.`,
+    COPYING_SELECTED: 'Copying selected items...',
+    COPY_COMPLETE: (count, target) => `All copies completed. Copied ${count} item${count !== 1 ? 's' : ''} to ${target}.`,
     NO_ADDITIONS_MADE: 'No valid items were added.',
     ERROR_OCCURRED: (action) => `Error occurred while ${action}.`,
   },

@@ -194,6 +194,8 @@ import { MESSAGES } from '../utils/ui-messages.js';
       this.isSelectingTarget = false;
       this.isMovingTracks = false;
       this.tracksToMove = null;
+      this.isCopyingTracks = false;
+      this.tracksToCopy = null;
       this.playlistsCache = [];
       this.isReloadDisabled = false;
       this.isFetchingPlaylists = false;
@@ -433,6 +435,7 @@ import { MESSAGES } from '../utils/ui-messages.js';
       this.attachButtonListener(CONSTANTS.UI.BUTTON_IDS.ADD_SELECTED, () => this.addSelectedItems());
       this.attachButtonListener(CONSTANTS.UI.BUTTON_IDS.REMOVE_SELECTED, () => this.removeSelectedItems());
       this.attachButtonListener(CONSTANTS.UI.BUTTON_IDS.MOVE_SELECTED, () => this.moveSelectedItems());
+      this.attachButtonListener(CONSTANTS.UI.BUTTON_IDS.COPY_SELECTED, () => this.copySelectedItems());
       this.attachButtonListener(CONSTANTS.UI.BUTTON_IDS.IMPORT_FROM_FOLDER, () => {
         this.processor.importFromFolder();
         this.ui.setActiveButton(CONSTANTS.UI.BUTTON_IDS.IMPORT_FROM_FOLDER);
@@ -612,6 +615,18 @@ import { MESSAGES } from '../utils/ui-messages.js';
         return;
       }
 
+      if (this.isCopyingTracks) {
+        this.isCopyingTracks = false;
+        const targetPlaylist = playlist;
+        this.ui.setTargetModalVisibility(false);
+        if (this.currentSelectedPlaylist) {
+          this.ui.updatePopupTitle(`Playlist: ${this.currentSelectedPlaylist.title}`);
+        }
+        this.executeCopySelectedItems(targetPlaylist, this.tracksToCopy);
+        this.tracksToCopy = null;
+        return;
+      }
+
       const oldTarget = this.targetPlaylist;
       this.targetPlaylist = playlist;
       this.finishTargetSelection();
@@ -628,6 +643,8 @@ import { MESSAGES } from '../utils/ui-messages.js';
     cancelTargetSelection() {
       this.isMovingTracks = false;
       this.tracksToMove = null;
+      this.isCopyingTracks = false;
+      this.tracksToCopy = null;
       this.finishTargetSelection();
     }
 
@@ -933,6 +950,59 @@ import { MESSAGES } from '../utils/ui-messages.js';
         }
       } catch (error) {
         this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('moving'));
+      } finally {
+        await this.afterActionsOnSelectedItems(true);
+      }
+    }
+
+    /**
+     * Initiates the copy process by prompting the user to select a target playlist
+     */
+    async copySelectedItems() {
+      const selectedItems = UIHelper.getSelectedMediaItems();
+      if (selectedItems.length === 0) return;
+
+      this.isCopyingTracks = true;
+      this.tracksToCopy = selectedItems;
+      this.ui.setTargetModalVisibility(true);
+      
+      await this.initPlaylistFetching(false, null, true);
+    }
+
+    /**
+     * Executes the copy operation to copy items from one playlist to another
+     * @param {Object} targetPlaylist - Destination playlist object
+     * @param {Array} selectedItems - Array of media items to copy
+     */
+    async executeCopySelectedItems(targetPlaylist, selectedItems) {
+      if (selectedItems.length === 0) return;
+
+      this.beforeActionsOnSelectedItems();
+      this.ui.setProgressText(MESSAGES.ACTIONS.COPYING_SELECTED);
+
+      try {
+        if (!targetPlaylist?.id) return;
+
+        const targetTitle = targetPlaylist.title || CONSTANTS.UI.STRINGS.PLAYLIST_FALLBACK;
+        
+        const videoIdsToAdd = selectedItems
+          .filter(item => item.originalMedia?.videoId)
+          .map(item => item.originalMedia.videoId);
+
+        if (videoIdsToAdd.length === 0) {
+          this.ui.setProgressText(MESSAGES.ACTIONS.NO_ADDITIONS_MADE);
+          return;
+        }
+
+        const addSuccess = await this.ytMusicAPI.addItemsToPlaylist(targetPlaylist.id, videoIdsToAdd);
+        
+        if (addSuccess) {
+          this.ui.setProgressText(MESSAGES.ACTIONS.COPY_COMPLETE(videoIdsToAdd.length, targetTitle));
+        } else {
+          this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('copying tracks'));
+        }
+      } catch (error) {
+        this.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('copying tracks'));
       } finally {
         await this.afterActionsOnSelectedItems(true);
       }

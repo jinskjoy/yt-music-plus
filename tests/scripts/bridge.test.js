@@ -72,6 +72,8 @@ describe('Bridge Script Unit Tests', () => {
     bridge.targetPlaylist = { id: 'src123', title: 'Source Playlist' };
     bridge.isMovingTracks = false;
     bridge.tracksToMove = null;
+    bridge.isCopyingTracks = false;
+    bridge.tracksToCopy = null;
     bridge.extSettings = null;
 
     // Stub confirm globally
@@ -379,14 +381,14 @@ describe('Bridge Script Unit Tests', () => {
         data: {
           type: CONSTANTS.MESSAGE_TYPES.EXT_SETTINGS,
           settings: { showPlaylistButton: false },
-          version: '1.6.5'
+          version: '1.7.0'
         },
         source: window
       });
       window.dispatchEvent(event);
       
       expect(bridge.extSettings).toEqual({ showPlaylistButton: false });
-      expect(bridge.version).toBe('1.6.5');
+      expect(bridge.version).toBe('1.7.0');
     });
   });
 
@@ -632,6 +634,138 @@ describe('Bridge Script Unit Tests', () => {
       await bridge.executeMoveSelectedItems(mockTarget, selectedItems);
 
       expect(bridge.ui.setProgressText).toHaveBeenCalledWith(MESSAGES.ACTIONS.ERROR_OCCURRED('moving'));
+    });
+  });
+
+  // Copy Selected Tracks Tests
+  describe('Bridge Copy Operations', () => {
+    it('should initialize copying state and open target modal when copySelectedItems is called', async () => {
+      await bridge.copySelectedItems();
+
+      expect(bridge.isCopyingTracks).toBe(true);
+      expect(bridge.tracksToCopy).toEqual([
+        {
+          originalMedia: { videoId: 'vid123', playlistSetVideoId: 'set456' },
+          replacementMedia: { videoId: 'rep123' }
+        }
+      ]);
+      expect(bridge.ui.setTargetModalVisibility).toHaveBeenCalledWith(true);
+      expect(bridge.initPlaylistFetching).toHaveBeenCalledWith(false, null, true);
+    });
+
+    it('should do nothing when copySelectedItems is called with no selected items', async () => {
+      vi.spyOn(UIHelper, 'getSelectedMediaItems').mockReturnValue([]);
+      await bridge.copySelectedItems();
+
+      expect(bridge.isCopyingTracks).toBe(false);
+      expect(bridge.tracksToCopy).toBeNull();
+      expect(bridge.ui.setTargetModalVisibility).not.toHaveBeenCalled();
+    });
+
+    it('should clear copying states on cancelTargetSelection', () => {
+      bridge.isCopyingTracks = true;
+      bridge.tracksToCopy = [{ originalMedia: { videoId: 'vid123' } }];
+
+      bridge.cancelTargetSelection();
+
+      expect(bridge.isCopyingTracks).toBe(false);
+      expect(bridge.tracksToCopy).toBeNull();
+    });
+
+    it('should execute copy when onTargetPlaylistSelected is called in copying mode', () => {
+      const mockTarget = { id: 'target999', title: 'Target Playlist' };
+      bridge.isCopyingTracks = true;
+      bridge.tracksToCopy = [
+        {
+          originalMedia: { videoId: 'vid123', playlistSetVideoId: 'set456' },
+          replacementMedia: null
+        }
+      ];
+
+      const executeSpy = vi.spyOn(bridge, 'executeCopySelectedItems').mockResolvedValue();
+
+      bridge.onTargetPlaylistSelected(mockTarget);
+
+      expect(bridge.isCopyingTracks).toBe(false);
+      expect(bridge.ui.setTargetModalVisibility).toHaveBeenCalledWith(false);
+      expect(bridge.ui.updatePopupTitle).toHaveBeenCalledWith('Playlist: Source Playlist');
+      expect(executeSpy).toHaveBeenCalledWith(mockTarget, [
+        {
+          originalMedia: { videoId: 'vid123', playlistSetVideoId: 'set456' },
+          replacementMedia: null
+        }
+      ]);
+      expect(bridge.tracksToCopy).toBeNull();
+    });
+
+    it('should successfully add tracks and not remove items from source during executeCopySelectedItems', async () => {
+      const mockTarget = { id: 'target999', title: 'Target Playlist' };
+      const selectedItems = [
+        {
+          originalMedia: { videoId: 'vid123', playlistSetVideoId: 'set456' },
+          replacementMedia: null
+        }
+      ];
+      bridge.ytMusicAPI.addItemsToPlaylist.mockResolvedValue(true);
+
+      await bridge.executeCopySelectedItems(mockTarget, selectedItems);
+
+      expect(bridge.beforeActionsOnSelectedItems).toHaveBeenCalled();
+      expect(bridge.ui.setProgressText).toHaveBeenCalledWith(MESSAGES.ACTIONS.COPYING_SELECTED);
+      expect(bridge.ytMusicAPI.addItemsToPlaylist).toHaveBeenCalledWith('target999', ['vid123']);
+      expect(bridge.ytMusicAPI.removeItemsFromPlaylist).not.toHaveBeenCalled();
+      expect(UIHelper.removeMediaGridRow).not.toHaveBeenCalled();
+      expect(bridge.ui.setProgressText).toHaveBeenCalledWith(MESSAGES.ACTIONS.COPY_COMPLETE(1, 'Target Playlist'));
+      expect(bridge.afterActionsOnSelectedItems).toHaveBeenCalledWith(true);
+    });
+
+    it('should set NO_ADDITIONS_MADE if no valid videoIds present during executeCopySelectedItems', async () => {
+      const mockTarget = { id: 'target999', title: 'Target Playlist' };
+      const selectedItems = [{ originalMedia: {} }];
+
+      await bridge.executeCopySelectedItems(mockTarget, selectedItems);
+
+      expect(bridge.ui.setProgressText).toHaveBeenCalledWith(MESSAGES.ACTIONS.NO_ADDITIONS_MADE);
+      expect(bridge.ytMusicAPI.addItemsToPlaylist).not.toHaveBeenCalled();
+    });
+
+    it('should set error message if addItemsToPlaylist fails during executeCopySelectedItems', async () => {
+      bridge.ytMusicAPI.addItemsToPlaylist.mockResolvedValue(false);
+      const mockTarget = { id: 'target999', title: 'Target Playlist' };
+      const selectedItems = [
+        {
+          originalMedia: { videoId: 'vid123' },
+          replacementMedia: null
+        }
+      ];
+
+      await bridge.executeCopySelectedItems(mockTarget, selectedItems);
+
+      expect(bridge.ui.setProgressText).toHaveBeenCalledWith(MESSAGES.ACTIONS.ERROR_OCCURRED('copying tracks'));
+      expect(bridge.afterActionsOnSelectedItems).toHaveBeenCalledWith(true);
+    });
+
+    it('should set error message if addItemsToPlaylist throws an error during executeCopySelectedItems', async () => {
+      bridge.ytMusicAPI.addItemsToPlaylist.mockRejectedValue(new Error('API failed'));
+      const mockTarget = { id: 'target999', title: 'Target Playlist' };
+      const selectedItems = [
+        {
+          originalMedia: { videoId: 'vid123' },
+          replacementMedia: null
+        }
+      ];
+
+      await bridge.executeCopySelectedItems(mockTarget, selectedItems);
+
+      expect(bridge.ui.setProgressText).toHaveBeenCalledWith(MESSAGES.ACTIONS.ERROR_OCCURRED('copying tracks'));
+    });
+
+    it('should return early if executeCopySelectedItems is called with empty items or invalid target', async () => {
+      await bridge.executeCopySelectedItems({ id: 't1' }, []);
+      expect(bridge.beforeActionsOnSelectedItems).not.toHaveBeenCalled();
+
+      await bridge.executeCopySelectedItems(null, [{ originalMedia: { videoId: 'v1' } }]);
+      expect(bridge.ui.setProgressText).toHaveBeenCalledWith(MESSAGES.ACTIONS.COPYING_SELECTED);
     });
   });
 

@@ -443,6 +443,9 @@ export class UIHelper {
     const moveBtn = popupElement.querySelector(`#${CONSTANTS.UI.BUTTON_IDS.MOVE_SELECTED}`);
     if (moveBtn) moveBtn.disabled = isSearching || !isListOnlyMode ? true : !anyChecked;
 
+    const copyBtn = popupElement.querySelector(`#${CONSTANTS.UI.BUTTON_IDS.COPY_SELECTED}`);
+    if (copyBtn) copyBtn.disabled = isSearching || !isListOnlyMode ? true : !anyChecked;
+
     const addBtn = popupElement.querySelector(`#${CONSTANTS.UI.BUTTON_IDS.ADD_SELECTED}`);
     if (addBtn) addBtn.disabled = isSearching || isListOnlyMode || isDuplicateMode ? true : !anyCheckedWithReplacement;
 

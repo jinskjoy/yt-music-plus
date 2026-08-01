@@ -111,14 +111,17 @@ describe('BridgeUI Extended', () => {
   it('should update view mode', () => {
     const findLocalBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_LOCAL_REPLACEMENTS);
     const moveBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.MOVE_SELECTED);
+    const copyBtn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.COPY_SELECTED);
     
     bridgeUI.updateViewMode(CONSTANTS.UI.VIEW_MODES.IMPORT, { isEditable: true });
     expect(findLocalBtn.classList.contains(CONSTANTS.UI.CLASSES.HIDDEN)).toBe(false);
     expect(moveBtn.classList.contains(CONSTANTS.UI.CLASSES.HIDDEN)).toBe(true);
+    expect(copyBtn.classList.contains(CONSTANTS.UI.CLASSES.HIDDEN)).toBe(true);
     
     bridgeUI.updateViewMode(CONSTANTS.UI.VIEW_MODES.LIST_ALL, { isEditable: true });
     expect(findLocalBtn.classList.contains(CONSTANTS.UI.CLASSES.HIDDEN)).toBe(true);
     expect(moveBtn.classList.contains(CONSTANTS.UI.CLASSES.HIDDEN)).toBe(false);
+    expect(copyBtn.classList.contains(CONSTANTS.UI.CLASSES.HIDDEN)).toBe(false);
   });
 
   describe('addItems and race conditions', () => {

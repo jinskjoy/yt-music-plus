@@ -48,6 +48,7 @@ describe('UI Visibility Integration', () => {
       const addBtn = document.getElementById('yt-music-plus-addSelectedBtn');
       const removeBtn = document.getElementById('yt-music-plus-removeSelectedBtn');
       const moveBtn = document.getElementById('yt-music-plus-moveSelectedBtn');
+      const copyBtn = document.getElementById('yt-music-plus-copySelectedBtn');
       
       await trackProcessor.listAllTracks();
       
@@ -55,6 +56,7 @@ describe('UI Visibility Integration', () => {
       expect(addBtn.classList.contains('yt-music-plus-hidden')).toBe(true);
       expect(removeBtn.classList.contains('yt-music-plus-hidden')).toBe(false);
       expect(moveBtn.classList.contains('yt-music-plus-hidden')).toBe(false);
+      expect(copyBtn.classList.contains('yt-music-plus-hidden')).toBe(false);
     });
   });
 
