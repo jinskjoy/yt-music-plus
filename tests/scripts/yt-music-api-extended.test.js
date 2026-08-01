@@ -267,6 +267,20 @@ describe('YTMusicAPI Extended', () => {
       expect(api.makePostRequest).toHaveBeenCalledTimes(2);
     });
 
+    it('should deduplicate items with identical videoId or playlistSetVideoId', async () => {
+      vi.spyOn(api, 'makePostRequest').mockResolvedValueOnce({});
+      vi.spyOn(YTMusicParser, 'parsePlaylistItemsFromResponse').mockReturnValueOnce([
+        { videoId: 'v1', name: 'Song A', playlistSetVideoId: 'ps1' },
+        { videoId: 'v1', name: 'Song A', playlistSetVideoId: 'ps1' },
+        { videoId: 'v2', name: 'Song B', playlistSetVideoId: 'ps2' }
+      ]);
+
+      const items = await api.getPlaylistItems('PL123');
+      expect(items.length).toBe(2);
+      expect(items[0].videoId).toBe('v1');
+      expect(items[1].videoId).toBe('v2');
+    });
+
     it('should throw error if request fails', async () => {
       vi.spyOn(api, 'makePostRequest').mockRejectedValue(new Error('API Error'));
       await expect(api.getPlaylistItems('PL123')).rejects.toThrow('API Error');

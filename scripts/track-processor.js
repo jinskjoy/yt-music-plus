@@ -12,6 +12,14 @@ export class TrackProcessor {
     this.bridge = bridge;
     this.ytMusicAPI = bridge.ytMusicAPI;
     this.targetPlaylistItems = new Map(); // Cache for target playlist video IDs
+    this.currentOperationId = 0;
+  }
+
+  startNewOperation() {
+    this.currentOperationId++;
+    this.bridge.session.isCancelled = false;
+    this.bridge.ui.clearPlaylistItemsContainer();
+    return this.currentOperationId;
   }
 
   isTokenExpiredError(error) {
@@ -509,8 +517,7 @@ export class TrackProcessor {
    * @async
    */
   async listAllTracks() {
-    this.bridge.session.isCancelled = false;
-    this.bridge.ui.clearPlaylistItemsContainer();
+    const opId = this.startNewOperation();
     this.bridge.ui.updateViewMode(CONSTANTS.UI.VIEW_MODES.LIST_ALL, this.bridge.currentSelectedPlaylist);
     this.bridge.ui.toggleSearchProgress(true, true);
     this.bridge.ui.setProgressText(MESSAGES.SEARCH.FETCHING_ALL_TRACKS);
@@ -523,12 +530,16 @@ export class TrackProcessor {
 
       const items = await this.ytMusicAPI.getPlaylistItems(currentPlaylistId);
       
+      // Operation guard check: Verify if another operation has started or session was cancelled
+      if (this.currentOperationId !== opId || this.bridge.session.isCancelled) {
+        return;
+      }
+
       // Race condition check: Verify if we are still on the same playlist
       if (this.bridge.currentSelectedPlaylist?.id !== currentPlaylistId) {
         return;
       }
 
-      if (this.bridge.session.isCancelled) return;
       if (items.length === 0) {
         this.bridge.ui.setProgressText(MESSAGES.RESULTS.NO_TRACKS_FOUND);
         return;
@@ -545,15 +556,20 @@ export class TrackProcessor {
       
       await this.bridge.ui.addItems(items, CONSTANTS.API.BASE_URL);
 
-      UIHelper.updateCheckAllCheckbox();
+      if (this.currentOperationId === opId) {
+        UIHelper.updateCheckAllCheckbox();
+      }
     } catch (error) {
+      if (this.currentOperationId !== opId) return;
       if (this.isTokenExpiredError(error)) {
         this.handleTokenExpired(() => this.listAllTracks());
         return;
       }
       this.bridge.ui.setProgressText(MESSAGES.ACTIONS.ERROR_OCCURRED('fetching tracks'));
     } finally {
-      this.bridge.ui.toggleSearchProgress(false);
+      if (this.currentOperationId === opId) {
+        this.bridge.ui.toggleSearchProgress(false);
+      }
     }
   }
 

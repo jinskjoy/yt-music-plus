@@ -209,6 +209,10 @@ export class BridgeUI {
         this.rowMap.set(globalIndex, gridRow);
       });
       
+      if (this.renderVersion !== currentVersion) {
+        return;
+      }
+
       container.appendChild(fragment);
       
       // Yield to main thread for responsiveness

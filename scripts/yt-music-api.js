@@ -227,7 +227,19 @@ export class YTMusicAPI {
         continuationToken = nextToken;
       }
 
-      return allItems;
+      // Deduplicate items by unique key (playlistSetVideoId or videoId+name)
+      const seenKeys = new Set();
+      const uniqueItems = [];
+      for (const item of allItems) {
+        const key = item.playlistSetVideoId || (item.videoId ? `${item.videoId}_${item.name}` : null);
+        if (key) {
+          if (seenKeys.has(key)) continue;
+          seenKeys.add(key);
+        }
+        uniqueItems.push(item);
+      }
+
+      return uniqueItems;
     } catch (error) {
       throw error;
     }
