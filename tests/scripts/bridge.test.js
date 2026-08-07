@@ -381,14 +381,14 @@ describe('Bridge Script Unit Tests', () => {
         data: {
           type: CONSTANTS.MESSAGE_TYPES.EXT_SETTINGS,
           settings: { showPlaylistButton: false },
-          version: '1.8.0'
+          version: '1.9.0'
         },
         source: window
       });
       window.dispatchEvent(event);
       
       expect(bridge.extSettings).toEqual({ showPlaylistButton: false });
-      expect(bridge.version).toBe('1.8.0');
+      expect(bridge.version).toBe('1.9.0');
     });
   });
 

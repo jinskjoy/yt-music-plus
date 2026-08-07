@@ -18,7 +18,7 @@ describe('PlayerHandler', () => {
   });
 
   it('should initialize successfully when playerApi is available', () => {
-    const mockApi = { playVideo: vi.fn() };
+    const mockApi = { loadVideoById: vi.fn(), playVideo: vi.fn() };
     const mockApp = document.createElement('ytmusic-app');
     mockApp.playerApi = mockApi;
     document.body.appendChild(mockApp);
@@ -28,13 +28,31 @@ describe('PlayerHandler', () => {
     expect(handler.api).toBe(mockApi);
   });
 
+  it('should find movie_player when ytmusic-app has no playerApi', () => {
+    const moviePlayer = document.createElement('div');
+    moviePlayer.id = 'movie_player';
+    moviePlayer.loadVideoById = vi.fn();
+    document.body.appendChild(moviePlayer);
+
+    expect(handler.api).toBe(moviePlayer);
+  });
+
+  it('should find ytmusic-player-bar when ytmusic-app and movie_player are absent', () => {
+    const playerBar = document.createElement('ytmusic-player-bar');
+    const mockApi = { loadVideoById: vi.fn() };
+    playerBar.playerApi = mockApi;
+    document.body.appendChild(playerBar);
+
+    expect(handler.api).toBe(mockApi);
+  });
+
   it('should retry initialization if playerApi is not immediately available', () => {
     handler.init();
     expect(handler.initialized).toBe(false);
     expect(handler.retryCount).toBe(1);
 
     // Add mock app after first try
-    const mockApi = { playVideo: vi.fn() };
+    const mockApi = { loadVideoById: vi.fn(), playVideo: vi.fn() };
     const mockApp = document.createElement('ytmusic-app');
     mockApp.playerApi = mockApi;
     document.body.appendChild(mockApp);
@@ -59,9 +77,24 @@ describe('PlayerHandler', () => {
 
   it('should call playVideo when playTrack is called with current videoId', () => {
     const mockApi = { 
+      loadVideoById: vi.fn(),
       getVideoData: vi.fn().mockReturnValue({ video_id: 'vid123' }),
-      playVideo: vi.fn(),
-      loadVideoById: vi.fn()
+      playVideo: vi.fn()
+    };
+    const mockApp = document.createElement('ytmusic-app');
+    mockApp.playerApi = mockApi;
+    document.body.appendChild(mockApp);
+
+    handler.playTrack('vid123');
+    expect(mockApi.playVideo).toHaveBeenCalled();
+    expect(mockApi.loadVideoById).not.toHaveBeenCalled();
+  });
+
+  it('should recognize current videoId when videoData has videoId property', () => {
+    const mockApi = { 
+      loadVideoById: vi.fn(),
+      getVideoData: vi.fn().mockReturnValue({ videoId: 'vid123' }),
+      playVideo: vi.fn()
     };
     const mockApp = document.createElement('ytmusic-app');
     mockApp.playerApi = mockApi;
@@ -74,9 +107,9 @@ describe('PlayerHandler', () => {
 
   it('should call loadVideoById when playTrack is called with different videoId', () => {
     const mockApi = { 
+      loadVideoById: vi.fn(),
       getVideoData: vi.fn().mockReturnValue({ video_id: 'other123' }),
-      playVideo: vi.fn(),
-      loadVideoById: vi.fn()
+      playVideo: vi.fn()
     };
     const mockApp = document.createElement('ytmusic-app');
     mockApp.playerApi = mockApi;
@@ -86,8 +119,26 @@ describe('PlayerHandler', () => {
     expect(mockApi.loadVideoById).toHaveBeenCalledWith('vid123');
   });
 
+  it('should fallback to loadVideoById object when string invocation throws', () => {
+    const loadVideoByIdMock = vi.fn()
+      .mockImplementationOnce(() => { throw new Error('Invalid params'); })
+      .mockImplementationOnce(() => {});
+
+    const mockApi = { 
+      loadVideoById: loadVideoByIdMock,
+      getVideoData: vi.fn().mockReturnValue({ video_id: 'other123' })
+    };
+    const mockApp = document.createElement('ytmusic-app');
+    mockApp.playerApi = mockApi;
+    document.body.appendChild(mockApp);
+
+    handler.playTrack('vid123');
+    expect(loadVideoByIdMock).toHaveBeenNthCalledWith(1, 'vid123');
+    expect(loadVideoByIdMock).toHaveBeenNthCalledWith(2, { videoId: 'vid123' });
+  });
+
   it('should call pauseVideo', () => {
-    const mockApi = { pauseVideo: vi.fn() };
+    const mockApi = { loadVideoById: vi.fn(), pauseVideo: vi.fn() };
     const mockApp = document.createElement('ytmusic-app');
     mockApp.playerApi = mockApi;
     document.body.appendChild(mockApp);
@@ -96,14 +147,28 @@ describe('PlayerHandler', () => {
     expect(mockApi.pauseVideo).toHaveBeenCalled();
   });
 
-  it('should call seekBy', () => {
-    const mockApi = { seekBy: vi.fn() };
+  it('should call seekBy when available', () => {
+    const mockApi = { loadVideoById: vi.fn(), seekBy: vi.fn() };
     const mockApp = document.createElement('ytmusic-app');
     mockApp.playerApi = mockApi;
     document.body.appendChild(mockApp);
 
     handler.seekBy(10);
     expect(mockApi.seekBy).toHaveBeenCalledWith(10);
+  });
+
+  it('should fallback to seekTo when seekBy is missing', () => {
+    const mockApi = { 
+      loadVideoById: vi.fn(),
+      seekTo: vi.fn(),
+      getCurrentTime: vi.fn().mockReturnValue(30)
+    };
+    const mockApp = document.createElement('ytmusic-app');
+    mockApp.playerApi = mockApi;
+    document.body.appendChild(mockApp);
+
+    handler.seekBy(10);
+    expect(mockApi.seekTo).toHaveBeenCalledWith(40, true);
   });
 
   it('should return video data', () => {
@@ -303,6 +368,93 @@ describe('PlayerHandler', () => {
       handler.activeSource = CONSTANTS.PLAYER.SOURCE.LOCAL;
       handler.localPlayer = null;
       expect(handler.getPlayerState()).toBe(CONSTANTS.PLAYER.STATE.UNSTARTED);
+    });
+  });
+
+  describe('updatePlayerBar', () => {
+    it('should update thumbnail, title, and artist on player bar element', () => {
+      const playerBar = document.createElement('ytmusic-player-bar');
+      playerBar.innerHTML = `
+        <div class="thumbnail-image-wrapper">
+          <img src="old-thumb.jpg" />
+        </div>
+        <div class="title">
+          <a href="#">Old Title</a>
+        </div>
+        <div class="byline">
+          <a href="#">Old Artist</a>
+        </div>
+      `;
+      playerBar.currentVideoData = {};
+      document.body.appendChild(playerBar);
+
+      handler.updatePlayerBar('newVid123', {
+        name: 'New Track Title',
+        artist: 'New Artist Name',
+        thumbnail: 'http://example.com/new-thumb.jpg'
+      });
+
+      const img = playerBar.querySelector('img');
+      const titleLink = playerBar.querySelector('.title a');
+      const bylineLink = playerBar.querySelector('.byline a');
+
+      expect(img.src).toBe('http://example.com/new-thumb.jpg');
+      expect(titleLink.textContent).toBe('New Track Title');
+      expect(bylineLink.textContent).toBe('New Artist Name');
+      expect(playerBar.currentVideoData.title).toBe('New Track Title');
+    });
+
+    it('should handle player bar with no trackInfo by falling back to videoId default thumbnail and videoData', () => {
+      const playerBar = document.createElement('ytmusic-player-bar');
+      playerBar.innerHTML = `
+        <div class="thumbnail-image-wrapper">
+          <img src="" />
+        </div>
+        <div class="title">Old Title</div>
+        <div class="byline">Old Artist</div>
+      `;
+      document.body.appendChild(playerBar);
+
+      const mockApi = {
+        loadVideoById: vi.fn(),
+        getVideoData: vi.fn().mockReturnValue({ title: 'API Song', author: 'API Artist' })
+      };
+      const mockApp = document.createElement('ytmusic-app');
+      mockApp.playerApi = mockApi;
+      document.body.appendChild(mockApp);
+
+      handler.updatePlayerBar('abc1234');
+
+      const img = playerBar.querySelector('img');
+      const titleEl = playerBar.querySelector('.title');
+      const bylineEl = playerBar.querySelector('.byline');
+
+      expect(img.src).toContain('https://i.ytimg.com/vi/abc1234/hqdefault.jpg');
+      expect(titleEl.textContent).toBe('API Song');
+      expect(bylineEl.textContent).toBe('API Artist');
+    });
+
+    it('should unhide hidden playerBar and hidden parent container', () => {
+      const parent = document.createElement('div');
+      parent.setAttribute('hidden', '');
+      parent.style.display = 'none';
+
+      const playerBar = document.createElement('ytmusic-player-bar');
+      playerBar.setAttribute('hidden', '');
+      playerBar.classList.add('hidden');
+      playerBar.style.display = 'none';
+
+      parent.appendChild(playerBar);
+      document.body.appendChild(parent);
+
+      handler.showPlayerBar();
+
+      expect(playerBar.hasAttribute('hidden')).toBe(false);
+      expect(playerBar.classList.contains('hidden')).toBe(false);
+      expect(playerBar.style.display).not.toBe('none');
+
+      expect(parent.hasAttribute('hidden')).toBe(false);
+      expect(parent.style.display).not.toBe('none');
     });
   });
 });
