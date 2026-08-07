@@ -219,7 +219,7 @@ export const CONSTANTS = {
   STORAGE_KEYS: {
     // Add storage keys here if needed
   },
-  VERSION: '1.8.0',
+  VERSION: '1.9.0',
   MESSAGE_TYPES: {
     EXT_SETTINGS: 'EXT_SETTINGS',
   }

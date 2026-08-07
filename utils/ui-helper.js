@@ -58,7 +58,8 @@ export class MediaItem {
         } else if (media.videoId) {
           const currentVideoData = playerHandler.getVideoData();
           const playerState = playerHandler.getPlayerState();
-          const isCurrentTrack = currentVideoData && currentVideoData.video_id === media.videoId;
+          const currentVideoId = currentVideoData?.video_id || currentVideoData?.videoId;
+          const isCurrentTrack = currentVideoData && currentVideoId === media.videoId;
           
           // Use an array for active playback states to improve scalability
           const activeStates = [
@@ -76,7 +77,7 @@ export class MediaItem {
         if (media.localFile) {
           playerHandler.playLocalFile(media.localFile);
         } else {
-          playerHandler.playTrack(media.videoId);
+          playerHandler.playTrack(media.videoId, media);
         }
         
         // Immediate optimistic update
@@ -322,7 +323,7 @@ export class UIHelper {
   /**
    * Populate a grid container with rows.
    */
-  static createMediaGridRows(records, containerId = CONSTANTS.UI.ELEMENT_IDS.ITEMS_GRID_CONTAINER) {
+  static createMediaGridRows(records, containerId = CONSTANTS.UI.ELEMENT_IDS.ITEMS_GRID_CONTAINER, playerHandler = null) {
     const container = document.getElementById(containerId);
     if (!container) return null;
 
@@ -333,7 +334,8 @@ export class UIHelper {
         MediaGridRow.render(
           record.originalMedia,
           record.replacementMedia,
-          index + 1
+          index + 1,
+          playerHandler
         )
       );
     });

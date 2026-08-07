@@ -182,7 +182,7 @@ describe('UIHelper', () => {
        const el = MediaItem.render(media, playerHandler);
        const playBtn = el.querySelector('.yt-music-plus-btn-play');
        playBtn.click();
-       expect(playerHandler.playTrack).toHaveBeenCalledWith('v1');
+       expect(playerHandler.playTrack).toHaveBeenCalledWith('v1', media);
     });
 
     it('should stop propagation on play button click', () => {
@@ -374,14 +374,20 @@ describe('UIHelper', () => {
   });
 
   describe('UIHelper Grid Operations', () => {
-    it('createMediaGridRows should populate container', () => {
+    it('createMediaGridRows should populate container and attach player controls if playerHandler is passed', () => {
+      const mockPlayerHandler = {
+        playTrack: vi.fn(),
+        getVideoData: vi.fn(),
+        getPlayerState: vi.fn()
+      };
       const records = [
-        { originalMedia: { name: 'O1' }, replacementMedia: { name: 'R1' } },
+        { originalMedia: { name: 'O1', videoId: 'v1' }, replacementMedia: { name: 'R1' } },
         { originalMedia: { name: 'O2' }, replacementMedia: { name: 'R2' } }
       ];
-      UIHelper.createMediaGridRows(records);
+      UIHelper.createMediaGridRows(records, 'yt-music-plus-itemsGridContainer', mockPlayerHandler);
       const container = document.getElementById('yt-music-plus-itemsGridContainer');
       expect(container.querySelectorAll('.yt-music-plus-grid-row')).toHaveLength(2);
+      expect(container.querySelector('.yt-music-plus-controls')).not.toBeNull();
     });
 
     it('createMediaGridRows should return null if container not found', () => {

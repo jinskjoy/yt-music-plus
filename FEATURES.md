@@ -140,6 +140,8 @@ This document provides a comprehensive list of features for the YouTube Music + 
 - **Feature**: Playback controls (Play, Pause, Skip forward/backward 10s) integrated into the media grid.
 - **Behavior**: Controls appear as an overlay when hovering over the track details section (Original or Replacement media).
 - **Control**: Allows users to preview tracks directly within the popup without navigating away from the current workspace.
+- **Resilient Player API**: Uses candidate fallback resolution (`ytmusic-app.playerApi`, `#movie_player`, `ytmusic-player-bar`) with safe object/string parameter handling for `loadVideoById`, `video_id`/`videoId` metadata matching, and `seekTo` fallback when `seekBy` is unavailable.
+- **Player Bar Synchronization**: Automatically updates YouTube Music's bottom player bar (`ytmusic-player-bar`) thumbnail, track title, and artist name immediately upon track playback, both for YouTube tracks and local audio files.
 - **Enhanced Player API**: Exposed methods for advanced player control including `getVideoData`, `getPlayerState`, `nextTrack`, `previousTrack`, `getVolume`, `setVolume`, `isMuted`, `mute`, `unMute`, `getCurrentTime`, and `getDuration`.
 - **Testable Case**: Hover over a track title in the grid; verify playback controls appear and function as expected (controlling the page's background player).
 

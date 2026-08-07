@@ -57,7 +57,7 @@ describe('UI Components', () => {
 
       // Play click
       playBtn.dispatchEvent(new MouseEvent('click'));
-      expect(playerHandler.playTrack).toHaveBeenCalledWith('v123');
+      expect(playerHandler.playTrack).toHaveBeenCalledWith('v123', media);
       expect(playBtn.classList.contains('yt-music-plus-hidden')).toBe(true);
       expect(pauseBtn.classList.contains('yt-music-plus-hidden')).toBe(false);
 
