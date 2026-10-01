@@ -59,6 +59,7 @@ describe('In-Site Popup HTML Templates', () => {
     expect(content.querySelector('#yt-music-plus-action-buttons')).not.toBeNull();
     expect(content.querySelector('.yt-music-plus-content-wrapper')).not.toBeNull();
     expect(content.querySelector('.yt-music-plus-icon')).not.toBeNull();
+    expect(content.querySelector('.yt-music-plus-icon').textContent).toBe('YTM+');
   });
 
   it('should have the minimize button in the popup header', () => {
