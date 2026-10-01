@@ -67,7 +67,7 @@ class ContentScriptController {
     const button = document.createElement('div');
     button.id = 'yt-music-plus-nav-btn';
     button.className = `${CONSTANTS.UI.CLASSES.NAV_BAR_BTN || 'yt-music-plus-nav-bar-btn'} ${CONSTANTS.UI.CLASSES.HIDDEN}`;
-    button.textContent = 'YouTube Music +';
+    button.textContent = 'YTM+';
     navBarRightSide.appendChild(button);
   }
 
@@ -177,4 +177,8 @@ class ContentScriptController {
 }
 
 // Initialize content script
-new ContentScriptController();
+if (typeof process === 'undefined' || process.env?.NODE_ENV !== 'test') {
+  new ContentScriptController();
+}
+
+export { ContentScriptController };

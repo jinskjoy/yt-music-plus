@@ -7,13 +7,13 @@ This document provides a comprehensive list of features for the YouTube Music + 
 ## 1. User Interface Integration
 
 ### 1.1 In-page Navigation Button
-- **Feature**: A "YouTube Music +" button injected into the top navigation bar (right side).
+- **Feature**: A "YTM+" button injected into the top navigation bar (right side).
 - **Behavior**: Clicking this button opens the Main Management Popup.
 - **Configurability**: Can be toggled on/off in Settings.
 - **Testable Case**: Verify button appears when enabled and clicking it opens the popup.
 
 ### 1.2 In-page Playlist Button
-- **Feature**: A "YouTube Music +" action button injected into the header of any playlist page.
+- **Feature**: A "YTM+" action button injected into the header of any playlist page.
 - **Behavior**: Clicking this button opens the Main Management Popup and automatically selects the current playlist.
 - **Configurability**: Can be toggled on/off in Settings.
 - **Testable Case**: Navigate to a playlist page; verify button appears and auto-selects the playlist in the popup.
