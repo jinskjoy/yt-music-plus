@@ -81,6 +81,7 @@ export const CONSTANTS = {
       PLAYLISTS_LOADING_INDICATOR: 'yt-music-plus-playlistsLoadingIndicator',
       PLAYLISTS_GRID: 'yt-music-plus-playlistsGrid',
       POPUP_TITLE: 'yt-music-plus-popupTitle',
+      POPUP_HEADING: 'yt-music-plus-popupHeading',
       NAV_BTN: 'yt-music-plus-nav-btn',
       ACTION_BUTTONS: 'yt-music-plus-action-buttons',
       POPUP_HOLDER: 'yt-music-plus-popup',
@@ -166,6 +167,8 @@ export const CONSTANTS = {
       ALT_DUPLICATE_GROUP_ROW: 'yt-music-plus-alt-duplicate-group-row',
       IGNORE_GROUP_BTN: 'yt-music-plus-ignore-group-btn',
       SELECT_ALL_CHECKBOX: 'yt-music-plus-select-all-checkbox',
+      CHROME_STORE_LINK: 'yt-music-plus-chrome-store-link',
+      EXTENSION_BRANDING_TITLE: 'yt-music-plus-extension-branding-title',
     },
     SELECTORS: {
       YT_MUSIC_HEADER: 'ytmusic-responsive-header-renderer',
@@ -219,7 +222,7 @@ export const CONSTANTS = {
   STORAGE_KEYS: {
     // Add storage keys here if needed
   },
-  VERSION: '1.10.0',
+  VERSION: '1.11.0',
   MESSAGE_TYPES: {
     EXT_SETTINGS: 'EXT_SETTINGS',
   }
