@@ -687,5 +687,41 @@ describe('UIHelper', () => {
       document.getElementById(CONSTANTS.UI.ELEMENT_IDS.ERROR_MESSAGE_TEMPLATE).remove();
       expect(UIHelper.showErrorInGridRow({ videoId: 'v1' }, 'Error')).toBeUndefined();
     });
+
+    describe('focusPopupHeading', () => {
+      it('should focus popup heading element when present', () => {
+        const holder = document.createElement('div');
+        holder.id = CONSTANTS.UI.ELEMENT_IDS.POPUP_HOLDER;
+        const heading = document.createElement('a');
+        heading.id = CONSTANTS.UI.ELEMENT_IDS.POPUP_HEADING;
+        heading.href = '#';
+        holder.appendChild(heading);
+        document.body.appendChild(holder);
+
+        UIHelper.focusPopupHeading(holder);
+        expect(document.activeElement).toBe(heading);
+        holder.remove();
+      });
+
+      it('should add tabindex -1 and focus heading if not natively focusable', () => {
+        const holder = document.createElement('div');
+        holder.id = CONSTANTS.UI.ELEMENT_IDS.POPUP_HOLDER;
+        const heading = document.createElement('h1');
+        heading.className = CONSTANTS.UI.CLASSES.EXTENSION_BRANDING_TITLE;
+        holder.appendChild(heading);
+        document.body.appendChild(holder);
+
+        UIHelper.focusPopupHeading(holder);
+        expect(heading.getAttribute('tabindex')).toBe('-1');
+        expect(document.activeElement).toBe(heading);
+        holder.remove();
+      });
+
+      it('should gracefully handle missing holder or heading', () => {
+        expect(() => UIHelper.focusPopupHeading(null)).not.toThrow();
+        const emptyHolder = document.createElement('div');
+        expect(() => UIHelper.focusPopupHeading(emptyHolder)).not.toThrow();
+      });
+    });
   });
 });

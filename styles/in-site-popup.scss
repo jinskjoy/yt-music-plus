@@ -164,6 +164,27 @@
         margin: 0;
         font-size: 18px;
         font-weight: 600;
+        background: transparent;
+        user-select: none;
+
+        &:focus,
+        &:focus-visible {
+            outline: none !important;
+            box-shadow: none !important;
+            background: transparent !important;
+            background-color: transparent !important;
+        }
+    }
+
+    #yt-music-plus-popupTitle,
+    #yt-music-plus-popupHeading {
+        &:focus,
+        &:focus-visible {
+            outline: none !important;
+            box-shadow: none !important;
+            background: transparent !important;
+            background-color: transparent !important;
+        }
     }
 
     .yt-music-plus-playlist-controls-wrapper {
@@ -188,6 +209,11 @@
         justify-content: center;
         border-radius: 0;
         transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+
+        &:focus-visible {
+            outline: 2px solid #1976d2;
+            border-radius: 4px;
+        }
     }
 
     .yt-music-plus-close-btn:hover, .yt-music-plus-minimize-btn:hover {
@@ -203,11 +229,16 @@
     .yt-music-plus-report-issue-link {
         color: grey;
         text-decoration: none;
-    }
 
-    .yt-music-plus-report-issue-link:hover {
-        color: darkgrey;
-        text-decoration: none;
+        &:hover {
+            color: darkgrey;
+            text-decoration: none;
+        }
+
+        &:focus-visible {
+            outline: 2px solid #1976d2;
+            border-radius: 2px;
+        }
     }
 
     .yt-music-plus-close-btn:active, .yt-music-plus-minimize-btn:active {
@@ -357,6 +388,11 @@
         &:disabled {
             opacity: 0.5;
             cursor: not-allowed;
+        }
+
+        &:focus-visible {
+            outline: 2px solid #1976d2;
+            outline-offset: 2px;
         }
 
         &.yt-music-plus-btn-primary {
@@ -565,6 +601,10 @@
             width: 18px;
             height: 18px;
             cursor: pointer;
+
+            &:focus-visible {
+                outline: 2px solid #1976d2;
+            }
         }
     }
 
@@ -608,8 +648,10 @@
         min-width: 0;
         position: relative;
 
-        &:hover .yt-music-plus-controls {
+        &:hover .yt-music-plus-controls,
+        &:focus-within .yt-music-plus-controls {
             opacity: 1;
+            pointer-events: auto;
         }
     }
 
@@ -707,6 +749,13 @@
             border-color: #000;
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        &:focus-visible {
+            outline: 2px solid #1976d2;
+            outline-offset: 2px;
+            background-color: #f0f0f0;
+            border-color: #000;
         }
     }
 
@@ -813,6 +862,10 @@
         display: flex;
         align-items: center;
         justify-content: center;
+
+        &:focus-visible {
+            outline: 2px solid #1976d2;
+        }
     }
 
     .yt-music-plus-chrome-store-link {
@@ -820,15 +873,32 @@
         padding: 10px;
         text-decoration: none;
         color: black;
+        background: transparent;
+        user-select: none;
 
         &:visited, &:active, &:hover {
             text-decoration: none;
             color: black;
+            background: transparent;
+        }
+
+        &:focus,
+        &:focus-visible {
+            outline: none !important;
+            box-shadow: none !important;
+            background: transparent !important;
+            background-color: transparent !important;
         }
     }
 
     .yt-music-plus-clickable-column {
         cursor: pointer;
+
+        &:focus-visible {
+            outline: 2px solid #1976d2;
+            outline-offset: -2px;
+            background-color: #f0f7ff;
+        }
     }
 
     .yt-music-plus-extension-title {
@@ -892,6 +962,10 @@
         &:hover {
             color: #000;
         }
+
+        &:focus-visible {
+            outline: 2px solid #1976d2;
+        }
     }
 
     /* Search Container Styles */
@@ -914,6 +988,11 @@
         box-sizing: border-box;
         outline: none;
         box-shadow: none;
+
+        &:focus-visible {
+            border-bottom-color: #1976d2;
+            border-bottom-width: 2px;
+        }
     }
 
     .yt-music-plus-clear-search-btn {
@@ -984,6 +1063,11 @@
         &:hover {
             color: #000;
             transform: translateY(-1px);
+        }
+
+        &:focus-visible {
+            outline: 2px solid #1976d2;
+            border-radius: 2px;
         }
     }
 
@@ -1081,6 +1165,11 @@
         &:hover {
             transform: scale(1.1);
             background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        &:focus-visible {
+            outline: 2px solid #1976d2;
+            border-radius: 2px;
         }
     }
 

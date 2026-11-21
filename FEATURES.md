@@ -173,3 +173,20 @@ This document provides a comprehensive list of features for the YouTube Music + 
   - Allows users to cancel the dialog if desired.
   - Upon receiving a new token, automatically closes the dialog and resumes the user's pending action.
 - **Testable Case**: Simulate an expired token during an action; verify the modal appears; click "Fetch New Token" or issue a new token; verify the pending operation resumes seamlessly.
+
+## 5. Keyboard Accessibility
+
+### 5.1 Keyboard Navigation & Focus Management
+- **Feature**: Comprehensive keyboard accessibility for the in-site popup.
+- **Behavior**:
+    - All interactive elements (buttons, playlist cards, clickable columns, checkboxes, links) are reachable and operable via keyboard.
+    - Playlist cards support `Enter` and `Space` to activate, with descriptive `aria-label` attributes (e.g., "Open playlist: My Playlist").
+    - The original media column in the grid is keyboard-focusable (`tabindex="0"`, `role="button"`) and toggles checkbox selection on `Enter`/`Space`.
+    - The "Select all items" checkbox has an `aria-label` for screen reader clarity.
+    - Both modals (`role="dialog"`, `aria-modal="true"`, `aria-labelledby`) receive focus on open and restore focus to the trigger element on close.
+    - Pressing `Escape` closes the currently open modal (target playlist or token expired), or the popup if no modal is open.
+    - On popup open, focus is automatically moved to the popup heading (`#yt-music-plus-popupHeading`) as the starting point for navigation.
+    - Focus trapping ensures Tab and Shift+Tab navigation stays within the active popup or modal, preventing focus from escaping into YouTube Music's native background page elements while the dialog is open.
+    - When an action button (e.g. "List All Tracks", "Find Unavailable Tracks") is activated, focus is restored to that button after the action completes and continues seamlessly to the next element on subsequent Tab presses.
+- **Focus Indicators**: All interactive elements display a visible `2px solid #1976d2` `:focus-visible` outline, including buttons, playlist cards, the clickable column, search input, checkboxes, footer icon links, and control buttons.
+- **Testable Case**: Tab through all elements in the popup; verify each is reachable and visually highlighted. Press `Enter`/`Space` on playlist cards and the original media column; verify they activate. Press `Escape`; verify modals/popup close correctly.

@@ -48,6 +48,133 @@ export class PopupManager {
   setupPopupListeners(popupElement) {
     if (!popupElement) return;
 
+    // Clean up any existing global tab trap handler before attaching a new one
+    if (PopupManager._tabTrapHandler) {
+      document.removeEventListener('keydown', PopupManager._tabTrapHandler, true);
+    }
+
+    let lastFocusedElement = null;
+
+    popupElement.addEventListener('focus', (e) => {
+      if (e.target && e.target !== document.body && popupElement.contains(e.target)) {
+        lastFocusedElement = e.target;
+      }
+    }, true);
+
+    popupElement.addEventListener('focusin', (e) => {
+      if (e.target && e.target !== document.body && popupElement.contains(e.target)) {
+        lastFocusedElement = e.target;
+      }
+    }, true);
+
+    popupElement.addEventListener('click', (e) => {
+      const interactiveEl = e.target.closest('button, a, input, select, textarea, [tabindex="0"]');
+      if (interactiveEl && popupElement.contains(interactiveEl)) {
+        lastFocusedElement = interactiveEl;
+      }
+    }, true);
+
+    // Global keyboard listener for Tab trap when popup is open
+    const tabTrapHandler = (e) => {
+      if (e.key !== 'Tab') return;
+
+      const popupHolder = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.POPUP_HOLDER);
+      if (!popupHolder || popupHolder.classList.contains(CONSTANTS.UI.CLASSES.HIDDEN)) {
+        return;
+      }
+
+      const container = popupHolder.querySelector(`.${CONSTANTS.UI.CLASSES.POPUP_CONTAINER}`);
+      if (container && container.classList.contains(CONSTANTS.UI.CLASSES.MINIMIZED)) {
+        return;
+      }
+
+      // Check for active modal overlay first
+      const targetModal = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.TARGET_PLAYLIST_MODAL);
+      const tokenModal = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.TOKEN_EXPIRED_MODAL);
+      const activeModal = (targetModal && !targetModal.classList.contains(CONSTANTS.UI.CLASSES.HIDDEN)) ? targetModal :
+                          (tokenModal && !tokenModal.classList.contains(CONSTANTS.UI.CLASSES.HIDDEN)) ? tokenModal : null;
+
+      const currentScope = activeModal || container || popupHolder;
+      const focusable = Array.from(currentScope.querySelectorAll(
+        'a[href]:not([disabled]), button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]):not([disabled])'
+      )).filter(el => !el.classList.contains(CONSTANTS.UI.CLASSES.HIDDEN) && !el.closest(`.${CONSTANTS.UI.CLASSES.HIDDEN}`));
+
+      if (!focusable.length) {
+        e.preventDefault();
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      // If focus is currently outside this popup scope, continue from last focused element if valid
+      if (!currentScope.contains(document.activeElement)) {
+        e.preventDefault();
+        if (lastFocusedElement && currentScope.contains(lastFocusedElement) && !lastFocusedElement.disabled && !lastFocusedElement.classList.contains(CONSTANTS.UI.CLASSES.HIDDEN)) {
+          const lastIdx = focusable.indexOf(lastFocusedElement);
+          if (lastIdx !== -1) {
+            const targetIdx = e.shiftKey
+              ? (lastIdx - 1 + focusable.length) % focusable.length
+              : (lastIdx + 1) % focusable.length;
+            focusable[targetIdx].focus();
+            return;
+          }
+        }
+        if (e.shiftKey) {
+          last.focus();
+        } else {
+          first.focus();
+        }
+        return;
+      }
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', tabTrapHandler, true);
+    PopupManager._tabTrapHandler = tabTrapHandler;
+
+    // Keyboard handler: Escape closes modals/popup; Space is captured to prevent
+    // YouTube's own player from intercepting it when focus is inside the popup.
+    popupElement.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const targetModal = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.TARGET_PLAYLIST_MODAL);
+        const tokenModal = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.TOKEN_EXPIRED_MODAL);
+
+        if (targetModal && !targetModal.classList.contains(CONSTANTS.UI.CLASSES.HIDDEN)) {
+          document.getElementById(CONSTANTS.UI.BUTTON_IDS.CANCEL_TARGET_MODAL)?.click();
+          return;
+        }
+        if (tokenModal && !tokenModal.classList.contains(CONSTANTS.UI.CLASSES.HIDDEN)) {
+          document.getElementById(CONSTANTS.UI.BUTTON_IDS.CANCEL_TOKEN_MODAL)?.click();
+          return;
+        }
+        document.getElementById(CONSTANTS.UI.BUTTON_IDS.CLOSE_POPUP)?.click();
+        return;
+      }
+
+      // Block Space from reaching YouTube's player when focused on a grid row
+      // column or any non-input, non-button element inside the popup.
+      if (e.key === ' ') {
+        const tag = e.target.tagName;
+        const isNativelyActivatable = tag === 'BUTTON' || tag === 'INPUT' ||
+          tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'A';
+        if (!isNativelyActivatable) {
+          e.stopPropagation();
+        }
+      }
+    }, true); // useCapture=true so we intercept before YouTube's handlers
+
     // Select all checkbox handler
     const selectAllCheckbox = popupElement.querySelector(`#${CONSTANTS.UI.ELEMENT_IDS.SELECT_ALL_CHECKBOX_ID}`);
     if (selectAllCheckbox) {
@@ -190,6 +317,9 @@ export class PopupManager {
           minimizeBtn.setAttribute('aria-label', 'Minimize popup');
         }
       }
+
+      // Focus heading as starting point for keyboard navigation
+      UIHelper.focusPopupHeading(popupHolder);
     }
   }
 

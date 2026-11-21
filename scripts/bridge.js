@@ -409,6 +409,7 @@ import { isTokenExpiredError } from '../utils/utils.js';
       }
 
       this.ui.setPlaylistScreenVisibility(true);
+      UIHelper.focusPopupHeading(this.popupElements?.holder);
       await this.initPlaylistFetching();
 
       const currentPlaylistId = this.ytMusicAPI.getCurrentPlaylistIdFromURL();

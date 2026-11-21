@@ -280,6 +280,13 @@ export class BridgeUI {
    * Toggles search progress indicators
    */
   toggleSearchProgress(show, isSearch = false) {
+    if (show) {
+      const activeEl = document.activeElement;
+      if (activeEl && activeEl !== document.body && activeEl.id) {
+        this._lastFocusedButtonId = activeEl.id;
+      }
+    }
+
     const loadingOverlay = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.SEARCH_PROGRESS);
     if (loadingOverlay) {
       loadingOverlay.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !show);
@@ -313,6 +320,17 @@ export class BridgeUI {
       if (btn) btn.disabled = show;
     });
 
+    if (!show) {
+      const targetId = this._lastFocusedButtonId || document.querySelector(CONSTANTS.UI.SELECTORS.ACTIVE_ACTION_BUTTON)?.id;
+      if (targetId) {
+        const targetBtn = document.getElementById(targetId);
+        if (targetBtn && !targetBtn.disabled && !targetBtn.classList.contains(CONSTANTS.UI.CLASSES.HIDDEN)) {
+          targetBtn.focus();
+        }
+      }
+      this._lastFocusedButtonId = null;
+    }
+
     UIHelper.updateCheckAllCheckbox();
   }
 
@@ -326,6 +344,13 @@ export class BridgeUI {
       modal.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !isVisible);
       if (isVisible) {
         this.initTargetModalButtons();
+        // Set focus to first focusable element in the modal
+        requestAnimationFrame(() => {
+          this._setupModalFocus(modal);
+        });
+      } else {
+        // Restore focus to the trigger button when modal closes
+        document.getElementById(CONSTANTS.UI.BUTTON_IDS.SELECT_TARGET_PLAYLIST)?.focus();
       }
     }
   }
@@ -340,8 +365,26 @@ export class BridgeUI {
       modal.classList.toggle(CONSTANTS.UI.CLASSES.HIDDEN, !isVisible);
       if (isVisible) {
         this.initTokenModalButtons();
+        // Set focus to first focusable element in the modal
+        requestAnimationFrame(() => {
+          this._setupModalFocus(modal);
+        });
+      } else {
+        // Restore focus to the trigger button when modal closes
+        document.getElementById(CONSTANTS.UI.BUTTON_IDS.FIND_UNAVAILABLE)?.focus();
       }
     }
+  }
+
+  /**
+   * Sets focus to the first focusable element in a modal
+   * @param {HTMLElement} modal
+   */
+  _setupModalFocus(modal) {
+    const focusable = modal.querySelector(
+      'button:not([disabled]):not(.yt-music-plus-hidden), [tabindex="0"]:not(.yt-music-plus-hidden), input:not([disabled])'
+    );
+    if (focusable) focusable.focus();
   }
 
   /**

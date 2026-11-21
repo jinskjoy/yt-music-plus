@@ -492,4 +492,187 @@ describe('PopupManager', () => {
       expect(details.classList.contains(CONSTANTS.UI.CLASSES.HIDDEN)).toBe(false);
     });
   });
+
+  describe('Keyboard navigation and focus management', () => {
+    let holder, container, heading, button1, button2;
+
+    beforeEach(() => {
+      document.body.innerHTML = `
+        <button id="outsideBtn">Outside</button>
+        <div id="${CONSTANTS.UI.ELEMENT_IDS.POPUP_HOLDER}">
+          <div class="${CONSTANTS.UI.CLASSES.POPUP_CONTAINER}">
+            <h1 class="${CONSTANTS.UI.CLASSES.EXTENSION_BRANDING_TITLE}">
+              <a href="#" id="${CONSTANTS.UI.ELEMENT_IDS.POPUP_HEADING}" class="${CONSTANTS.UI.CLASSES.CHROME_STORE_LINK}">YouTube Music +</a>
+            </h1>
+            <button id="btn1">Button 1</button>
+            <button id="btn2">Button 2</button>
+          </div>
+        </div>
+      `;
+
+      holder = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.POPUP_HOLDER);
+      container = holder.querySelector(`.${CONSTANTS.UI.CLASSES.POPUP_CONTAINER}`);
+      heading = document.getElementById(CONSTANTS.UI.ELEMENT_IDS.POPUP_HEADING);
+      button1 = document.getElementById('btn1');
+      button2 = document.getElementById('btn2');
+
+      popupManager.setupPopupListeners(holder);
+    });
+
+    it('should focus heading when showPopup is called', () => {
+      holder.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
+      popupManager.showPopup();
+      expect(document.activeElement).toBe(heading);
+    });
+
+    it('should redirect focus to first element when Tab is pressed and focus is outside popup', () => {
+      const outsideBtn = document.getElementById('outsideBtn');
+      outsideBtn.focus();
+      expect(document.activeElement).toBe(outsideBtn);
+
+      const tabEvent = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+      document.dispatchEvent(tabEvent);
+
+      expect(document.activeElement).toBe(heading);
+      expect(tabEvent.defaultPrevented).toBe(true);
+    });
+
+    it('should continue from where it was left off when an element was previously focused and focus was lost', () => {
+      button1.focus();
+      expect(document.activeElement).toBe(button1);
+
+      // Simulate focus lost to document.body (e.g. when button was temporarily disabled)
+      document.body.focus();
+      expect(document.activeElement).toBe(document.body);
+
+      const tabEvent = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+      document.dispatchEvent(tabEvent);
+
+      // Should advance to next element (button2) after button1
+      expect(document.activeElement).toBe(button2);
+      expect(tabEvent.defaultPrevented).toBe(true);
+    });
+
+    it('should continue backwards from where it was left off when Shift+Tab is pressed and focus was lost', () => {
+      button2.focus();
+      expect(document.activeElement).toBe(button2);
+
+      // Simulate focus lost to document.body
+      document.body.focus();
+
+      const shiftTabEvent = new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true, cancelable: true });
+      document.dispatchEvent(shiftTabEvent);
+
+      // Should move backwards to button1
+      expect(document.activeElement).toBe(button1);
+      expect(shiftTabEvent.defaultPrevented).toBe(true);
+    });
+
+    it('should wrap focus to first element when Tab is pressed on last element', () => {
+      button2.focus();
+      expect(document.activeElement).toBe(button2);
+
+      const tabEvent = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+      document.dispatchEvent(tabEvent);
+
+      expect(document.activeElement).toBe(heading);
+      expect(tabEvent.defaultPrevented).toBe(true);
+    });
+
+    it('should wrap focus to last element when Shift+Tab is pressed on first element', () => {
+      heading.focus();
+      expect(document.activeElement).toBe(heading);
+
+      const shiftTabEvent = new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true, cancelable: true });
+      document.dispatchEvent(shiftTabEvent);
+
+      expect(document.activeElement).toBe(button2);
+      expect(shiftTabEvent.defaultPrevented).toBe(true);
+    });
+
+    it('should not intercept Tab when popup is hidden', () => {
+      holder.classList.add(CONSTANTS.UI.CLASSES.HIDDEN);
+      const outsideBtn = document.getElementById('outsideBtn');
+      outsideBtn.focus();
+
+      const tabEvent = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+      document.dispatchEvent(tabEvent);
+
+      expect(tabEvent.defaultPrevented).toBe(false);
+    });
+
+    it('should not intercept Tab when popup is minimized', () => {
+      container.classList.add(CONSTANTS.UI.CLASSES.MINIMIZED);
+      const outsideBtn = document.getElementById('outsideBtn');
+      outsideBtn.focus();
+
+      const tabEvent = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+      document.dispatchEvent(tabEvent);
+
+      expect(tabEvent.defaultPrevented).toBe(false);
+    });
+
+    describe('Escape and Space key handling', () => {
+      it('should click cancel target modal on Escape when target modal is visible', () => {
+        const targetModal = document.createElement('div');
+        targetModal.id = CONSTANTS.UI.ELEMENT_IDS.TARGET_PLAYLIST_MODAL;
+        const cancelBtn = document.createElement('button');
+        cancelBtn.id = CONSTANTS.UI.BUTTON_IDS.CANCEL_TARGET_MODAL;
+        const clickSpy = vi.spyOn(cancelBtn, 'click');
+        targetModal.appendChild(cancelBtn);
+        document.body.appendChild(targetModal);
+
+        holder.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+
+        expect(clickSpy).toHaveBeenCalled();
+        targetModal.remove();
+      });
+
+      it('should click cancel token modal on Escape when token modal is visible', () => {
+        const tokenModal = document.createElement('div');
+        tokenModal.id = CONSTANTS.UI.ELEMENT_IDS.TOKEN_EXPIRED_MODAL;
+        const cancelBtn = document.createElement('button');
+        cancelBtn.id = CONSTANTS.UI.BUTTON_IDS.CANCEL_TOKEN_MODAL;
+        const clickSpy = vi.spyOn(cancelBtn, 'click');
+        tokenModal.appendChild(cancelBtn);
+        document.body.appendChild(tokenModal);
+
+        holder.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+
+        expect(clickSpy).toHaveBeenCalled();
+        tokenModal.remove();
+      });
+
+      it('should click close popup button on Escape when no modal is visible', () => {
+        const closeBtn = document.createElement('button');
+        closeBtn.id = CONSTANTS.UI.BUTTON_IDS.CLOSE_POPUP;
+        const clickSpy = vi.spyOn(closeBtn, 'click');
+        document.body.appendChild(closeBtn);
+
+        holder.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+
+        expect(clickSpy).toHaveBeenCalled();
+        closeBtn.remove();
+      });
+
+      it('should stop propagation of Space key on non-natively activatable elements', () => {
+        const div = document.createElement('div');
+        holder.appendChild(div);
+
+        const spaceEvent = new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true });
+        const stopSpy = vi.spyOn(spaceEvent, 'stopPropagation');
+        div.dispatchEvent(spaceEvent);
+
+        expect(stopSpy).toHaveBeenCalled();
+      });
+
+      it('should not stop propagation of Space key on natively activatable elements like buttons', () => {
+        const spaceEvent = new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true });
+        const stopSpy = vi.spyOn(spaceEvent, 'stopPropagation');
+        button1.dispatchEvent(spaceEvent);
+
+        expect(stopSpy).not.toHaveBeenCalled();
+      });
+    });
+  });
 });

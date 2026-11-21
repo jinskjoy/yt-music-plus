@@ -98,10 +98,12 @@ export class MediaItem {
       bindControl(`.${CONSTANTS.UI.CLASSES.BTN_SEEK_BACK}`, () => playerHandler.seekBy(-CONSTANTS.PLAYER.SEEK_DURATION_SECONDS));
       bindControl(`.${CONSTANTS.UI.CLASSES.BTN_SEEK_FORWARD}`, () => playerHandler.seekBy(CONSTANTS.PLAYER.SEEK_DURATION_SECONDS));
 
-      // Handle play/pause button visibility on hover
+      // Handle play/pause button visibility on hover and keyboard focus
       const mediaInfo = item.querySelector(`.${CONSTANTS.UI.CLASSES.MEDIA_INFO}`);
       if (mediaInfo) {
         mediaInfo.addEventListener('mouseenter', updateButtonVisibility);
+        // Also refresh button state when any control receives keyboard focus
+        mediaInfo.addEventListener('focusin', updateButtonVisibility);
       }
 
       // Initial visibility update
@@ -205,6 +207,17 @@ export class MediaGridRow {
         checkbox.dispatchEvent(new Event('change', { bubbles: true }));
       }
     });
+    // Keyboard support for original column (Enter/Space to toggle checkbox)
+    originalCol.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        if (!checkbox.disabled) {
+          checkbox.checked = !checkbox.checked;
+          checkbox.dataset.userInteracted = 'true';
+          checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+    });
     originalCol.appendChild(MediaItem.render(originalMedia, playerHandler));
 
     const replacementCol = row.querySelector(`.${CONSTANTS.UI.CLASSES.GRID_COL_REPLACEMENT}`);
@@ -259,6 +272,19 @@ export class PlaylistCard {
     thumb.alt = playlist.title || 'Playlist Thumbnail';
     title.textContent = playlist.title || 'Untitled Playlist';
     meta.textContent = playlist.subtitle || '';
+
+    // Keyboard accessibility: set role, tabindex and aria-label
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('role', 'button');
+    card.setAttribute('aria-label', `Open playlist: ${playlist.title || 'Untitled Playlist'}`);
+
+    // Activate card on Enter or Space key
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        card.click();
+      }
+    });
 
     return card;
   }
@@ -532,5 +558,29 @@ export class UIHelper {
       toggleGridBtn.title = shouldExpand ? 'Collapse grid' : 'Expand grid';
     }
     if (gridWrapper) gridWrapper.classList.toggle(CONSTANTS.UI.CLASSES.EXPANDED, shouldExpand);
+  }
+
+  /**
+   * Sets focus to the popup heading as the starting point for navigation
+   * @param {HTMLElement} [root]
+   */
+  static focusPopupHeading(root) {
+    const container = root || document.getElementById(CONSTANTS.UI.ELEMENT_IDS.POPUP_HOLDER);
+    if (!container) return;
+
+    const heading = container.querySelector(`#${CONSTANTS.UI.ELEMENT_IDS.POPUP_HEADING}`) ||
+                    container.querySelector(`.${CONSTANTS.UI.CLASSES.CHROME_STORE_LINK}`) ||
+                    container.querySelector(`.${CONSTANTS.UI.CLASSES.EXTENSION_BRANDING_TITLE}`) ||
+                    container.querySelector(`#${CONSTANTS.UI.ELEMENT_IDS.POPUP_TITLE}`);
+
+    if (heading) {
+      if (!heading.hasAttribute('tabindex') && heading.tagName !== 'A' && heading.tagName !== 'BUTTON') {
+        heading.setAttribute('tabindex', '-1');
+      }
+      heading.focus();
+      if (typeof requestAnimationFrame !== 'undefined') {
+        requestAnimationFrame(() => heading.focus());
+      }
+    }
   }
 }

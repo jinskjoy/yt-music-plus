@@ -142,6 +142,19 @@ describe('BridgeUI', () => {
       expect(overlay.classList.contains('yt-music-plus-hidden')).toBe(true);
       expect(btn.disabled).toBe(false);
     });
+
+    it('should restore focus to the chosen button when search progress finishes', () => {
+      const btn = document.getElementById(CONSTANTS.UI.BUTTON_IDS.LIST_ALL_TRACKS);
+      btn.focus();
+      expect(document.activeElement).toBe(btn);
+
+      bridgeUI.toggleSearchProgress(true);
+      expect(btn.disabled).toBe(true);
+
+      bridgeUI.toggleSearchProgress(false);
+      expect(btn.disabled).toBe(false);
+      expect(document.activeElement).toBe(btn);
+    });
   });
 
   describe('displayPlaylistsForSelection', () => {

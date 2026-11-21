@@ -1,9 +1,9 @@
-<div class="yt-music-plus-popup-container" role="dialog" aria-modal="true" aria-labelledby="yt-music-plus-popupTitle">
+<div class="yt-music-plus-popup-container" role="dialog" aria-modal="true" aria-labelledby="yt-music-plus-popupHeading yt-music-plus-popupTitle">
     <div class="yt-music-plus-popup-content">
         <div class="yt-music-plus-popup-header">
-            <p class="yt-music-plus-extension-branding-title">
-                <a href="https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc" target="_blank" rel="noopener noreferrer" class="yt-music-plus-chrome-store-link">YouTube Music +</a>
-            </p>
+            <h1 class="yt-music-plus-extension-branding-title">
+                <a href="https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc" target="_blank" rel="noopener noreferrer" class="yt-music-plus-chrome-store-link" id="yt-music-plus-popupHeading">YouTube Music +</a>
+            </h1>
             <h2 id="yt-music-plus-popupTitle"></h2>
             <div class="yt-music-plus-header-actions-wrapper">
                 <a href="https://chromewebstore.google.com/detail/lkieghnbgfnidfhdeclkjkmnjokmkmdc/support" target="_blank" rel="noopener noreferrer" class="yt-music-plus-report-issue-link">Report a problem</a>
@@ -105,7 +105,7 @@
                         <div class="yt-music-plus-grid-col yt-music-plus-grid-col-original">Original Media</div>
                         <div id="yt-music-plus-gridHeaderReplacement" class="yt-music-plus-grid-col yt-music-plus-grid-col-replacement">Replacement Media</div>
                         <div class="yt-music-plus-grid-col yt-music-plus-grid-col-checkbox">
-                            <input type="checkbox" id="yt-music-plus-selectAllCheckbox" class="yt-music-plus-select-all-checkbox" />
+                            <input type="checkbox" id="yt-music-plus-selectAllCheckbox" class="yt-music-plus-select-all-checkbox" aria-label="Select all items" />
                         </div>
                     </div>
 
@@ -152,10 +152,10 @@
             </div>
 
             <!-- Target Playlist Selection Modal (Popup in Popup) -->
-            <div id="yt-music-plus-targetPlaylistModal" class="yt-music-plus-modal-overlay yt-music-plus-hidden">
+            <div id="yt-music-plus-targetPlaylistModal" class="yt-music-plus-modal-overlay yt-music-plus-hidden" role="dialog" aria-modal="true" aria-labelledby="yt-music-plus-targetModalTitle">
                 <div class="yt-music-plus-modal-content">
                     <div class="yt-music-plus-modal-header">
-                        <h3>Select Target Playlist</h3>
+                        <h3 id="yt-music-plus-targetModalTitle">Select Target Playlist</h3>
                         <button id="yt-music-plus-closeTargetModalBtn" class="yt-music-plus-close-btn" type="button" aria-label="Close modal">&times;</button>
                     </div>
                     <div class="yt-music-plus-modal-body">
@@ -176,10 +176,10 @@
             </div>
 
             <!-- Token Expired Modal -->
-            <div id="yt-music-plus-tokenExpiredModal" class="yt-music-plus-modal-overlay yt-music-plus-hidden">
+            <div id="yt-music-plus-tokenExpiredModal" class="yt-music-plus-modal-overlay yt-music-plus-hidden" role="dialog" aria-modal="true" aria-labelledby="yt-music-plus-tokenModalTitle">
                 <div class="yt-music-plus-modal-content">
                     <div class="yt-music-plus-modal-header">
-                        <h3>Authentication Token Expired</h3>
+                        <h3 id="yt-music-plus-tokenModalTitle">Authentication Token Expired</h3>
                         <button id="yt-music-plus-closeTokenModalBtn" class="yt-music-plus-close-btn" type="button" aria-label="Close modal">&times;</button>
                     </div>
                     <div class="yt-music-plus-modal-body">
@@ -196,7 +196,7 @@
 
     <!-- Templates for Dynamic Elements -->
     <template id="yt-music-plus-playlist-card-template">
-        <div class="yt-music-plus-playlist-card">
+        <div class="yt-music-plus-playlist-card" tabindex="0" role="button" aria-label="Open playlist">
             <img class="yt-music-plus-playlist-card-thumbnail" src="" alt="Playlist Thumbnail" />
             <div class="yt-music-plus-playlist-card-title"></div>
             <div class="yt-music-plus-playlist-card-meta"></div>
@@ -225,7 +225,7 @@
     <template id="yt-music-plus-grid-row-template">
         <div class="yt-music-plus-grid-row">
             <div class="yt-music-plus-grid-col yt-music-plus-grid-col-serial"></div>
-            <div class="yt-music-plus-grid-col yt-music-plus-grid-col-original yt-music-plus-clickable-column"></div>
+            <div class="yt-music-plus-grid-col yt-music-plus-grid-col-original yt-music-plus-clickable-column" tabindex="0" role="button" aria-label="Toggle selection"></div>
             <div class="yt-music-plus-grid-col yt-music-plus-grid-col-replacement">
                 <div class="yt-music-plus-warning-container yt-music-plus-hidden">
                     <span class="yt-music-plus-warning-icon yt-music-plus-hidden">⚠️</span>
